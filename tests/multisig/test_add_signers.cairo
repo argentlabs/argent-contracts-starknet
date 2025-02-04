@@ -1,7 +1,8 @@
-use argent::multisig_account::signer_manager::signer_manager::signer_manager_component;
+use argent::multiowner_account::events::SignerLinked;
+use argent::multisig_account::signer_manager::{OwnerAddedGuid, ThresholdUpdated, signer_manager_component};
 use argent::signer::signer_signature::{SignerTrait};
+use crate::{ITestArgentMultisigDispatcherTrait, SIGNER_1, SIGNER_2, initialize_multisig_with_one_signer};
 use snforge_std::{EventSpyAssertionsTrait, EventSpyTrait, spy_events};
-use super::super::{ITestArgentMultisigDispatcherTrait, SIGNER_1, SIGNER_2, initialize_multisig_with_one_signer};
 
 #[test]
 fn add_signers() {
@@ -21,22 +22,18 @@ fn add_signers() {
     let events = array![
         (
             multisig.contract_address,
-            signer_manager_component::Event::OwnerAddedGuid(
-                signer_manager_component::OwnerAddedGuid { new_owner_guid: signer_1.into_guid() },
-            ),
+            signer_manager_component::Event::OwnerAddedGuid(OwnerAddedGuid { new_owner_guid: signer_1.into_guid() }),
         ),
         (
             multisig.contract_address,
             signer_manager_component::Event::SignerLinked(
-                signer_manager_component::SignerLinked { signer_guid: signer_1.into_guid(), signer: signer_1 },
+                SignerLinked { signer_guid: signer_1.into_guid(), signer: signer_1 },
             ),
         ),
     ];
     spy.assert_emitted(@events);
 
-    let event = signer_manager_component::Event::ThresholdUpdated(
-        signer_manager_component::ThresholdUpdated { new_threshold: 2 },
-    );
+    let event = signer_manager_component::Event::ThresholdUpdated(ThresholdUpdated { new_threshold: 2 });
     spy.assert_emitted(@array![(multisig.contract_address, event)]);
 
     assert_eq!(spy.get_events().events.len(), 3);

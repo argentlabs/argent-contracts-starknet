@@ -1,27 +1,24 @@
-use argent::multiowner_account::account_interface::OwnerAliveSignature;
-use argent::multiowner_account::owner_alive::OwnerAlive;
+use argent::multiowner_account::owner_alive::OwnerAliveSignature;
 use argent::multiowner_account::{
-    argent_account::ArgentAccount, events::{OwnerAddedGuid, OwnerRemovedGuid},
+    argent_account::ArgentAccount,
+    events::{GuardianAddedGuid, GuardianRemovedGuid, OwnerAddedGuid, OwnerRemovedGuid, SignerLinked},
     guardian_manager::guardian_manager_component, owner_manager::owner_manager_component,
 };
 use argent::recovery::EscapeStatus;
 use argent::signer::signer_signature::{
-    Eip191Signer, Secp256k1Signer, Signer, SignerSignature, SignerSignatureTrait, SignerTrait, StarknetSignature,
-    StarknetSigner, starknet_signer_from_pubkey,
+    Eip191Signer, Secp256k1Signer, Signer, SignerSignature, SignerTrait, StarknetSignature, StarknetSigner,
+    starknet_signer_from_pubkey,
 };
-
-use hash::{HashStateExTrait, HashStateTrait};
-use pedersen::PedersenTrait;
+use crate::{
+    Felt252TryIntoStarknetSigner, GUARDIAN, ITestArgentAccountDispatcherTrait, OWNER, initialize_account,
+    initialize_account_with, initialize_account_without_guardian,
+};
 use snforge_std::{
     EventSpyAssertionsTrait, EventSpyTrait,
     signature::{KeyPairTrait, stark_curve::{StarkCurveKeyPairImpl, StarkCurveSignerImpl}}, spy_events,
     start_cheat_block_timestamp_global, start_cheat_caller_address_global, start_cheat_transaction_version_global,
 };
 use starknet::contract_address_const;
-use super::super::{
-    ARGENT_ACCOUNT_ADDRESS, Felt252TryIntoStarknetSigner, GUARDIAN, ITestArgentAccountDispatcherTrait, OWNER,
-    WRONG_OWNER, initialize_account, initialize_account_with, initialize_account_without_guardian,
-};
 
 const VALID_UNTIL: u64 = 1100;
 
@@ -107,11 +104,9 @@ fn change_owner() {
     assert_eq!(spy.get_events().events.len(), 3);
     // owner_manager events
     let guid_removed_event = owner_manager_component::Event::OwnerRemovedGuid(
-        owner_manager_component::OwnerRemovedGuid { removed_owner_guid: old_owner_guid },
+        OwnerRemovedGuid { removed_owner_guid: old_owner_guid },
     );
-    let guid_added_event = owner_manager_component::Event::OwnerAddedGuid(
-        owner_manager_component::OwnerAddedGuid { new_owner_guid },
-    );
+    let guid_added_event = owner_manager_component::Event::OwnerAddedGuid(OwnerAddedGuid { new_owner_guid });
     spy
         .assert_emitted(
             @array![(account.contract_address, guid_removed_event), (account.contract_address, guid_added_event)],
@@ -119,7 +114,7 @@ fn change_owner() {
 
     // ArgentAccount events
     let signer_link_event = ArgentAccount::Event::SignerLinked(
-        ArgentAccount::SignerLinked { signer_guid: new_owner_guid, signer: signer },
+        SignerLinked { signer_guid: new_owner_guid, signer: signer },
     );
     spy.assert_emitted(@array![(account.contract_address, signer_link_event)]);
 }
@@ -260,15 +255,13 @@ fn change_guardians() {
 
     assert_eq!(spy.get_events().events.len(), 3);
     let signer_link_event = ArgentAccount::Event::SignerLinked(
-        ArgentAccount::SignerLinked { signer_guid: guardian.into_guid(), signer: guardian },
+        SignerLinked { signer_guid: guardian.into_guid(), signer: guardian },
     );
     let guardian_removed_event = guardian_manager_component::Event::GuardianRemovedGuid(
-        guardian_manager_component::GuardianRemovedGuid {
-            removed_guardian_guid: starknet_signer_from_pubkey(GUARDIAN().pubkey).into_guid(),
-        },
+        GuardianRemovedGuid { removed_guardian_guid: starknet_signer_from_pubkey(GUARDIAN().pubkey).into_guid() },
     );
     let guardian_added_event = guardian_manager_component::Event::GuardianAddedGuid(
-        guardian_manager_component::GuardianAddedGuid { new_guardian_guid: guardian.into_guid() },
+        GuardianAddedGuid { new_guardian_guid: guardian.into_guid() },
     );
     spy.assert_emitted(@array![(account.contract_address, signer_link_event)]);
     spy

@@ -36,33 +36,33 @@ trait IOwnerManagerInternal<TContractState> {
 
 /// Managing the list of owners of the account
 #[starknet::component]
-mod owner_manager_component {
-    use argent::account::interface::IEmitArgentAccountEvent;
+pub mod owner_manager_component {
+    use argent::linked_set::linked_set_with_head::{
+        LinkedSetWithHead, LinkedSetWithHeadReadImpl, LinkedSetWithHeadWriteImpl, MutableLinkedSetWithHeadReadImpl,
+    };
     use argent::multiowner_account::argent_account::ArgentAccount::Event as ArgentAccountEvent;
+    use argent::multiowner_account::argent_account::IEmitArgentAccountEvent;
     use argent::multiowner_account::events::{OwnerAddedGuid, OwnerRemovedGuid, SignerLinked};
     use argent::multiowner_account::signer_storage_linked_set::SignerStorageValueLinkedSetConfig;
     use argent::signer::signer_signature::{
-        Signer, SignerInfo, SignerSignature, SignerSignatureTrait, SignerSpanTrait, SignerStorageTrait,
-        SignerStorageValue, SignerTrait, SignerType,
+        Signer, SignerInfo, SignerSignature, SignerSignatureTrait, SignerStorageTrait, SignerStorageValue, SignerTrait,
+        SignerType,
     };
     use argent::utils::array_ext::SpanContains;
-    use argent::utils::linked_set_with_head::{
-        LinkedSetWithHead, LinkedSetWithHeadReadImpl, LinkedSetWithHeadWriteImpl, MutableLinkedSetWithHeadReadImpl,
-    };
-    use argent::utils::{asserts::assert_only_self, transaction_version::is_estimate_transaction};
+    use argent::utils::{transaction_version::is_estimate_transaction};
     use super::{IOwnerManager, IOwnerManagerInternal};
 
     /// Too many owners could make the account unable to process transactions if we reach a limit
     const MAX_SIGNERS_COUNT: usize = 32;
 
     #[storage]
-    struct Storage {
+    pub struct Storage {
         owners_storage: LinkedSetWithHead<SignerStorageValue>,
     }
 
     #[event]
     #[derive(Drop, starknet::Event)]
-    enum Event {
+    pub enum Event {
         OwnerAddedGuid: OwnerAddedGuid,
         OwnerRemovedGuid: OwnerRemovedGuid,
     }
@@ -114,7 +114,7 @@ mod owner_manager_component {
         }
     }
 
-    impl OwnerManagerInternalImpl<
+    pub impl OwnerManagerInternalImpl<
         TContractState, +HasComponent<TContractState>, +IEmitArgentAccountEvent<TContractState>, +Drop<TContractState>,
     > of IOwnerManagerInternal<ComponentState<TContractState>> {
         fn initialize(ref self: ComponentState<TContractState>, owner: Signer) -> felt252 {

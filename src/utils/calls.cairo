@@ -1,7 +1,7 @@
 use argent::utils::array_ext::ArrayExtTrait;
-use starknet::{account::Call, call_contract_syscall};
+use starknet::{account::Call, syscalls::call_contract_syscall};
 
-fn execute_multicall(mut calls: Span<Call>) {
+pub fn execute_multicall(mut calls: Span<Call>) {
     let mut index = 0;
     for call in calls {
         match call_contract_syscall(*call.to, *call.selector, *call.calldata) {
@@ -15,7 +15,7 @@ fn execute_multicall(mut calls: Span<Call>) {
     };
 }
 
-fn execute_multicall_with_result(mut calls: Span<Call>) -> Array<Span<felt252>> {
+pub fn execute_multicall_with_result(mut calls: Span<Call>) -> Array<Span<felt252>> {
     let mut result = array![];
     let mut index = 0;
     for call in calls {

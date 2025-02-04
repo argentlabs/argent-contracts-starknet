@@ -1,11 +1,17 @@
+use argent::multiowner_account::argent_account::ArgentAccount::Event;
+
+pub trait IEmitArgentAccountEvent<TContractState> {
+    fn emit_event_callback(ref self: TContractState, event: Event);
+}
+
 #[starknet::contract(account)]
-mod ArgentAccount {
-    use argent::account::interface::{IAccount, IDeprecatedArgentAccount, IEmitArgentAccountEvent, Version};
-    use argent::introspection::src5::src5_component;
+pub mod ArgentAccount {
+    use argent::account::{IAccount, IDeprecatedArgentAccount, Version};
+    use argent::introspection::src5_component;
     use argent::multiowner_account::account_interface::{
         IArgentMultiOwnerAccount, IArgentMultiOwnerAccountDispatcher, IArgentMultiOwnerAccountDispatcherTrait,
-        OwnerAliveSignature,
     };
+    use argent::multiowner_account::argent_account::IEmitArgentAccountEvent;
     use argent::multiowner_account::events::{
         AccountCreated, AccountCreatedGuid, EscapeCanceled, EscapeGuardianTriggeredGuid, EscapeOwnerTriggeredGuid,
         EscapeSecurityPeriodChanged, GuardianEscapedGuid, OwnerEscapedGuid, SignerLinked, TransactionExecuted,
@@ -14,6 +20,7 @@ mod ArgentAccount {
         IGuardianManager, guardian_manager_component, guardian_manager_component::GuardianManagerInternalImpl,
     };
     use argent::multiowner_account::owner_alive::OwnerAlive;
+    use argent::multiowner_account::owner_alive::OwnerAliveSignature;
     use argent::multiowner_account::owner_manager::{
         owner_manager_component, owner_manager_component::OwnerManagerInternalImpl,
     };
@@ -23,19 +30,19 @@ mod ArgentAccount {
         upgrade_migration_component::UpgradeMigrationInternalImpl,
     };
 
-    use argent::offchain_message::interface::IOffChainMessageHashRev1;
+    use argent::offchain_message::IOffChainMessageHashRev1;
     use argent::outside_execution::{
-        interface::IOutsideExecutionCallback, outside_execution::outside_execution_component,
+        outside_execution::IOutsideExecutionCallback, outside_execution::outside_execution_component,
     };
     use argent::recovery::EscapeStatus;
-    use argent::session::{interface::ISessionCallback, session::{session_component, session_component::InternalTrait}};
+    use argent::session::session::{ISessionCallback, session_component, session_component::InternalTrait};
     use argent::signer::signer_signature::{
         Signer, SignerSignature, SignerSignatureTrait, SignerStorageTrait, SignerStorageValue, SignerTrait, SignerType,
         StarknetSignature, StarknetSigner,
     };
     use argent::upgrade::{
-        interface::{IUpgradableCallback, IUpgradableCallbackOld},
-        upgrade::{IUpgradeInternal, upgrade_component, upgrade_component::UpgradableInternalImpl},
+        IUpgradableCallback, IUpgradableCallbackOld, IUpgradeInternal, upgrade_component,
+        upgrade_component::UpgradableInternalImpl,
     };
     use argent::utils::array_ext::SpanContains;
     use argent::utils::{
@@ -46,10 +53,11 @@ mod ArgentAccount {
             assert_correct_deploy_account_version, assert_correct_invoke_version,
         },
     };
+    use core::panic_with_felt252;
     use openzeppelin_security::reentrancyguard::{ReentrancyGuardComponent, ReentrancyGuardComponent::InternalImpl};
     use starknet::{
-        ClassHash, ContractAddress, SyscallResultTrait, VALIDATED, account::Call, get_block_timestamp,
-        get_contract_address, get_execution_info, get_tx_info, storage::Map,
+        ClassHash, ContractAddress, VALIDATED, account::Call, get_block_timestamp, get_contract_address,
+        get_execution_info, get_tx_info, storage::{StoragePointerReadAccess, StoragePointerWriteAccess},
     };
 
     const NAME: felt252 = 'ArgentAccount';
@@ -141,7 +149,7 @@ mod ArgentAccount {
 
     #[event]
     #[derive(Drop, starknet::Event)]
-    enum Event {
+    pub enum Event {
         #[flat]
         OwnerManagerEvents: owner_manager_component::Event,
         #[flat]

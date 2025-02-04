@@ -1,26 +1,26 @@
 use argent::signer::signer_signature::{Eip191Signer, is_valid_secp256k1_signature};
-use integer::{u128_byte_reverse, u256_as_non_zero, u256_safe_div_rem};
-use keccak::cairo_keccak;
+use core::integer::u128_byte_reverse;
+use core::keccak::cairo_keccak;
 use starknet::secp256_trait::{Signature as Secp256Signature};
 
 #[must_use]
-fn is_valid_eip191_signature(hash: felt252, signer: Eip191Signer, signature: Secp256Signature) -> bool {
+pub fn is_valid_eip191_signature(hash: felt252, signer: Eip191Signer, signature: Secp256Signature) -> bool {
     is_valid_secp256k1_signature(calculate_eip191_hash(hash), signer.eth_address.into(), signature)
 }
 
 #[must_use]
-fn calculate_eip191_hash(message: felt252) -> u256 {
+pub fn calculate_eip191_hash(message: felt252) -> u256 {
     // This functions allows to verify eip-191 signatures
 
     // split message into pieces
-    let shift_4_bytes = u256_as_non_zero(0x100000000);
-    let shift_8_bytes = u256_as_non_zero(0x10000000000000000);
+    let shift_4_bytes = 0x100000000;
+    let shift_8_bytes = 0x10000000000000000;
 
     let rest: u256 = message.into();
-    let (rest, tx_hash_part_5) = u256_safe_div_rem(rest, shift_4_bytes);
-    let (rest, tx_hash_part_4) = u256_safe_div_rem(rest, shift_8_bytes);
-    let (rest, tx_hash_part_3) = u256_safe_div_rem(rest, shift_8_bytes);
-    let (tx_hash_part_1, tx_hash_part_2) = u256_safe_div_rem(rest, shift_8_bytes);
+    let (rest, tx_hash_part_5) = DivRem::div_rem(rest, shift_4_bytes);
+    let (rest, tx_hash_part_4) = DivRem::div_rem(rest, shift_8_bytes);
+    let (rest, tx_hash_part_3) = DivRem::div_rem(rest, shift_8_bytes);
+    let (tx_hash_part_1, tx_hash_part_2) = DivRem::div_rem(rest, shift_8_bytes);
 
     let tx_hash_part_1: u64 = tx_hash_part_1.try_into().unwrap(); // 4 bytes 
     let tx_hash_part_2: u64 = tx_hash_part_2.try_into().unwrap(); // 8 bytes

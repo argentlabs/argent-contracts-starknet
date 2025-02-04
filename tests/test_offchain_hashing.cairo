@@ -1,4 +1,4 @@
-use argent::offchain_message::interface::{IStructHashRev1, StarknetDomain};
+use argent::offchain_message::{IStructHashRev1, StarknetDomain};
 use argent::outside_execution::outside_execution_hash::{
     MAINNET_FIRST_HADES_PERMUTATION as MAINNET_FIRST_HADES_PERMUTATION_OE,
     SEPOLIA_FIRST_HADES_PERMUTATION as SEPOLIA_FIRST_HADES_PERMUTATION_OE,
@@ -7,7 +7,7 @@ use argent::session::session_hash::{
     MAINNET_FIRST_HADES_PERMUTATION as MAINNET_FIRST_HADES_PERMUTATION_SESSION,
     SEPOLIA_FIRST_HADES_PERMUTATION as SEPOLIA_FIRST_HADES_PERMUTATION_SESSION,
 };
-use poseidon::hades_permutation;
+use core::poseidon::hades_permutation;
 use snforge_std::start_cheat_chain_id_global;
 use starknet::get_tx_info;
 

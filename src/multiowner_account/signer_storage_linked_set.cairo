@@ -1,8 +1,8 @@
+use argent::linked_set::linked_set::LinkedSetConfig;
 use argent::signer::signer_signature::{SignerStorageTrait, SignerStorageValue, SignerType};
-use argent::utils::linked_set::LinkedSetConfig;
-use starknet::storage::StoragePath;
+use starknet::storage::{StoragePath, StoragePointerReadAccess};
 
-impl SignerStorageValueLinkedSetConfig of LinkedSetConfig<SignerStorageValue> {
+pub impl SignerStorageValueLinkedSetConfig of LinkedSetConfig<SignerStorageValue> {
     const END_MARKER: SignerStorageValue = SignerStorageValue {
         stored_value: 'end', signer_type: SignerType::Starknet,
     };

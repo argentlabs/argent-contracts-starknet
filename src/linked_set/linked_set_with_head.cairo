@@ -1,10 +1,10 @@
-use argent::utils::array_ext::ArrayExtTrait;
-use argent::utils::linked_set::{
+use argent::linked_set::linked_set::{
     LinkedSet, LinkedSetConfig, LinkedSetReadImpl, LinkedSetWriteImpl, MutableLinkedSetReadImpl,
     StorageBaseAsReadOnlyImpl,
 };
+use argent::utils::array_ext::ArrayExtTrait;
 use starknet::Store;
-use starknet::storage::{Mutable, StorageAsPath, StorageBase, StoragePath, StoragePathEntry, StoragePathTrait};
+use starknet::storage::{Mutable, StorageAsPath, StorageBase, StoragePath, StoragePointerWriteAccess};
 
 ///
 /// A LinkedSetWithHead is storage structure that allows to store multiple items making it efficient to check if an item
@@ -62,7 +62,7 @@ pub trait LinkedSetWithHeadWrite<TMemberState> {
 }
 
 
-impl LinkedSetWithHeadReadImpl<
+pub impl LinkedSetWithHeadReadImpl<
     T, +Drop<T>, +Copy<T>, +PartialEq<T>, +starknet::Store<T>, +LinkedSetConfig<T>,
 > of LinkedSetWithHeadRead<StorageBase<LinkedSetWithHead<T>>> {
     type Value = T;
@@ -148,7 +148,7 @@ impl LinkedSetWithHeadReadPrivateImpl<
 > of LinkedSetWithHeadReadPrivate<T> {
     #[inline(always)]
     fn head_entry(self: StorageBase<LinkedSetWithHead<T>>) -> StoragePath<T> {
-        StoragePathTrait::new(self.__hash_state__.state)
+        StorageBase { __base_address__: self.__base_address__ }.as_path()
     }
 
     #[inline(always)]
@@ -157,7 +157,7 @@ impl LinkedSetWithHeadReadPrivateImpl<
     }
 }
 
-impl LinkedSetWithHeadWriteImpl<
+pub impl LinkedSetWithHeadWriteImpl<
     T, +Drop<T>, +PartialEq<T>, +Copy<T>, +Store<T>, +LinkedSetConfig<T>, +Default<T>,
 > of LinkedSetWithHeadWrite<StorageBase<Mutable<LinkedSetWithHead<T>>>> {
     type Value = T;
@@ -200,7 +200,7 @@ impl LinkedSetWithHeadWritePrivateImpl<
 > of LinkedSetWithHeadWritePrivate<T> {
     #[inline(always)]
     fn head_entry(self: StorageBase<Mutable<LinkedSetWithHead<T>>>) -> StoragePath<Mutable<T>> {
-        StoragePathTrait::new(self.__hash_state__.state)
+        StorageBase { __base_address__: self.__base_address__ }.as_path()
     }
 
     #[inline(always)]
@@ -210,7 +210,7 @@ impl LinkedSetWithHeadWritePrivateImpl<
 }
 
 // Allow read operations in mutable access too
-impl MutableLinkedSetWithHeadReadImpl<
+pub impl MutableLinkedSetWithHeadReadImpl<
     T, +Drop<T>, +Copy<T>, +PartialEq<T>, +Store<T>, +LinkedSetConfig<T>,
 > of LinkedSetWithHeadRead<StorageBase<Mutable<LinkedSetWithHead<T>>>> {
     type Value = T;

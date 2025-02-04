@@ -1,23 +1,20 @@
 use argent::offchain_message::{
-    interface::{
-        IOffChainMessageHashRev0, IOffChainMessageHashRev1, IStructHashRev0, IStructHashRev1, StarkNetDomain,
-        StarknetDomain, StructHashStarkNetDomain,
-    },
-    precalculated_hashing::get_message_hash_rev_1_with_precalc,
+    IOffChainMessageHashRev0, IOffChainMessageHashRev1, IStructHashRev0, IStructHashRev1, StarkNetDomain,
+    StarknetDomain, StructHashStarkNetDomain, get_message_hash_rev_1_with_precalc,
 };
-use argent::outside_execution::interface::OutsideExecution;
-use hash::{HashStateExTrait, HashStateTrait};
-use pedersen::PedersenTrait;
-use poseidon::poseidon_hash_span;
+use argent::outside_execution::outside_execution::OutsideExecution;
+use core::hash::{HashStateExTrait, HashStateTrait};
+use core::pedersen::PedersenTrait;
+use core::poseidon::poseidon_hash_span;
 use starknet::{account::Call, get_contract_address, get_tx_info};
 
-const MAINNET_FIRST_HADES_PERMUTATION: (felt252, felt252, felt252) = (
+pub const MAINNET_FIRST_HADES_PERMUTATION: (felt252, felt252, felt252) = (
     2727651893633223888261849279042022325174182119102281398572272198960815727249,
     729016093840936084580216898033636860729342953928695140840860652272753125883,
     2792630223211151632174198306610141883878913626231408099903852589995722964080,
 );
 
-const SEPOLIA_FIRST_HADES_PERMUTATION: (felt252, felt252, felt252) = (
+pub const SEPOLIA_FIRST_HADES_PERMUTATION: (felt252, felt252, felt252) = (
     3580606761507954093996364807837346681513890124685758374532511352257317798951,
     3431227198346789440159663709265467470274870120429209591243179659934705045436,
     974062396530052497724701732977002885691473732259823426261944148730229556466,
@@ -89,7 +86,7 @@ impl StructHashCallRev0 of IStructHashRev0<Call> {
     }
 }
 
-impl OffChainMessageOutsideExecutionRev0 of IOffChainMessageHashRev0<OutsideExecution> {
+pub impl OffChainMessageOutsideExecutionRev0 of IOffChainMessageHashRev0<OutsideExecution> {
     fn get_message_hash_rev_0(self: @OutsideExecution) -> felt252 {
         let domain = StarkNetDomain {
             name: 'Account.execute_from_outside', version: 1, chain_id: get_tx_info().chain_id,
@@ -136,7 +133,7 @@ impl StructHashOutsideExecutionRev1 of IStructHashRev1<OutsideExecution> {
     }
 }
 
-impl OffChainMessageOutsideExecutionRev1 of IOffChainMessageHashRev1<OutsideExecution> {
+pub impl OffChainMessageOutsideExecutionRev1 of IOffChainMessageHashRev1<OutsideExecution> {
     fn get_message_hash_rev_1(self: @OutsideExecution) -> felt252 {
         // Version is a felt instead of a shortstring in SNIP-9 due to a mistake in the Braavos contracts and has been
         // copied for compatibility.

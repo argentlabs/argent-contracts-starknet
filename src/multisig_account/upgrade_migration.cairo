@@ -6,19 +6,18 @@ trait IUpgradeMigrationInternal<TContractState> {
 /// @notice This implementation relies on the `SignerManager` component to perform the migration.
 /// If that component's logic is changed, this could break the migration.
 #[starknet::component]
-mod upgrade_migration_component {
-    use argent::multisig_account::signer_manager::interface::IUpgradeMigration;
-    use argent::multisig_account::signer_manager::signer_manager::signer_manager_component;
+pub mod upgrade_migration_component {
+    use argent::multisig_account::signer_manager::{IUpgradeMigration, signer_manager_component};
     use super::IUpgradeMigrationInternal;
 
     #[storage]
-    struct Storage {}
+    pub struct Storage {}
 
     #[event]
     #[derive(Drop, starknet::Event)]
-    enum Event {}
+    pub enum Event {}
 
-    #[embeddable_as(UpgradableInternalImpl)]
+    #[embeddable_as(UpgradableMigrationInternalImpl)]
     impl UpgradableMigrationInternal<
         TContractState,
         +HasComponent<TContractState>,

@@ -1,5 +1,5 @@
 use argent::utils::bytes::{bytes_to_u32s, eight_words_to_bytes, u256_to_u8s, u32_to_bytes, u8s_to_u32s_pad_end};
-use super::test_webauthn_validation::ByteArrayExt;
+use crate::ByteArrayExt;
 
 #[test]
 fn convert_u8s_to_u32s_pad_end() {

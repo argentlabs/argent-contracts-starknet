@@ -1,11 +1,8 @@
-use argent::utils::bytes::{u8s_to_u32s_pad_end};
-use argent::utils::serialization::{serialize};
-use poseidon::hades_permutation;
-use starknet::{class_hash_const, library_call_syscall};
+use core::poseidon::hades_permutation;
 
 // Hashes two felts using poseidon
 #[inline(always)]
-fn poseidon_2(a: felt252, b: felt252) -> felt252 {
+pub fn poseidon_2(a: felt252, b: felt252) -> felt252 {
     let (hash, _, _) = hades_permutation(a, b, 2);
     hash
 }

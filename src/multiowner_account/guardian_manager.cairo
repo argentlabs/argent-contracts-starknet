@@ -48,9 +48,12 @@ trait IGuardianManagerInternal<TContractState> {
 
 /// Managing the account guardians
 #[starknet::component]
-mod guardian_manager_component {
-    use argent::account::interface::IEmitArgentAccountEvent;
+pub mod guardian_manager_component {
+    use argent::linked_set::linked_set_with_head::{
+        LinkedSetWithHead, LinkedSetWithHeadReadImpl, LinkedSetWithHeadWriteImpl, MutableLinkedSetWithHeadReadImpl,
+    };
     use argent::multiowner_account::argent_account::ArgentAccount::Event as ArgentAccountEvent;
+    use argent::multiowner_account::argent_account::IEmitArgentAccountEvent;
     use argent::multiowner_account::events::{GuardianAddedGuid, GuardianRemovedGuid, SignerLinked};
     use argent::multiowner_account::signer_storage_linked_set::SignerStorageValueLinkedSetConfig;
     use argent::signer::signer_signature::{
@@ -58,9 +61,6 @@ mod guardian_manager_component {
         SignerType,
     };
     use argent::utils::array_ext::SpanContains;
-    use argent::utils::linked_set_with_head::{
-        LinkedSetWithHead, LinkedSetWithHeadReadImpl, LinkedSetWithHeadWriteImpl, MutableLinkedSetWithHeadReadImpl,
-    };
     use argent::utils::transaction_version::is_estimate_transaction;
     use super::{IGuardianManager, IGuardianManagerInternal};
 
@@ -68,13 +68,13 @@ mod guardian_manager_component {
     const MAX_SIGNERS_COUNT: usize = 32;
 
     #[storage]
-    struct Storage {
+    pub struct Storage {
         guardians_storage: LinkedSetWithHead<SignerStorageValue>,
     }
 
     #[event]
     #[derive(Drop, starknet::Event)]
-    enum Event {
+    pub enum Event {
         GuardianAddedGuid: GuardianAddedGuid,
         GuardianRemovedGuid: GuardianRemovedGuid,
     }

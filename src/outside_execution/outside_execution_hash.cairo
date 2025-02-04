@@ -43,12 +43,10 @@ impl StructHashOutsideExecutionRev0 of IStructHashRev0<OutsideExecution> {
         let mut state = PedersenTrait::new(0);
         let mut calls_span = self.calls;
         let calls_len = self.calls.len().into();
-        let calls_hash = loop {
-            match calls_span.pop_front() {
-                Option::Some(call) => state = state.update((call.get_struct_hash_rev_0())),
-                Option::None => { break state.update(calls_len).finalize(); },
-            }
+        for call in calls_span {
+            state = state.update((call.get_struct_hash_rev_0()));
         };
+        let calls_hash = state.update(calls_len).finalize();
 
         PedersenTrait::new(0)
             .update_with(OUTSIDE_EXECUTION_TYPE_HASH_REV_0)
@@ -68,12 +66,10 @@ impl StructHashCallRev0 of IStructHashRev0<Call> {
         let mut state = PedersenTrait::new(0);
         let mut calldata_span = *self.calldata;
         let calldata_len = calldata_span.len().into();
-        let calldata_hash = loop {
-            match calldata_span.pop_front() {
-                Option::Some(item) => state = state.update(*item),
-                Option::None => { break state.update(calldata_len).finalize(); },
-            }
+        for item in calldata_span {
+            state = state.update(*item)
         };
+        let calldata_hash = state.update(calldata_len).finalize();
 
         PedersenTrait::new(0)
             .update_with(OUTSIDE_CALL_TYPE_HASH_REV_0)
@@ -113,10 +109,8 @@ impl StructHashCallRev1 of IStructHashRev1<Call> {
 impl StructHashOutsideExecutionRev1 of IStructHashRev1<OutsideExecution> {
     fn get_struct_hash_rev_1(self: @OutsideExecution) -> felt252 {
         let self = *self;
-        let mut calls_span = self.calls;
         let mut hashed_calls = array![];
-
-        while let Option::Some(call) = calls_span.pop_front() {
+        for call in self.calls {
             hashed_calls.append(call.get_struct_hash_rev_1());
         };
         poseidon_hash_span(

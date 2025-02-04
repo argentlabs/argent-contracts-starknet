@@ -182,10 +182,9 @@ pub mod signer_manager_component {
 
             let mut guids = signers_to_remove.span().to_guid_list();
             self.signer_list.remove_many(guids.span());
-            while let Option::Some(removed_owner_guid) = guids.pop_front() {
+            for removed_owner_guid in guids {
                 self.emit(OwnerRemovedGuid { removed_owner_guid })
             };
-
             self.threshold.write(new_threshold);
             if previous_threshold != new_threshold {
                 self.emit(ThresholdUpdated { new_threshold });
@@ -273,7 +272,7 @@ pub mod signer_manager_component {
             let mut guids = signers.span().to_guid_list();
             self.signer_list.insert_many(guids.span());
 
-            while let Option::Some(signer) = signers.pop_front() {
+            for signer in signers {
                 let signer_guid = guids.pop_front().unwrap();
                 self.emit(OwnerAddedGuid { new_owner_guid: signer_guid });
                 self.emit(SignerLinked { signer_guid, signer });

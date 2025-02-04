@@ -17,7 +17,7 @@ pub mod ArgentAccount {
         EscapeSecurityPeriodChanged, GuardianEscapedGuid, OwnerEscapedGuid, SignerLinked, TransactionExecuted,
     };
     use argent::multiowner_account::guardian_manager::{
-        IGuardianManager, guardian_manager_component, guardian_manager_component::GuardianManagerInternalImpl,
+        IGuardianManager, guardian_manager_component, guardian_manager_component::IGuardianManagerInternal,
     };
     use argent::multiowner_account::owner_alive::OwnerAlive;
     use argent::multiowner_account::owner_alive::OwnerAliveSignature;
@@ -26,8 +26,7 @@ pub mod ArgentAccount {
     };
     use argent::multiowner_account::recovery::{Escape, EscapeType};
     use argent::multiowner_account::upgrade_migration::{
-        IUpgradeMigrationCallback, IUpgradeMigrationInternal, upgrade_migration_component,
-        upgrade_migration_component::UpgradeMigrationInternalImpl,
+        IUpgradeMigrationCallback, upgrade_migration_component, upgrade_migration_component::IUpgradeMigrationInternal,
     };
 
     use argent::offchain_message::IOffChainMessageHashRev1;
@@ -41,8 +40,7 @@ pub mod ArgentAccount {
         StarknetSignature, StarknetSigner,
     };
     use argent::upgrade::{
-        IUpgradableCallback, IUpgradableCallbackOld, IUpgradeInternal, upgrade_component,
-        upgrade_component::UpgradableInternalImpl,
+        IUpgradableCallback, IUpgradableCallbackOld, upgrade_component, upgrade_component::IUpgradeInternal,
     };
     use argent::utils::array_ext::SpanContains;
     use argent::utils::{
@@ -638,7 +636,7 @@ pub mod ArgentAccount {
                         return; // valid
                     }
                     if selector == selector!("trigger_escape_guardian") {
-                        self.assert_guardian_set();
+                        self.guardian_manager.assert_guardian_set();
 
                         if !is_from_outside {
                             assert_valid_escape_parameters(self.last_owner_trigger_escape_attempt.read());
@@ -653,7 +651,7 @@ pub mod ArgentAccount {
                         return; // valid
                     }
                     if selector == selector!("escape_guardian") {
-                        self.assert_guardian_set();
+                        self.guardian_manager.assert_guardian_set();
 
                         if !is_from_outside {
                             assert_valid_escape_parameters(self.last_owner_escape_attempt.read());
@@ -671,7 +669,7 @@ pub mod ArgentAccount {
                     }
                     if selector == selector!("change_owners") {
                         let signer_signatures: Array<SignerSignature> = self.parse_signature_array(signatures);
-                        if !self.has_guardian() {
+                        if !self.guardian_manager.has_guardian() {
                             let (owner_guids_to_remove, _, owner_alive_signature) = full_deserialize::<
                                 (Array<felt252>, Array<Signer>, Option<OwnerAliveSignature>),
                             >(*call.calldata)
@@ -785,7 +783,7 @@ pub mod ArgentAccount {
         fn is_valid_span_signature(
             self: @ContractState, hash: felt252, signer_signatures: Span<SignerSignature>,
         ) -> bool {
-            if self.has_guardian() {
+            if self.guardian_manager.has_guardian() {
                 assert(signer_signatures.len() == 2, 'argent/invalid-signature-length');
                 self.is_valid_owner_signature(hash, *signer_signatures.at(0))
                     && self.is_valid_guardian_signature(hash, *signer_signatures.at(1))
@@ -796,7 +794,7 @@ pub mod ArgentAccount {
         }
 
         fn assert_valid_span_signature(self: @ContractState, hash: felt252, signer_signatures: Span<SignerSignature>) {
-            if self.has_guardian() {
+            if self.guardian_manager.has_guardian() {
                 assert(signer_signatures.len() == 2, 'argent/invalid-signature-length');
                 assert(self.is_valid_owner_signature(hash, *signer_signatures.at(0)), 'argent/invalid-owner-sig');
                 assert(self.is_valid_guardian_signature(hash, *signer_signatures.at(1)), 'argent/invalid-guardian-sig');
@@ -844,10 +842,6 @@ pub mod ArgentAccount {
             if current_escape_status != EscapeStatus::Expired {
                 self.emit(EscapeCanceled {});
             }
-        }
-
-        fn assert_guardian_set(self: @ContractState) {
-            assert(self.has_guardian(), 'argent/guardian-required');
         }
 
         fn reset_escape_timestamps(ref self: ContractState) {

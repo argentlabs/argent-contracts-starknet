@@ -1,9 +1,5 @@
 use argent::signer::signer_signature::SignerStorageValue;
 
-pub trait IUpgradeMigrationInternal<TContractState> {
-    fn migrate_from_before_0_4_0(ref self: TContractState);
-    fn migrate_from_0_4_0(ref self: TContractState);
-}
 
 pub trait IUpgradeMigrationCallback<TContractState> {
     fn finalize_migration(ref self: TContractState);
@@ -45,7 +41,7 @@ pub mod upgrade_migration_component {
         StorageMapReadAccess, StorageMapWriteAccess, StoragePointerReadAccess, StoragePointerWriteAccess,
     };
     use starknet::{get_block_timestamp, storage::Map, syscalls::replace_class_syscall};
-    use super::{IRecoveryFromLegacyUpgrade, IUpgradeMigrationCallback, IUpgradeMigrationInternal, LegacyEscape};
+    use super::{IRecoveryFromLegacyUpgrade, IUpgradeMigrationCallback, LegacyEscape};
 
     const LEGACY_ESCAPE_SECURITY_PERIOD: u64 = 7 * 24 * 60 * 60; // 7 days
 
@@ -100,6 +96,7 @@ pub mod upgrade_migration_component {
         }
     }
 
+    #[generate_trait]
     pub impl UpgradeMigrationInternalImpl<
         TContractState,
         +HasComponent<TContractState>,
@@ -107,7 +104,7 @@ pub mod upgrade_migration_component {
         +IUpgradeMigrationCallback<TContractState>,
         +IArgentMultiOwnerAccount<TContractState>,
         +IEmitArgentAccountEvent<TContractState>,
-    > of IUpgradeMigrationInternal<ComponentState<TContractState>> {
+    > of IUpgradeMigrationInternal<TContractState> {
         fn migrate_from_before_0_4_0(ref self: ComponentState<TContractState>) {
             let legacy_escape = self._escape.read();
             if legacy_escape.ready_at != 0 && get_block_timestamp() < legacy_escape.ready_at

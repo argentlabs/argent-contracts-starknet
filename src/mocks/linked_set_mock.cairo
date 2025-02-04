@@ -5,9 +5,9 @@
 
 #[starknet::component]
 pub mod linked_set_mock {
+    use argent::linked_set::linked_set::LinkedSet;
+    use argent::linked_set::linked_set_with_head::LinkedSetWithHead;
     use argent::signer::signer_signature::SignerStorageValue;
-    use argent::utils::linked_set::LinkedSet;
-    use argent::utils::linked_set_with_head::LinkedSetWithHead;
 
     #[storage]
     pub struct Storage {

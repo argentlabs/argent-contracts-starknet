@@ -1,8 +1,8 @@
-use argent::account::interface::Version;
+use argent::account::Version;
+use argent::multiowner_account::owner_alive::OwnerAliveSignature;
 use argent::multiowner_account::recovery::Escape;
 use argent::recovery::{EscapeStatus};
-use argent::signer::signer_signature::{Signer, SignerSignature};
-
+use argent::signer::signer_signature::Signer;
 #[starknet::interface]
 pub trait IArgentMultiOwnerAccount<TContractState> {
     fn __validate_declare__(self: @TContractState, class_hash: felt252) -> felt252;
@@ -98,12 +98,3 @@ pub trait IArgentMultiOwnerAccount<TContractState> {
     fn get_escape_security_period(self: @TContractState) -> u64;
 }
 
-
-///  Required to prevent changing to an owner which is not in control of the user
-#[derive(Drop, Copy, Serde)]
-pub struct OwnerAliveSignature {
-    /// It is the signature of the SNIP-12 V1 compliant object OwnerAlive
-    pub owner_signature: SignerSignature,
-    /// Signature expiration in seconds. Cannot be more than 24 hours in the future
-    pub signature_expiration: u64,
-}

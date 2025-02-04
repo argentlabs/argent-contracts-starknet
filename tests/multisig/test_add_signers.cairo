@@ -1,6 +1,5 @@
 use argent::multiowner_account::events::SignerLinked;
-use argent::multisig_account::signer_manager::interface::{OwnerAddedGuid, ThresholdUpdated};
-use argent::multisig_account::signer_manager::signer_manager::signer_manager_component;
+use argent::multisig_account::signer_manager::{OwnerAddedGuid, ThresholdUpdated, signer_manager_component};
 use argent::signer::signer_signature::{SignerTrait};
 use crate::{ITestArgentMultisigDispatcherTrait, SIGNER_1, SIGNER_2, initialize_multisig_with_one_signer};
 use snforge_std::{EventSpyAssertionsTrait, EventSpyTrait, spy_events};

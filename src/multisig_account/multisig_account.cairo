@@ -1,25 +1,20 @@
 #[starknet::contract(account)]
 mod ArgentMultisigAccount {
-    use argent::account::interface::{
-        IAccount, IArgentAccount, IArgentAccountDispatcher, IArgentAccountDispatcherTrait, Version,
-    };
-    use argent::introspection::src5::src5_component;
-    use argent::multisig_account::external_recovery::external_recovery::{
-        IExternalRecoveryCallback, external_recovery_component,
-    };
-    use argent::multisig_account::signer_manager::signer_manager::{
+    use argent::account::{IAccount, IArgentAccount, IArgentAccountDispatcher, IArgentAccountDispatcherTrait, Version};
+    use argent::introspection::src5_component;
+    use argent::multisig_account::external_recovery::{IExternalRecoveryCallback, external_recovery_component};
+    use argent::multisig_account::signer_manager::{
         signer_manager_component, signer_manager_component::SignerManagerInternalImpl,
     };
     use argent::multisig_account::upgrade_migration::{
         upgrade_migration_component, upgrade_migration_component::UpgradableMigrationInternalImpl,
     };
     use argent::outside_execution::{
-        interface::IOutsideExecutionCallback, outside_execution::outside_execution_component,
+        outside_execution::IOutsideExecutionCallback, outside_execution::outside_execution_component,
     };
     use argent::signer::signer_signature::{Signer, SignerSignature};
     use argent::upgrade::{
-        interface::{IUpgradableCallback, IUpgradableCallbackOld}, upgrade::upgrade_component,
-        upgrade::upgrade_component::UpgradableInternalImpl,
+        IUpgradableCallback, IUpgradableCallbackOld, upgrade_component, upgrade_component::UpgradableInternalImpl,
     };
     use argent::utils::{
         asserts::{assert_no_self_call, assert_only_protocol, assert_only_self},

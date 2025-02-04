@@ -1,4 +1,4 @@
-use argent::multiowner_account::account_interface::OwnerAliveSignature;
+use argent::multiowner_account::owner_alive::OwnerAliveSignature;
 use argent::multiowner_account::{
     argent_account::ArgentAccount,
     events::{GuardianAddedGuid, GuardianRemovedGuid, OwnerAddedGuid, OwnerRemovedGuid, SignerLinked},

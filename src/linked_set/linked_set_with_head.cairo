@@ -1,8 +1,8 @@
-use argent::utils::array_ext::ArrayExtTrait;
-use argent::utils::linked_set::{
+use argent::linked_set::linked_set::{
     LinkedSet, LinkedSetConfig, LinkedSetReadImpl, LinkedSetWriteImpl, MutableLinkedSetReadImpl,
     StorageBaseAsReadOnlyImpl,
 };
+use argent::utils::array_ext::ArrayExtTrait;
 use starknet::Store;
 use starknet::storage::{Mutable, StorageAsPath, StorageBase, StoragePath, StoragePointerWriteAccess};
 

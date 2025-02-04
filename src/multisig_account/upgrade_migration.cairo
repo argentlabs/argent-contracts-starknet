@@ -7,8 +7,7 @@ trait IUpgradeMigrationInternal<TContractState> {
 /// If that component's logic is changed, this could break the migration.
 #[starknet::component]
 pub mod upgrade_migration_component {
-    use argent::multisig_account::signer_manager::interface::IUpgradeMigration;
-    use argent::multisig_account::signer_manager::signer_manager::signer_manager_component;
+    use argent::multisig_account::signer_manager::{IUpgradeMigration, signer_manager_component};
     use super::IUpgradeMigrationInternal;
 
     #[storage]

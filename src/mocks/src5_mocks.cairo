@@ -3,7 +3,7 @@
 /// Please refrain from relying on the functionality of this contract for any production code. 🚨
 #[starknet::contract]
 pub mod SRC5Mock {
-    use argent::introspection::src5::src5_component;
+    use argent::introspection::src5_component;
 
     component!(path: src5_component, storage: src5, event: SRC5Events);
     #[abi(embed_v0)]

@@ -1,6 +1,6 @@
-use integer::{u128_safe_divmod, u32_safe_divmod};
+use core::integer::{u128_safe_divmod, u32_safe_divmod};
 
-fn u256_to_u8s(word: u256) -> Array<u8> {
+pub fn u256_to_u8s(word: u256) -> Array<u8> {
     let (rest, byte_32) = u128_safe_divmod(word.low, 0x100);
     let (rest, byte_31) = u128_safe_divmod(rest, 0x100);
     let (rest, byte_30) = u128_safe_divmod(rest, 0x100);
@@ -70,7 +70,7 @@ fn u256_to_u8s(word: u256) -> Array<u8> {
 /// @notice Converts of 8 u32s into a u256
 /// @param words 8 words sorted from most significant to least significant
 /// @return u256 A 256-bit unsigned integer
-fn eight_words_to_u256(words: [u32; 8]) -> u256 {
+pub fn eight_words_to_u256(words: [u32; 8]) -> u256 {
     let [word_0, word_1, word_2, word_3, word_4, word_5, word_6, word_7] = words;
     let high: felt252 = word_3.into()
         + word_2.into() * 0x1_0000_0000
@@ -89,7 +89,7 @@ fn eight_words_to_u256(words: [u32; 8]) -> u256 {
 /// @notice Converts a u32 into 4 u8s
 /// @param word The u32 to convert.
 /// @return The individual `u8` bytes ordered from most significant to least.
-fn u32_to_bytes(word: u32) -> [u8; 4] {
+pub fn u32_to_bytes(word: u32) -> [u8; 4] {
     let (rest, byte_4) = u32_safe_divmod(word, 0x100);
     let (rest, byte_3) = u32_safe_divmod(rest, 0x100);
     let (byte_1, byte_2) = u32_safe_divmod(rest, 0x100);
@@ -99,7 +99,7 @@ fn u32_to_bytes(word: u32) -> [u8; 4] {
 /// @notice Converts 8 32-bit words into 32 bytes.
 /// @param words The 8 32-bit words to convert, ordered from most significant to least.
 /// @return The individual `u8` bytes ordered from most significant to least.
-fn eight_words_to_bytes(words: [u32; 8]) -> [u8; 32] {
+pub fn eight_words_to_bytes(words: [u32; 8]) -> [u8; 32] {
     let [word_0, word_1, word_2, word_3, word_4, word_5, word_6, word_7] = words;
     let (rest, byte_0_4) = u32_safe_divmod(word_0, 0x100);
     let (rest, byte_0_3) = u32_safe_divmod(rest, 0x100);
@@ -151,7 +151,7 @@ fn eight_words_to_bytes(words: [u32; 8]) -> [u8; 32] {
 ///     to least significant, into a `u32`. If the length of `arr` is not a multiple of 4, the final
 ///     `u32` and remainder count represent any leftover bytes.
 // Inspired from https://github.com/starkware-libs/cairo/blob/main/corelib/src/sha256.cairo
-fn bytes_to_u32s(mut arr: Span<u8>) -> (Array<u32>, u32, u32) {
+pub fn bytes_to_u32s(mut arr: Span<u8>) -> (Array<u32>, u32, u32) {
     let mut word_arr: Array<u32> = array![];
     let len = arr.len();
     let rem = len % 4;
@@ -175,7 +175,7 @@ fn bytes_to_u32s(mut arr: Span<u8>) -> (Array<u32>, u32, u32) {
 }
 
 // Takes an array of u8s and returns an array of u32s, padding the end with 0s if necessary
-fn u8s_to_u32s_pad_end(mut bytes: Span<u8>) -> Array<u32> {
+pub fn u8s_to_u32s_pad_end(mut bytes: Span<u8>) -> Array<u32> {
     let mut output = array![];
     while let Option::Some(byte1) = bytes.pop_front() {
         let byte1 = *byte1;

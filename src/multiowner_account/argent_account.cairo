@@ -1,5 +1,5 @@
 #[starknet::contract(account)]
-mod ArgentAccount {
+pub mod ArgentAccount {
     use argent::account::interface::{IAccount, IDeprecatedArgentAccount, IEmitArgentAccountEvent, Version};
     use argent::introspection::src5::src5_component;
     use argent::multiowner_account::account_interface::{
@@ -46,10 +46,11 @@ mod ArgentAccount {
             assert_correct_deploy_account_version, assert_correct_invoke_version,
         },
     };
+    use core::panic_with_felt252;
     use openzeppelin_security::reentrancyguard::{ReentrancyGuardComponent, ReentrancyGuardComponent::InternalImpl};
     use starknet::{
-        ClassHash, ContractAddress, SyscallResultTrait, VALIDATED, account::Call, get_block_timestamp,
-        get_contract_address, get_execution_info, get_tx_info, storage::Map,
+        ClassHash, ContractAddress, VALIDATED, account::Call, get_block_timestamp, get_contract_address,
+        get_execution_info, get_tx_info, storage::{StoragePointerReadAccess, StoragePointerWriteAccess},
     };
 
     const NAME: felt252 = 'ArgentAccount';
@@ -141,7 +142,7 @@ mod ArgentAccount {
 
     #[event]
     #[derive(Drop, starknet::Event)]
-    enum Event {
+    pub enum Event {
         #[flat]
         OwnerManagerEvents: owner_manager_component::Event,
         #[flat]

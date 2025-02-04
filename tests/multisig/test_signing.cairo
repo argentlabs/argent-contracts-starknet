@@ -1,16 +1,15 @@
-use argent::utils::serialization::serialize;
-use starknet::VALIDATED;
-use super::super::{
-    ITestArgentMultisigDispatcherTrait, MULTISIG_OWNER, SIGNER_1, SIGNER_2, initialize_multisig_with,
-    initialize_multisig_with_one_signer, to_starknet_signatures, to_starknet_signer_signatures, tx_hash,
+use crate::{
+    ITestArgentMultisigDispatcherTrait, MULTISIG_OWNER, SIGNER_1, SIGNER_2, TX_HASH, initialize_multisig_with,
+    initialize_multisig_with_one_signer, to_starknet_signatures, to_starknet_signer_signatures,
 };
+use starknet::VALIDATED;
 
 #[test]
 fn test_signature() {
     let multisig = initialize_multisig_with_one_signer();
 
     let signature = to_starknet_signatures(array![MULTISIG_OWNER(1)]);
-    assert_eq!(multisig.is_valid_signature(tx_hash, signature), VALIDATED);
+    assert_eq!(multisig.is_valid_signature(TX_HASH, signature), VALIDATED);
 }
 
 #[test]
@@ -20,7 +19,7 @@ fn test_double_signature() {
     let multisig = initialize_multisig_with(threshold, array![SIGNER_1(), SIGNER_2()].span());
 
     let signature = to_starknet_signatures(array![MULTISIG_OWNER(2), MULTISIG_OWNER(1)]);
-    assert_eq!(multisig.is_valid_signature(tx_hash, signature), VALIDATED);
+    assert_eq!(multisig.is_valid_signature(TX_HASH, signature), VALIDATED);
 }
 
 #[test]
@@ -30,7 +29,7 @@ fn test_double_signature_order() {
     let multisig = initialize_multisig_with(threshold, array![SIGNER_1(), SIGNER_2()].span());
 
     let signature = to_starknet_signatures(array![MULTISIG_OWNER(1), MULTISIG_OWNER(2)]);
-    multisig.is_valid_signature(tx_hash, signature);
+    multisig.is_valid_signature(TX_HASH, signature);
 }
 
 #[test]
@@ -40,7 +39,7 @@ fn test_same_owner_twice() {
     let multisig = initialize_multisig_with(threshold, array![SIGNER_1(), SIGNER_2()].span());
 
     let signature = to_starknet_signatures(array![MULTISIG_OWNER(1), MULTISIG_OWNER(1)]);
-    multisig.is_valid_signature(tx_hash, signature);
+    multisig.is_valid_signature(TX_HASH, signature);
 }
 
 #[test]
@@ -50,7 +49,7 @@ fn test_missing_owner_signature() {
     let multisig = initialize_multisig_with(threshold, array![SIGNER_1(), SIGNER_2()].span());
 
     let signature = to_starknet_signatures(array![MULTISIG_OWNER(1)]);
-    multisig.is_valid_signature(tx_hash, signature);
+    multisig.is_valid_signature(TX_HASH, signature);
 }
 
 #[test]
@@ -60,7 +59,7 @@ fn test_short_signature() {
 
     // Missing S
     let signature = array![1, MULTISIG_OWNER(1).pubkey, MULTISIG_OWNER(1).sig.r];
-    multisig.is_valid_signature(tx_hash, signature);
+    multisig.is_valid_signature(TX_HASH, signature);
 }
 
 #[test]
@@ -69,7 +68,7 @@ fn test_not_a_signer() {
     let multisig = initialize_multisig_with_one_signer();
 
     let signature = to_starknet_signatures(array![MULTISIG_OWNER(2)]);
-    multisig.is_valid_signature(tx_hash, signature);
+    multisig.is_valid_signature(TX_HASH, signature);
 }
 
 #[test]
@@ -87,7 +86,7 @@ fn test_long_signature() {
             MULTISIG_OWNER(2).sig.s,
         ],
     );
-    multisig.is_valid_signature(tx_hash, signature);
+    multisig.is_valid_signature(TX_HASH, signature);
 }
 
 #[test]
@@ -95,6 +94,6 @@ fn test_long_signature() {
 fn test_empty_array_signature() {
     let multisig = initialize_multisig_with_one_signer();
 
-    multisig.is_valid_signature(tx_hash, array![]);
+    multisig.is_valid_signature(TX_HASH, array![]);
 }
 

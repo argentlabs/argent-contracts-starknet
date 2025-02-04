@@ -1,7 +1,5 @@
-use argent::signer::signer_signature::{
-    SECP_256_R1_HALF, Secp256Signature, Secp256r1Signer, SignerSignature, SignerSignatureTrait,
-};
-use starknet::secp256_trait::{Secp256PointTrait, Secp256Trait};
+use argent::signer::signer_signature::{SECP_256_R1_HALF, Secp256r1Signer, SignerSignature, SignerSignatureTrait};
+use starknet::secp256_trait::{Secp256Trait, Signature as Secp256Signature};
 use starknet::secp256r1::Secp256r1Point;
 
 const pubkey: u256 = 0xbde58cc7c321604ffec0de496616a6eb88481f6438900dec19167a4322d93ec0;

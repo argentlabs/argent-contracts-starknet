@@ -2,7 +2,7 @@
 /// environment. It is solely for testing, educational, or demonstration purposes.
 /// Please refrain from relying on the functionality of this contract for any production code. 🚨
 #[starknet::contract]
-mod SRC5Mock {
+pub mod SRC5Mock {
     use argent::introspection::src5::src5_component;
 
     component!(path: src5_component, storage: src5, event: SRC5Events);

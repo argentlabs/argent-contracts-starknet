@@ -2,7 +2,7 @@
 name = "argent"
 version = "0.1.0"
 cairo-version = "2.9.2"
-edition="2023_01"
+edition="2024_07"
 
 [[target.starknet-contract]]
 sierra = true
@@ -15,7 +15,6 @@ build-external-contracts = ["openzeppelin_presets::account::AccountUpgradeable"]
 starknet = "2.9.2"
 assert_macros = "2.9.2"
 snforge_std = "0.36.0"
-alexandria_math = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "162bed1" }
 alexandria_encoding = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "162bed1" }
 alexandria_merkle_tree = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev="162bed1" }
 openzeppelin_security = "0.20.0"

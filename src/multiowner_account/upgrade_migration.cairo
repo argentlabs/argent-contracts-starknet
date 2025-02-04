@@ -1,11 +1,11 @@
 use argent::signer::signer_signature::SignerStorageValue;
 
-trait IUpgradeMigrationInternal<TContractState> {
+pub trait IUpgradeMigrationInternal<TContractState> {
     fn migrate_from_before_0_4_0(ref self: TContractState);
     fn migrate_from_0_4_0(ref self: TContractState);
 }
 
-trait IUpgradeMigrationCallback<TContractState> {
+pub trait IUpgradeMigrationCallback<TContractState> {
     fn finalize_migration(ref self: TContractState);
     fn migrate_owner(ref self: TContractState, signer_storage_value: SignerStorageValue);
     fn migrate_guardians(ref self: TContractState, guardians_storage_value: Array<SignerStorageValue>);
@@ -31,28 +31,26 @@ struct LegacyEscape {
 }
 
 #[starknet::component]
-mod upgrade_migration_component {
+pub mod upgrade_migration_component {
     use argent::account::interface::IEmitArgentAccountEvent;
     use argent::multiowner_account::account_interface::IArgentMultiOwnerAccount;
     use argent::multiowner_account::argent_account::ArgentAccount::Event as ArgentAccountEvent;
     use argent::multiowner_account::events::{EscapeCanceled, SignerLinked};
     use argent::multiowner_account::owner_manager::{IOwnerManager, owner_manager_component};
-    use argent::multiowner_account::recovery::Escape;
     use argent::signer::signer_signature::{
         Signer, SignerStorageValue, SignerTrait, SignerType, starknet_signer_from_pubkey,
     };
-    use argent::upgrade::interface::{IUpgradableCallback, IUpgradableCallbackDispatcherTrait, IUpgradeable};
-    use starknet::{
-        SyscallResultTrait, get_block_timestamp, storage::Map,
-        storage_access::{storage_address_from_base_and_offset, storage_base_address_from_felt252, storage_read_syscall},
-        syscalls::replace_class_syscall,
+    use core::num::traits::Zero;
+    use starknet::storage::{
+        StorageMapReadAccess, StorageMapWriteAccess, StoragePointerReadAccess, StoragePointerWriteAccess,
     };
+    use starknet::{get_block_timestamp, storage::Map, syscalls::replace_class_syscall};
     use super::{IRecoveryFromLegacyUpgrade, IUpgradeMigrationCallback, IUpgradeMigrationInternal, LegacyEscape};
 
     const LEGACY_ESCAPE_SECURITY_PERIOD: u64 = 7 * 24 * 60 * 60; // 7 days
 
     #[storage]
-    struct Storage {
+    pub struct Storage {
         // proxy implementation before 0.3.0
         _implementation: felt252,
         // single owner starkey pubkey before 0.5.0
@@ -73,7 +71,7 @@ mod upgrade_migration_component {
 
     #[event]
     #[derive(Drop, starknet::Event)]
-    enum Event {}
+    pub enum Event {}
 
 
     #[embeddable_as(RecoveryFromLegacyUpgradeImpl)]
@@ -102,7 +100,7 @@ mod upgrade_migration_component {
         }
     }
 
-    impl UpgradeMigrationInternalImpl<
+    pub impl UpgradeMigrationInternalImpl<
         TContractState,
         +HasComponent<TContractState>,
         +Drop<TContractState>,
@@ -146,9 +144,9 @@ mod upgrade_migration_component {
 
             let implementation = self._implementation.read();
 
-            if implementation != Zeroable::zero() {
+            if implementation != Zero::zero() {
                 replace_class_syscall(implementation.try_into().unwrap()).expect('argent/invalid-after-upgrade');
-                self._implementation.write(Zeroable::zero());
+                self._implementation.write(Zero::zero());
             }
 
             self.migrate_from_0_4_0();

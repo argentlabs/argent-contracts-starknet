@@ -7,7 +7,7 @@ use argent::session::session_hash::{
     MAINNET_FIRST_HADES_PERMUTATION as MAINNET_FIRST_HADES_PERMUTATION_SESSION,
     SEPOLIA_FIRST_HADES_PERMUTATION as SEPOLIA_FIRST_HADES_PERMUTATION_SESSION,
 };
-use poseidon::hades_permutation;
+use core::poseidon::hades_permutation;
 use snforge_std::start_cheat_chain_id_global;
 use starknet::get_tx_info;
 

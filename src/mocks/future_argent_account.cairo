@@ -32,8 +32,11 @@ mod MockFutureArgentAccount {
     use argent::utils::{
         asserts::{assert_no_self_call, assert_only_self}, calls::execute_multicall, serialization::full_deserialize,
     };
-    use starknet::{ClassHash, SyscallResultTrait, VALIDATED, account::Call, get_contract_address, get_tx_info};
-    use super::{IFutureArgentUserAccount, IFutureArgentUserAccountDispatcher, IFutureArgentUserAccountDispatcherTrait};
+    use starknet::{
+        ClassHash, VALIDATED, account::Call, get_contract_address, get_tx_info,
+        storage::{StoragePointerReadAccess, StoragePointerWriteAccess},
+    };
+    use super::{IFutureArgentUserAccountDispatcher, IFutureArgentUserAccountDispatcherTrait};
 
     const NAME: felt252 = 'ArgentAccount';
     const VERSION_MAJOR: u8 = 0;
@@ -104,7 +107,7 @@ mod MockFutureArgentAccount {
     impl UpgradeableCallbackOldImpl of IUpgradableCallbackOld<ContractState> {
         // Called when coming from account < 0.4.0
         fn execute_after_upgrade(ref self: ContractState, data: Array<felt252>) -> Array<felt252> {
-            panic_with_felt252('argent/no-direct-upgrade');
+            core::panic_with_felt252('argent/no-direct-upgrade');
             array![]
         }
     }

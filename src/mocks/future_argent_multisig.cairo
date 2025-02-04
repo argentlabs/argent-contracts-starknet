@@ -10,12 +10,14 @@ mod MockFutureArgentMultisig {
     use argent::multisig_account::signer_manager::signer_manager::{
         signer_manager_component, signer_manager_component::SignerManagerInternalImpl,
     };
-    use argent::signer::signer_signature::{Signer, SignerSignature, SignerTrait};
+    use argent::signer::signer_signature::{Signer, SignerSignature};
     use argent::upgrade::{
         interface::{IUpgradableCallback, IUpgradableCallbackOld},
         upgrade::{upgrade_component, upgrade_component::UpgradableInternalImpl},
     };
     use argent::utils::{asserts::assert_only_self, calls::execute_multicall, serialization::full_deserialize};
+    use core::panic_with_felt252;
+    use starknet::storage::StoragePointerReadAccess;
     use starknet::{ClassHash, VALIDATED, account::Call, get_contract_address, get_tx_info};
 
     const NAME: felt252 = 'ArgentMultisig';

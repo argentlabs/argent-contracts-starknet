@@ -37,7 +37,7 @@ pub mod ArgentAccount {
     use argent::recovery::EscapeStatus;
     use argent::session::session::{ISessionCallback, session_component, session_component::InternalTrait};
     use argent::signer::signer_signature::{
-        Signer, SignerSignature, SignerSignatureTrait, SignerStorageTrait, SignerStorageValue, SignerTrait, 
+        Signer, SignerSignature, SignerSignatureTrait, SignerStorageTrait, SignerStorageValue, SignerTrait,
         StarknetSignature, StarknetSigner,
     };
     use argent::upgrade::{

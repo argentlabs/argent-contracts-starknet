@@ -1,9 +1,9 @@
 use argent::offchain_message::interface::IStructHashRev1;
-use hash::HashStateTrait;
-use poseidon::{HashState, hades_permutation};
+use core::hash::HashStateTrait;
+use core::poseidon::{HashState, hades_permutation};
 use starknet::get_contract_address;
 
-fn get_message_hash_rev_1_with_precalc<T, +Drop<T>, +IStructHashRev1<T>>(
+pub fn get_message_hash_rev_1_with_precalc<T, +Drop<T>, +IStructHashRev1<T>>(
     hades_permutation_state: (felt252, felt252, felt252), rev1_struct: T,
 ) -> felt252 {
     // mainnet_domain_hash = domain.get_struct_hash_rev_1()

@@ -1,11 +1,11 @@
 #[starknet::component]
-mod session_component {
+pub mod session_component {
     use alexandria_merkle_tree::merkle_tree::{
         Hasher, MerkleTree, MerkleTreeImpl, MerkleTreeTrait, poseidon::PoseidonHasherImpl,
     };
     use argent::account::interface::IAccount;
     use argent::session::{
-        interface::{ISessionCallback, ISessionable, Session, SessionToken},
+        interface::{ISessionCallback, ISessionable, SessionToken},
         session_hash::{MerkleLeafHash, OffChainMessageHashSessionRev1},
     };
     use argent::signer::signer_signature::{Signer, SignerSignatureTrait, SignerTrait};
@@ -13,12 +13,14 @@ mod session_component {
         asserts::{assert_no_self_call, assert_only_self}, serialization::full_deserialize,
         transaction_version::is_estimate_transaction,
     };
-    use hash::{HashStateExTrait, HashStateTrait};
-    use poseidon::PoseidonTrait;
+    use core::hash::{HashStateExTrait, HashStateTrait};
+
+    use core::poseidon::PoseidonTrait;
+    use starknet::storage::{StorageMapReadAccess, StorageMapWriteAccess};
     use starknet::{account::Call, get_block_timestamp, get_contract_address, storage::Map};
 
     #[storage]
-    struct Storage {
+    pub struct Storage {
         /// A map of session hashes to a boolean indicating if the session has been revoked.
         revoked_session: Map<felt252, bool>,
         /// A map of (owner_guid, guardian_guid, session_hash) to a len of authorization signature
@@ -29,7 +31,7 @@ mod session_component {
 
     #[event]
     #[derive(Drop, starknet::Event)]
-    enum Event {
+    pub enum Event {
         SessionRevoked: SessionRevoked,
     }
 
@@ -69,7 +71,7 @@ mod session_component {
     }
 
     #[generate_trait]
-    impl Internal<
+    pub impl Internal<
         TContractState, +HasComponent<TContractState>, +IAccount<TContractState>, +ISessionCallback<TContractState>,
     > of InternalTrait<TContractState> {
         #[inline(always)]

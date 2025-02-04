@@ -1,5 +1,5 @@
 #[starknet::component]
-mod src5_component {
+pub mod src5_component {
     use argent::account::interface::{
         SRC5_ACCOUNT_INTERFACE_ID, SRC5_ACCOUNT_INTERFACE_ID_OLD_1, SRC5_ACCOUNT_INTERFACE_ID_OLD_2,
     };
@@ -9,7 +9,7 @@ mod src5_component {
     };
 
     #[storage]
-    struct Storage {}
+    pub struct Storage {}
 
     #[embeddable_as(SRC5Impl)]
     impl SRC5<TContractState, +HasComponent<TContractState>> of ISRC5<ComponentState<TContractState>> {

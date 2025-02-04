@@ -1,7 +1,5 @@
-use argent::signer::signer_signature::{
-    SECP_256_K1_HALF, Secp256Signature, Secp256k1Signer, SignerSignature, SignerSignatureTrait,
-};
-use starknet::secp256_trait::{Secp256PointTrait, Secp256Trait};
+use argent::signer::signer_signature::{SECP_256_K1_HALF, Secp256k1Signer, SignerSignature, SignerSignatureTrait};
+use starknet::secp256_trait::{Secp256Trait, Signature as Secp256Signature};
 use starknet::secp256k1::Secp256k1Point;
 
 const pubkey_hash: felt252 = 0x8eD43fe3d24dA31f142688E6469D8E76B0a5a2f3;

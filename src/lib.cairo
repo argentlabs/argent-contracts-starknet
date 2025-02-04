@@ -1,90 +1,89 @@
-mod recovery;
+pub mod recovery;
+
 mod upgrade {
-    mod interface;
-    mod upgrade;
+    pub mod interface;
+    pub mod upgrade;
 }
 
-mod account {
-    mod interface;
+pub mod account {
+    pub mod interface;
 }
 
-mod introspection {
-    mod interface;
-    mod src5;
+pub mod introspection {
+    pub mod interface;
+    pub mod src5;
 }
 
-
-mod signer {
-    mod eip191;
-    mod signer_signature;
-    mod webauthn;
+pub mod signer {
+    pub mod eip191;
+    pub mod signer_signature;
+    pub mod webauthn;
 }
 
-mod outside_execution {
-    mod interface;
-    mod outside_execution;
-    mod outside_execution_hash;
+pub mod outside_execution {
+    pub mod interface;
+    pub mod outside_execution;
+    pub mod outside_execution_hash;
 }
 
-
-mod multisig_account {
+pub mod multisig_account {
     mod multisig_account;
     mod upgrade_migration;
-    mod external_recovery {
-        mod external_recovery;
-        mod interface;
+    pub mod external_recovery {
+        pub mod external_recovery;
+        pub mod interface;
         mod packing;
     }
-    mod signer_manager {
-        mod interface;
-        mod signer_manager;
+    pub mod signer_manager {
+        pub mod interface;
+        pub mod signer_manager;
     }
 }
 
-mod multiowner_account {
-    mod account_interface;
-    mod argent_account;
-    mod events;
-    mod guardian_manager;
-    mod owner_alive;
-    mod owner_manager;
-    mod recovery;
-    mod signer_storage_linked_set;
-    mod upgrade_migration;
+pub mod multiowner_account {
+    pub mod account_interface;
+    pub mod argent_account;
+    pub mod events;
+    pub mod guardian_manager;
+    pub mod owner_alive;
+    pub mod owner_manager;
+    pub mod recovery;
+    pub mod signer_storage_linked_set;
+    pub mod upgrade_migration;
 }
 
-mod utils {
-    mod array_ext;
-    mod asserts;
-    mod bytes;
-    mod calls;
-    mod hashing;
-    mod linked_set;
-    mod linked_set_with_head;
-    mod serialization;
-    mod transaction_version;
+pub mod utils {
+    pub mod array_ext;
+    pub mod asserts;
+    pub mod bytes;
+    pub mod calls;
+    pub mod hashing;
+    pub mod linked_set;
+    pub mod linked_set_with_head;
+    pub mod serialization;
+    pub mod transaction_version;
 }
 
-mod mocks {
+pub mod mocks {
     mod future_argent_account;
     mod future_argent_multisig;
-    mod linked_set_mock;
+    pub mod linked_set_mock;
     mod mock_dapp;
     mod multiowner_mock;
-    mod multisig_mocks;
+    pub mod multisig_mocks;
     mod recovery_mocks;
     mod signature_verifier;
-    mod src5_mocks;
+    pub mod src5_mocks;
 }
 
-mod session {
-    mod interface;
-    mod session;
-    mod session_hash;
+pub mod session {
+    pub mod interface;
+    pub mod session;
+    pub mod session_hash;
 }
 
-mod offchain_message {
-    mod interface;
-    mod precalculated_hashing;
+pub mod offchain_message {
+    pub mod interface;
+    pub mod precalculated_hashing;
 }
 

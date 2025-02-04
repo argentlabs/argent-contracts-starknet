@@ -6,16 +6,16 @@ use starknet::ContractAddress;
 /// @param ready_at when the escape can be completed
 /// @param call_hash the hash of the EscapeCall to be performed
 #[derive(Drop, Serde, Copy, Default, starknet::Store)]
-struct Escape {
-    ready_at: u64,
-    call_hash: felt252,
+pub struct Escape {
+    pub ready_at: u64,
+    pub call_hash: felt252,
 }
 
 /// @notice The call to be performed once the escape is Ready
 #[derive(Drop, Serde)]
-struct EscapeCall {
-    selector: felt252,
-    calldata: Array<felt252>,
+pub struct EscapeCall {
+    pub selector: felt252,
+    pub calldata: Array<felt252>,
 }
 
 /// @notice Information relative to whether the escape is enabled
@@ -23,15 +23,15 @@ struct EscapeCall {
 /// @param security_period Time it takes for the escape to become ready after being triggered
 /// @param expiry_period Time it takes for the escape to expire after being ready
 #[derive(Drop, Copy, Serde)]
-struct EscapeEnabled {
-    is_enabled: bool,
-    security_period: u64,
-    expiry_period: u64,
+pub struct EscapeEnabled {
+    pub is_enabled: bool,
+    pub security_period: u64,
+    pub expiry_period: u64,
 }
 
 
 #[starknet::interface]
-trait IExternalRecovery<TContractState> {
+pub trait IExternalRecovery<TContractState> {
     /// @notice Enables/Disables recovery and sets the recovery parameters
     fn toggle_escape(
         ref self: TContractState, is_enabled: bool, security_period: u64, expiry_period: u64, guardian: ContractAddress,
@@ -64,21 +64,21 @@ trait IExternalRecovery<TContractState> {
 /// @param ready_at when the escape can be completed
 /// @param call to execute to escape
 #[derive(Drop, starknet::Event)]
-struct EscapeTriggered {
-    ready_at: u64,
-    call: EscapeCall,
+pub struct EscapeTriggered {
+    pub ready_at: u64,
+    pub call: EscapeCall,
 }
 
 /// @notice Signer escape was completed and call was executed
 /// @param call_hash hash of the executed EscapeCall
 #[derive(Drop, starknet::Event)]
-struct EscapeExecuted {
-    call_hash: felt252,
+pub struct EscapeExecuted {
+    pub call_hash: felt252,
 }
 
 /// @notice Signer escape was canceled
 /// @param call_hash hash of EscapeCall
 #[derive(Drop, starknet::Event)]
-struct EscapeCanceled {
-    call_hash: felt252,
+pub struct EscapeCanceled {
+    pub call_hash: felt252,
 }

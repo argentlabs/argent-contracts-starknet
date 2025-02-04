@@ -1,6 +1,6 @@
 use starknet::Store;
 use starknet::storage::{
-    Mutable, StorageAsPath, StorageBase, StoragePath, StoragePathEntry, StoragePathTrait, StoragePathUpdateTrait,
+    Mutable, PendingStoragePathTrait, StorageAsPath, StorageBase, StoragePath, StoragePointerWriteAccess,
 };
 ///
 /// A LinkedSet is storage structure that allows to store multiple items making it efficient to check if an item is in
@@ -119,7 +119,7 @@ impl AddEndMarkerImpl<
     }
 }
 
-impl LinkedSetReadImpl<
+pub impl LinkedSetReadImpl<
     T, +Drop<T>, +PartialEq<T>, +Store<T>, +LinkedSetConfig<T>,
 > of LinkedSetRead<StorageBase<LinkedSet<T>>> {
     type Value = T;
@@ -172,11 +172,12 @@ impl LinkedSetReadImpl<
 }
 
 #[generate_trait]
-impl LinkedSetReadPrivateImpl<T, +Drop<T>, +PartialEq<T>, +Store<T>, +LinkedSetConfig<T>> of LinkedSetReadPrivate<T> {
+pub impl LinkedSetReadPrivateImpl<
+    T, +Drop<T>, +PartialEq<T>, +Store<T>, +LinkedSetConfig<T>,
+> of LinkedSetReadPrivate<T> {
     #[inline(always)]
     fn entry(self: StorageBase<LinkedSet<T>>, item_hash: felt252) -> StoragePath<T> {
-        let path: StoragePath<T> = StoragePathTrait::new(self.__hash_state__.state);
-        path.update(item_hash)
+        PendingStoragePathTrait::new(@self.as_path(), item_hash).as_path()
     }
 
     #[inline(always)]
@@ -207,7 +208,7 @@ impl LinkedSetReadPrivateImpl<T, +Drop<T>, +PartialEq<T>, +Store<T>, +LinkedSetC
     }
 }
 
-impl LinkedSetWriteImpl<
+pub impl LinkedSetWriteImpl<
     T, +Drop<T>, +PartialEq<T>, +Copy<T>, +Store<T>, +LinkedSetConfig<T>, +Default<T>,
 > of LinkedSetWrite<StorageBase<Mutable<LinkedSet<T>>>> {
     type Value = T;
@@ -248,13 +249,12 @@ impl LinkedSetWriteImpl<
 }
 
 #[generate_trait]
-impl LinkedSetWritePrivateImpl<
+pub impl LinkedSetWritePrivateImpl<
     T, +Drop<T>, +PartialEq<T>, +Copy<T>, +Store<T>, +LinkedSetConfig<T>, +Default<T>,
 > of LinkedSetWritePrivate<T> {
     #[inline(always)]
     fn entry(self: StorageBase<Mutable<LinkedSet<T>>>, item_hash: felt252) -> StoragePath<Mutable<T>> {
-        let path: StoragePath<Mutable<T>> = StoragePathTrait::new(self.__hash_state__.state);
-        path.update(item_hash)
+        PendingStoragePathTrait::new(@self.as_path(), item_hash).as_path()
     }
 
     #[inline(always)]
@@ -285,7 +285,7 @@ impl LinkedSetWritePrivateImpl<
 }
 
 #[generate_trait]
-impl StorageBaseAsReadOnlyImpl<T> of StorageBaseAsReadOnly<T> {
+pub impl StorageBaseAsReadOnlyImpl<T> of StorageBaseAsReadOnly<T> {
     #[inline(always)]
     fn as_read_only(self: StorageBase<Mutable<T>>) -> StorageBase<T> {
         StorageBase { __base_address__: self.__base_address__ }
@@ -293,7 +293,7 @@ impl StorageBaseAsReadOnlyImpl<T> of StorageBaseAsReadOnly<T> {
 }
 
 // Allow read operations in mutable access too
-impl MutableLinkedSetReadImpl<
+pub impl MutableLinkedSetReadImpl<
     T, +Drop<T>, +PartialEq<T>, +Store<T>, +LinkedSetConfig<T>,
 > of LinkedSetRead<StorageBase<Mutable<LinkedSet<T>>>> {
     type Value = T;

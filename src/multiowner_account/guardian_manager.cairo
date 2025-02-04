@@ -48,7 +48,7 @@ trait IGuardianManagerInternal<TContractState> {
 
 /// Managing the account guardians
 #[starknet::component]
-mod guardian_manager_component {
+pub mod guardian_manager_component {
     use argent::account::interface::IEmitArgentAccountEvent;
     use argent::multiowner_account::argent_account::ArgentAccount::Event as ArgentAccountEvent;
     use argent::multiowner_account::events::{GuardianAddedGuid, GuardianRemovedGuid, SignerLinked};
@@ -68,13 +68,13 @@ mod guardian_manager_component {
     const MAX_SIGNERS_COUNT: usize = 32;
 
     #[storage]
-    struct Storage {
+    pub struct Storage {
         guardians_storage: LinkedSetWithHead<SignerStorageValue>,
     }
 
     #[event]
     #[derive(Drop, starknet::Event)]
-    enum Event {
+    pub enum Event {
         GuardianAddedGuid: GuardianAddedGuid,
         GuardianRemovedGuid: GuardianRemovedGuid,
     }

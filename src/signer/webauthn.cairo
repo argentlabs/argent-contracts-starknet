@@ -12,11 +12,11 @@ use starknet::secp256_trait::Signature;
 /// @param ec_signature The signature as {r, s, y_parity}
 /// @param sha256_implementation The implementation of the sha256 hash
 #[derive(Drop, Copy, Serde, PartialEq)]
-struct WebauthnSignature {
-    client_data_json_outro: Span<u8>,
-    flags: u8,
-    sign_count: u32,
-    ec_signature: Signature,
+pub struct WebauthnSignature {
+    pub client_data_json_outro: Span<u8>,
+    pub flags: u8,
+    pub sign_count: u32,
+    pub ec_signature: Signature,
 }
 
 /// Example data:
@@ -25,7 +25,7 @@ struct WebauthnSignature {
 ///                         rpIdHash (32 bytes)                       ^   sign count (4 bytes)
 ///                                                    flags (1 byte) |
 /// Memory layout: https://www.w3.org/TR/webauthn/#sctn-authenticator-data
-fn verify_authenticator_flags(flags: u8) {
+pub fn verify_authenticator_flags(flags: u8) {
     // rpIdHash is verified with the signature over the authenticator
 
     // Verify that the User Present bit of the flags in authData is set.
@@ -92,7 +92,7 @@ fn encode_authenticator_data(signature: WebauthnSignature, rp_id_hash: u256) -> 
     bytes
 }
 
-fn get_webauthn_hash(hash: felt252, signer: WebauthnSigner, signature: WebauthnSignature) -> u256 {
+pub fn get_webauthn_hash(hash: felt252, signer: WebauthnSigner, signature: WebauthnSignature) -> u256 {
     let client_data_json = encode_client_data_json(hash, signature, signer.origin);
     let mut client_data_hash = eight_words_to_bytes(sha256_u8s(client_data_json));
 

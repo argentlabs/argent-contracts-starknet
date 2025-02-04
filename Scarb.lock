@@ -64,7 +64,6 @@ name = "argent"
 version = "0.1.0"
 dependencies = [
  "alexandria_encoding",
- "alexandria_math",
  "alexandria_merkle_tree",
  "openzeppelin_presets",
  "openzeppelin_security",

@@ -3,18 +3,17 @@ use argent::offchain_message::{
     precalculated_hashing::get_message_hash_rev_1_with_precalc,
 };
 use argent::session::interface::Session;
-use hash::{HashStateExTrait, HashStateTrait};
-use poseidon::{HashState, poseidon_hash_span};
+use core::poseidon::poseidon_hash_span;
 use starknet::{account::Call, get_contract_address, get_tx_info};
 
 
-const MAINNET_FIRST_HADES_PERMUTATION: (felt252, felt252, felt252) = (
+pub const MAINNET_FIRST_HADES_PERMUTATION: (felt252, felt252, felt252) = (
     3159357451750963173197764487250193801745009044296318704413979805593222351753,
     2856607116111318915813829371903536205200021468882518469573183227809900863246,
     2405333218043798385503929428387279699579326006043041470088260529024671365157,
 );
 
-const SEPOLIA_FIRST_HADES_PERMUTATION: (felt252, felt252, felt252) = (
+pub const SEPOLIA_FIRST_HADES_PERMUTATION: (felt252, felt252, felt252) = (
     691798498452391354097240300284680479233893583850648846821812933705410085810,
     317062340895242311773051982041708757540909251525159061717012359096590796798,
     517893314125397876808992724850240644188517690767234330219248407741294215037,
@@ -29,7 +28,7 @@ const ALLOWED_METHOD_HASH_REV_1: felt252 = selector!(
     "\"Allowed Method\"(\"Contract Address\":\"ContractAddress\",\"selector\":\"selector\")",
 );
 
-impl MerkleLeafHash of IMerkleLeafHash<Call> {
+pub impl MerkleLeafHash of IMerkleLeafHash<Call> {
     fn get_merkle_leaf(self: @Call) -> felt252 {
         poseidon_hash_span(array![ALLOWED_METHOD_HASH_REV_1, (*self.to).into(), *self.selector].span())
     }
@@ -51,7 +50,7 @@ impl StructHashSession of IStructHashRev1<Session> {
     }
 }
 
-impl OffChainMessageHashSessionRev1 of IOffChainMessageHashRev1<Session> {
+pub impl OffChainMessageHashSessionRev1 of IOffChainMessageHashRev1<Session> {
     fn get_message_hash_rev_1(self: @Session) -> felt252 {
         let chain_id = get_tx_info().chain_id;
         if chain_id == 'SN_MAIN' {

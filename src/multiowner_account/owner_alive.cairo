@@ -1,6 +1,6 @@
 use argent::offchain_message::interface::{IOffChainMessageHashRev1, IStructHashRev1, StarknetDomain};
-use hash::{HashStateExTrait, HashStateTrait};
-use poseidon::PoseidonTrait;
+use core::hash::{HashStateExTrait, HashStateTrait};
+use core::poseidon::PoseidonTrait;
 use starknet::{get_contract_address, get_tx_info};
 
 
@@ -9,9 +9,9 @@ const OWNER_ALIVE_TYPE_HASH: felt252 = selector!(
 );
 
 #[derive(Drop, Copy, Hash)]
-struct OwnerAlive {
-    new_owner_guid: felt252,
-    signature_expiration: u64,
+pub struct OwnerAlive {
+    pub new_owner_guid: felt252,
+    pub signature_expiration: u64,
 }
 
 impl StructHashOwnerAliveRev1 of IStructHashRev1<OwnerAlive> {

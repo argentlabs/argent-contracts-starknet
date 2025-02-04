@@ -367,6 +367,10 @@ pub mod ArgentAccount {
         fn is_guardian_guid(self: @ContractState, guardian_guid: felt252) -> bool {
             self.guardian_manager.is_guardian_guid(guardian_guid)
         }
+
+        fn is_guardian(self: @ContractState, guardian: Signer) -> bool {
+            self.guardian_manager.is_guardian(guardian)
+        }
     }
 
     #[abi(embed_v0)]

@@ -91,7 +91,6 @@ pub mod guardian_manager_component {
 
         // legacy
         fn get_guardian(self: @ComponentState<TContractState>) -> felt252 {
-            // TODO can be improved
             if !self.has_guardian() {
                 return 0;
             }

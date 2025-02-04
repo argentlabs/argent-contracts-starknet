@@ -1,4 +1,4 @@
-use argent::signer::signer_signature::SignerSignature;
+use argent::signer::signer_signature::{Signer, SignerSignature};
 
 /// @notice Session struct that the owner and guardian has to sign to initiate a session
 /// @dev The hash of the session is also signed by the guardian (backend) and
@@ -45,6 +45,7 @@ pub trait ISessionCallback<TContractState> {
     ) -> Array<SignerSignature>;
 
     fn is_owner_guid(self: @TContractState, owner_guid: felt252) -> bool;
+    fn is_guardian(self: @TContractState, guardian: Signer) -> bool;
     fn is_guardian_guid(self: @TContractState, guardian_guid: felt252) -> bool;
 }
 
@@ -222,9 +223,7 @@ pub mod session_component {
                 if cached_sig_len != 0 {
                     // assert signers still valid
                     assert(state.is_owner_guid(cache_owner_guid), 'session/cache-invalid-owner');
-                    // TODO compare using SignerSignature for performance?
-                    assert(state.is_guardian_guid(token_guardian_guid), 'session/cache-invalid-guardian');
-
+                    assert(state.is_guardian(token_guardian), 'session/cache-invalid-guardian');
                     // prevents a DoS attack where authorization can be replaced by a bigger one
                     assert(session_authorization.len() <= cached_sig_len, 'session/cache-invalid-auth-len');
                     // authorization is cached, we can skip the signature verification

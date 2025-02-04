@@ -789,25 +789,28 @@ pub mod ArgentAccount {
         fn is_valid_span_signature(
             self: @ContractState, hash: felt252, signer_signatures: Span<SignerSignature>,
         ) -> bool {
-            if self.has_guardian() {
-                assert(signer_signatures.len() == 2, 'argent/invalid-signature-length');
+            if signer_signatures.len() == 1 {
+                assert(!self.guardian_manager.has_guardian(), 'argent/missing-guardian-sig');
+                self.is_valid_owner_signature(hash, *signer_signatures.at(0))
+            } else if signer_signatures.len() == 2 {
                 self.is_valid_owner_signature(hash, *signer_signatures.at(0))
                     && self.is_valid_guardian_signature(hash, *signer_signatures.at(1))
             } else {
-                assert(signer_signatures.len() == 1, 'argent/invalid-signature-length');
-                self.is_valid_owner_signature(hash, *signer_signatures.at(0))
+                core::panic_with_felt252('argent/invalid-signature-length');
+                false
             }
         }
 
         fn assert_valid_span_signature(self: @ContractState, hash: felt252, signer_signatures: Span<SignerSignature>) {
-            if self.has_guardian() {
-                assert(signer_signatures.len() == 2, 'argent/invalid-signature-length');
+            if signer_signatures.len() == 1 {
+                assert(!self.guardian_manager.has_guardian(), 'argent/missing-guardian-sig');
+                assert(self.is_valid_owner_signature(hash, *signer_signatures.at(0)), 'argent/invalid-owner-sig');
+            } else if signer_signatures.len() == 2 {
                 assert(self.is_valid_owner_signature(hash, *signer_signatures.at(0)), 'argent/invalid-owner-sig');
                 assert(self.is_valid_guardian_signature(hash, *signer_signatures.at(1)), 'argent/invalid-guardian-sig');
             } else {
-                assert(signer_signatures.len() == 1, 'argent/invalid-signature-length');
-                assert(self.is_valid_owner_signature(hash, *signer_signatures.at(0)), 'argent/invalid-owner-sig');
-            }
+                core::panic_with_felt252('argent/invalid-signature-length');
+            };
         }
 
         /// The message hash is the result of hashing the SNIP-12 compliant object OwnerAlive

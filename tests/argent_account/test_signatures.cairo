@@ -91,7 +91,7 @@ fn invalid_empty_signature_without_guardian() {
 }
 
 #[test]
-#[should_panic(expected: ('argent/invalid-signature-length',))]
+#[should_panic(expected: ('argent/invalid-guardian-sig',))]
 fn invalid_signature_length_without_guardian() {
     let account = initialize_account_without_guardian();
     let signatures = to_starknet_signatures(array![OWNER(), GUARDIAN()]);
@@ -108,6 +108,13 @@ fn invalid_empty_signature_with_guardian() {
 
 #[test]
 #[should_panic(expected: ('argent/invalid-signature-length',))]
+fn invalid_empty_span_signature() {
+    let account = initialize_account();
+    account.is_valid_signature(TX_HASH, array![0]);
+}
+
+#[test]
+#[should_panic(expected: ('argent/missing-guardian-sig',))]
 fn invalid_signature_length_with_guardian() {
     let account = initialize_account();
     let signatures = to_starknet_signatures(array![OWNER()]);

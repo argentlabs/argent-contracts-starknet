@@ -243,11 +243,8 @@ pub mod ArgentAccount {
         }
 
         fn is_valid_signature(self: @ContractState, hash: felt252, signature: Array<felt252>) -> felt252 {
-            if self.is_valid_span_signature(hash, self.parse_signature_array(signature.span()).span()) {
-                VALIDATED
-            } else {
-                0
-            }
+            self.assert_valid_span_signature(hash, self.parse_signature_array(signature.span()).span());
+            VALIDATED
         }
     }
 
@@ -352,9 +349,7 @@ pub mod ArgentAccount {
             self: @ContractState, session_hash: felt252, authorization_signature: Span<felt252>,
         ) -> Array<SignerSignature> {
             let parsed_authorization = self.parse_signature_array(authorization_signature);
-            assert(
-                self.is_valid_span_signature(session_hash, parsed_authorization.span()), 'session/invalid-account-sig',
-            );
+            self.assert_valid_span_signature(session_hash, parsed_authorization.span());
             parsed_authorization
         }
 
@@ -783,22 +778,6 @@ pub mod ArgentAccount {
                     StarknetSignature { r: *signatures.pop_front().unwrap(), s: *signatures.pop_front().unwrap() },
                 ),
             );
-        }
-
-        #[must_use]
-        fn is_valid_span_signature(
-            self: @ContractState, hash: felt252, signer_signatures: Span<SignerSignature>,
-        ) -> bool {
-            if signer_signatures.len() == 1 {
-                assert(!self.guardian_manager.has_guardian(), 'argent/missing-guardian-sig');
-                self.is_valid_owner_signature(hash, *signer_signatures.at(0))
-            } else if signer_signatures.len() == 2 {
-                self.is_valid_owner_signature(hash, *signer_signatures.at(0))
-                    && self.is_valid_guardian_signature(hash, *signer_signatures.at(1))
-            } else {
-                core::panic_with_felt252('argent/invalid-signature-length');
-                false
-            }
         }
 
         fn assert_valid_span_signature(self: @ContractState, hash: felt252, signer_signatures: Span<SignerSignature>) {

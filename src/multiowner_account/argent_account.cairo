@@ -897,15 +897,4 @@ pub mod ArgentAccount {
 
         assert(get_block_timestamp() > last_timestamp + TIME_BETWEEN_TWO_ESCAPES, 'argent/last-escape-too-recent');
     }
-
-    fn guardian_ordered_types() -> Span<SignerType> {
-        array![
-            SignerType::Starknet,
-            SignerType::Eip191,
-            SignerType::Webauthn,
-            SignerType::Secp256r1,
-            SignerType::Secp256k1,
-        ]
-            .span()
-    }
 }

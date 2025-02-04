@@ -32,9 +32,9 @@ struct LegacyEscape {
 
 #[starknet::component]
 pub mod upgrade_migration_component {
-    use argent::account::interface::IEmitArgentAccountEvent;
     use argent::multiowner_account::account_interface::IArgentMultiOwnerAccount;
     use argent::multiowner_account::argent_account::ArgentAccount::Event as ArgentAccountEvent;
+    use argent::multiowner_account::argent_account::IEmitArgentAccountEvent;
     use argent::multiowner_account::events::{EscapeCanceled, SignerLinked};
     use argent::multiowner_account::owner_manager::{IOwnerManager, owner_manager_component};
     use argent::signer::signer_signature::{

@@ -1,7 +1,7 @@
 /// @dev 🚨 This smart contract is a mock implementation and is not meant for actual deployment or use in any live
 /// environment. It is solely for testing, educational, or demonstration purposes. Please refrain from relying on the
 /// functionality of this contract for any production. 🚨
-use argent::account::interface::Version;
+use argent::account::Version;
 use argent::signer::signer_signature::Signer;
 
 #[starknet::interface]
@@ -22,12 +22,11 @@ trait IFutureArgentUserAccount<TContractState> {
 
 #[starknet::contract(account)]
 mod MockFutureArgentAccount {
-    use argent::account::interface::{IAccount, Version};
-    use argent::introspection::src5::src5_component;
+    use argent::account::{IAccount, Version};
+    use argent::introspection::src5_component;
     use argent::signer::signer_signature::{Signer, SignerSignature, SignerSignatureTrait, SignerTrait, SignerType};
     use argent::upgrade::{
-        interface::{IUpgradableCallback, IUpgradableCallbackOld},
-        upgrade::{upgrade_component, upgrade_component::UpgradableInternalImpl},
+        IUpgradableCallback, IUpgradableCallbackOld, upgrade_component, upgrade_component::UpgradableInternalImpl,
     };
     use argent::utils::{
         asserts::{assert_no_self_call, assert_only_self}, calls::execute_multicall, serialization::full_deserialize,

@@ -3,8 +3,8 @@
 /// Please refrain from relying on the functionality of this contract for any production code. 🚨
 #[starknet::contract]
 mod MultiownerMock {
-    use argent::account::interface::{IEmitArgentAccountEvent};
-    use argent::multiowner_account::argent_account::ArgentAccount::Event as ArgentAccountEvent;
+    use argent::multiowner_account::argent_account::IEmitArgentAccountEvent;
+    use argent::multiowner_account::argent_account::{ArgentAccount::Event as ArgentAccountEvent};
     use argent::multiowner_account::events::SignerLinked;
     use argent::multiowner_account::owner_manager::{
         owner_manager_component, owner_manager_component::OwnerManagerInternalImpl,

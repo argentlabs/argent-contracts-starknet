@@ -1,5 +1,4 @@
-use argent::multisig_account::signer_manager::interface::{OwnerRemovedGuid, ThresholdUpdated};
-use argent::multisig_account::signer_manager::signer_manager::signer_manager_component;
+use argent::multisig_account::signer_manager::{OwnerRemovedGuid, ThresholdUpdated, signer_manager_component};
 use argent::signer::signer_signature::{SignerTrait, starknet_signer_from_pubkey};
 use crate::{
     ITestArgentMultisigDispatcherTrait, SIGNER_1, SIGNER_2, SIGNER_3, initialize_multisig, initialize_multisig_with,

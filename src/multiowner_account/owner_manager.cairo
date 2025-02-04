@@ -37,8 +37,11 @@ trait IOwnerManagerInternal<TContractState> {
 /// Managing the list of owners of the account
 #[starknet::component]
 pub mod owner_manager_component {
-    use argent::account::interface::IEmitArgentAccountEvent;
+    use argent::linked_set::linked_set_with_head::{
+        LinkedSetWithHead, LinkedSetWithHeadReadImpl, LinkedSetWithHeadWriteImpl, MutableLinkedSetWithHeadReadImpl,
+    };
     use argent::multiowner_account::argent_account::ArgentAccount::Event as ArgentAccountEvent;
+    use argent::multiowner_account::argent_account::IEmitArgentAccountEvent;
     use argent::multiowner_account::events::{OwnerAddedGuid, OwnerRemovedGuid, SignerLinked};
     use argent::multiowner_account::signer_storage_linked_set::SignerStorageValueLinkedSetConfig;
     use argent::signer::signer_signature::{
@@ -46,9 +49,6 @@ pub mod owner_manager_component {
         SignerType,
     };
     use argent::utils::array_ext::SpanContains;
-    use argent::utils::linked_set_with_head::{
-        LinkedSetWithHead, LinkedSetWithHeadReadImpl, LinkedSetWithHeadWriteImpl, MutableLinkedSetWithHeadReadImpl,
-    };
     use argent::utils::{transaction_version::is_estimate_transaction};
     use super::{IOwnerManager, IOwnerManagerInternal};
 

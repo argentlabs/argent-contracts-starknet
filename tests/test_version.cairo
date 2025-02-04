@@ -1,4 +1,4 @@
-use argent::account::interface::Version;
+use argent::account::Version;
 
 #[test]
 fn test_version_lt_simple_version_incr() {

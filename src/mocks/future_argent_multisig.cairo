@@ -3,17 +3,14 @@
 /// Please refrain from relying on the functionality of this contract for any production code. 🚨
 #[starknet::contract(account)]
 mod MockFutureArgentMultisig {
-    use argent::account::interface::{
-        IAccount, IArgentAccount, IArgentAccountDispatcher, IArgentAccountDispatcherTrait, Version,
-    };
-    use argent::introspection::src5::src5_component;
-    use argent::multisig_account::signer_manager::signer_manager::{
+    use argent::account::{IAccount, IArgentAccount, IArgentAccountDispatcher, IArgentAccountDispatcherTrait, Version};
+    use argent::introspection::src5_component;
+    use argent::multisig_account::signer_manager::{
         signer_manager_component, signer_manager_component::SignerManagerInternalImpl,
     };
     use argent::signer::signer_signature::{Signer, SignerSignature};
     use argent::upgrade::{
-        interface::{IUpgradableCallback, IUpgradableCallbackOld},
-        upgrade::{upgrade_component, upgrade_component::UpgradableInternalImpl},
+        IUpgradableCallback, IUpgradableCallbackOld, upgrade_component, upgrade_component::UpgradableInternalImpl,
     };
     use argent::utils::{asserts::assert_only_self, calls::execute_multicall, serialization::full_deserialize};
     use core::panic_with_felt252;

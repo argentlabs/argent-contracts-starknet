@@ -150,9 +150,7 @@ mod session_component {
                 if cached_sig_len != 0 {
                     // assert signers still valid
                     assert(state.is_owner_guid(cache_owner_guid), 'session/cache-invalid-owner');
-                    // TODO compare using SignerSignature for performance?
-                    assert(state.is_guardian_guid(token_guardian_guid), 'session/cache-invalid-guardian');
-
+                    assert(state.is_guardian(token_guardian), 'session/cache-invalid-guardian');
                     // prevents a DoS attack where authorization can be replaced by a bigger one
                     assert(session_authorization.len() <= cached_sig_len, 'session/cache-invalid-auth-len');
                     // authorization is cached, we can skip the signature verification

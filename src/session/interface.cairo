@@ -1,4 +1,4 @@
-use argent::signer::signer_signature::SignerSignature;
+use argent::signer::signer_signature::{Signer, SignerSignature};
 
 /// @notice Session struct that the owner and guardian has to sign to initiate a session
 /// @dev The hash of the session is also signed by the guardian (backend) and
@@ -45,6 +45,7 @@ trait ISessionCallback<TContractState> {
     ) -> Array<SignerSignature>;
 
     fn is_owner_guid(self: @TContractState, owner_guid: felt252) -> bool;
+    fn is_guardian(self: @TContractState, guardian: Signer) -> bool;
     fn is_guardian_guid(self: @TContractState, guardian_guid: felt252) -> bool;
 }
 

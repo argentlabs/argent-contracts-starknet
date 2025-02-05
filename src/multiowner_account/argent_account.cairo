@@ -711,13 +711,15 @@ pub mod ArgentAccount {
             //  [array_len, signer_type, signer_pubkey, r, s]
             if signatures.len() != 2 && signatures.len() != 4 {
                 // manual inlining instead of calling full_deserialize for performance
-                let signature_count = *signatures.pop_front().unwrap();
-                let owner_signature: SignerSignature = Serde::deserialize(ref signatures)
-                    .expect('argent/invalid-signature-format');
+                let signature_count = *signatures.pop_front().expect('argent/invalid-signature-format');
                 if signature_count == 1 {
+                    let owner_signature: SignerSignature = Serde::deserialize(ref signatures)
+                        .expect('argent/invalid-signature-format');
                     assert(signatures.is_empty(), 'argent/invalid-signature-length');
                     return AccountSignature { owner_signature, guardian_signature: Option::None };
                 } else if signature_count == 2 {
+                    let owner_signature: SignerSignature = Serde::deserialize(ref signatures)
+                        .expect('argent/invalid-signature-format');
                     let guardian_signature: SignerSignature = Serde::deserialize(ref signatures)
                         .expect('argent/invalid-signature-format');
                     assert(signatures.is_empty(), 'argent/invalid-signature-length');

@@ -94,11 +94,8 @@ mod MockFutureArgentAccount {
         }
 
         fn is_valid_signature(self: @ContractState, hash: felt252, signature: Array<felt252>) -> felt252 {
-            if self.is_valid_span_signature(hash, self.parse_signature_array(signature.span())) {
-                VALIDATED
-            } else {
-                0
-            }
+            self.assert_valid_span_signature(hash, self.parse_signature_array(signature.span()));
+            VALIDATED
         }
     }
 
@@ -171,19 +168,6 @@ mod MockFutureArgentAccount {
 
         fn parse_signature_array(self: @ContractState, mut signatures: Span<felt252>) -> Array<SignerSignature> {
             full_deserialize(signatures).expect('argent/invalid-signature-format')
-        }
-
-        fn is_valid_span_signature(
-            self: @ContractState, hash: felt252, signer_signatures: Array<SignerSignature>,
-        ) -> bool {
-            if self._guardian.read() == 0 {
-                assert(signer_signatures.len() == 1, 'argent/invalid-signature-length');
-                self.is_valid_owner_signature(hash, *signer_signatures.at(0))
-            } else {
-                assert(signer_signatures.len() == 2, 'argent/invalid-signature-length');
-                self.is_valid_owner_signature(hash, *signer_signatures.at(0))
-                    && self.is_valid_guardian_signature(hash, *signer_signatures.at(1))
-            }
         }
 
         fn assert_valid_span_signature(self: @ContractState, hash: felt252, signer_signatures: Array<SignerSignature>) {

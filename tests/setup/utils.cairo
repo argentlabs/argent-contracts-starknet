@@ -2,6 +2,7 @@ use argent::signer::signer_signature::{SignerSignature, StarknetSignature, Stark
 use argent::utils::serialization::serialize;
 use crate::KeyAndSig;
 
+/// converts an array like [pubkey_1, r_1, s_1, pubkey_2, r_2, s_2] into an array [Signature1, Signature2]
 pub fn to_starknet_signer_signatures(arr: Array<felt252>) -> Array<felt252> {
     let mut signatures = array![];
     let mut arr = arr.span();
@@ -14,6 +15,8 @@ pub fn to_starknet_signer_signatures(arr: Array<felt252>) -> Array<felt252> {
     serialize(@signatures)
 }
 
+/// converts an array like [pubkey_1, starknet_signature_1, pubkey_2, starknet_signature_2] into an array [Signature1,
+/// Signature2]
 pub fn to_starknet_signatures(arr: Array<KeyAndSig>) -> Array<felt252> {
     let mut signatures = array![];
     let mut arr = arr.span();

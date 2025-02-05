@@ -24,10 +24,12 @@ trait IFutureArgentUserAccount<TContractState> {
 mod MockFutureArgentAccount {
     use argent::account::{IAccount, Version};
     use argent::introspection::src5_component;
+    use argent::multiowner_account::argent_account::AccountSignature;
     use argent::signer::signer_signature::{Signer, SignerSignature, SignerSignatureTrait, SignerTrait, SignerType};
     use argent::upgrade::{
         IUpgradableCallback, IUpgradableCallbackOld, upgrade_component, upgrade_component::UpgradableInternalImpl,
     };
+
     use argent::utils::{
         asserts::{assert_no_self_call, assert_only_self}, calls::execute_multicall, serialization::full_deserialize,
     };
@@ -94,7 +96,7 @@ mod MockFutureArgentAccount {
         }
 
         fn is_valid_signature(self: @ContractState, hash: felt252, signature: Array<felt252>) -> felt252 {
-            self.assert_valid_span_signature(hash, self.parse_signature_array(signature.span()));
+            self.assert_valid_account_signature(hash, self.parse_account_signature(signature.span()));
             VALIDATED
         }
     }
@@ -136,7 +138,10 @@ mod MockFutureArgentAccount {
             guardian: Option<Signer>,
         ) -> felt252 {
             let tx_info = get_tx_info();
-            self.assert_valid_span_signature(tx_info.transaction_hash, self.parse_signature_array(tx_info.signature));
+            self
+                .assert_valid_account_signature(
+                    tx_info.transaction_hash, self.parse_account_signature(tx_info.signature),
+                );
             VALIDATED
         }
 
@@ -163,22 +168,29 @@ mod MockFutureArgentAccount {
         fn assert_valid_calls_and_signature(
             ref self: ContractState, calls: Span<Call>, execution_hash: felt252, mut signatures: Span<felt252>,
         ) {
-            self.assert_valid_span_signature(execution_hash, self.parse_signature_array(signatures));
+            self.assert_valid_account_signature(execution_hash, self.parse_account_signature(signatures));
         }
 
-        fn parse_signature_array(self: @ContractState, mut signatures: Span<felt252>) -> Array<SignerSignature> {
-            full_deserialize(signatures).expect('argent/invalid-signature-format')
-        }
-
-        fn assert_valid_span_signature(self: @ContractState, hash: felt252, signer_signatures: Array<SignerSignature>) {
-            if self._guardian.read() == 0 {
-                assert(signer_signatures.len() == 1, 'argent/invalid-signature-length');
-                assert(self.is_valid_owner_signature(hash, *signer_signatures.at(0)), 'argent/invalid-owner-sig');
-            } else {
-                assert(signer_signatures.len() == 2, 'argent/invalid-signature-length');
-                assert(self.is_valid_owner_signature(hash, *signer_signatures.at(0)), 'argent/invalid-owner-sig');
-                assert(self.is_valid_guardian_signature(hash, *signer_signatures.at(1)), 'argent/invalid-guardian-sig');
+        fn parse_account_signature(self: @ContractState, mut raw_signature: Span<felt252>) -> AccountSignature {
+            let sigs_as_array: Array<SignerSignature> = full_deserialize(raw_signature)
+                .expect('argent/invalid-signature-format');
+            if sigs_as_array.len() == 1 {
+                return AccountSignature { owner_signature: *sigs_as_array[0], guardian_signature: Option::None };
+            } else if sigs_as_array.len() == 2 {
+                return AccountSignature {
+                    owner_signature: *sigs_as_array[0], guardian_signature: Option::Some(*sigs_as_array[1]),
+                };
             }
+            core::panic_with_felt252('argent/invalid-signature-length')
+        }
+
+        fn assert_valid_account_signature(self: @ContractState, hash: felt252, account_signature: AccountSignature) {
+            assert(self.is_valid_owner_signature(hash, account_signature.owner_signature), 'argent/invalid-owner-sig');
+            if let Option::Some(guardian_signature) = account_signature.guardian_signature {
+                assert(self.is_valid_guardian_signature(hash, guardian_signature), 'argent/invalid-guardian-sig');
+            } else {
+                assert(self.get_guardian() != 0, 'argent/missing-guardian-sig');
+            };
         }
 
         fn is_valid_owner_signature(self: @ContractState, hash: felt252, signer_signature: SignerSignature) -> bool {

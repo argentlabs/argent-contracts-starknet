@@ -254,7 +254,7 @@ pub mod ArgentAccount {
         }
 
         fn is_valid_signature(self: @ContractState, hash: felt252, signature: Array<felt252>) -> felt252 {
-            self.assert_valid_span_signature(hash, self.parse_signature_array(signature.span()));
+            self.assert_valid_account_signature(hash, self.parse_account_signature(signature.span()));
             VALIDATED
         }
     }
@@ -359,8 +359,8 @@ pub mod ArgentAccount {
         fn validate_authorization(
             self: @ContractState, session_hash: felt252, authorization_signature: Span<felt252>,
         ) -> AccountSignature {
-            let parsed_authorization = self.parse_signature_array(authorization_signature);
-            self.assert_valid_span_signature(session_hash, parsed_authorization);
+            let parsed_authorization = self.parse_account_signature(authorization_signature);
+            self.assert_valid_account_signature(session_hash, parsed_authorization);
             parsed_authorization
         }
 
@@ -383,7 +383,10 @@ pub mod ArgentAccount {
             let tx_info = get_tx_info();
             assert_correct_declare_version(tx_info.version);
             assert(tx_info.paymaster_data.is_empty(), 'argent/unsupported-paymaster');
-            self.assert_valid_span_signature(tx_info.transaction_hash, self.parse_signature_array(tx_info.signature));
+            self
+                .assert_valid_account_signature(
+                    tx_info.transaction_hash, self.parse_account_signature(tx_info.signature),
+                );
             VALIDATED
         }
 
@@ -397,7 +400,10 @@ pub mod ArgentAccount {
             let tx_info = get_tx_info();
             assert_correct_deploy_account_version(tx_info.version);
             assert(tx_info.paymaster_data.is_empty(), 'argent/unsupported-paymaster');
-            self.assert_valid_span_signature(tx_info.transaction_hash, self.parse_signature_array(tx_info.signature));
+            self
+                .assert_valid_account_signature(
+                    tx_info.transaction_hash, self.parse_account_signature(tx_info.signature),
+                );
             VALIDATED
         }
 
@@ -603,7 +609,7 @@ pub mod ArgentAccount {
             ref self: ContractState,
             calls: Span<Call>,
             execution_hash: felt252,
-            mut signatures: Span<felt252>,
+            mut raw_signature: Span<felt252>,
             is_from_outside: bool,
             account_address: ContractAddress,
         ) {
@@ -620,7 +626,7 @@ pub mod ArgentAccount {
 
                         let new_owner = full_deserialize::<Signer>(*call.calldata).expect('argent/invalid-calldata');
                         assert(!self.is_owner(new_owner), 'argent/invalid-owner-replace'); // TODO is this needed?
-                        let guardian_signature = self.parse_single_guardian_signature(signatures);
+                        let guardian_signature = self.parse_single_guardian_signature(raw_signature);
                         let is_valid = self.is_valid_guardian_signature(execution_hash, guardian_signature);
                         assert(is_valid, 'argent/invalid-guardian-sig');
                         // valid guardian signature also asserts that a guardian is set
@@ -635,7 +641,7 @@ pub mod ArgentAccount {
                         assert((*call.calldata).is_empty(), 'argent/invalid-calldata');
                         let current_escape = self._escape.read();
                         assert(current_escape.escape_type == EscapeType::Owner, 'argent/invalid-escape');
-                        let guardian_signature = self.parse_single_guardian_signature(signatures);
+                        let guardian_signature = self.parse_single_guardian_signature(raw_signature);
                         let is_valid = self.is_valid_guardian_signature(execution_hash, guardian_signature);
                         assert(is_valid, 'argent/invalid-guardian-sig');
                         // valid guardian signature also asserts that a guardian is set
@@ -651,7 +657,7 @@ pub mod ArgentAccount {
 
                         let _ = full_deserialize::<Option<Signer>>(*call.calldata).expect('argent/invalid-calldata');
 
-                        let owner_signature = self.parse_single_owner_signature(signatures);
+                        let owner_signature = self.parse_single_owner_signature(raw_signature);
                         let is_valid = self.is_valid_owner_signature(execution_hash, owner_signature);
                         assert(is_valid, 'argent/invalid-owner-sig');
                         return; // valid
@@ -668,13 +674,13 @@ pub mod ArgentAccount {
 
                         assert(current_escape.escape_type == EscapeType::Guardian, 'argent/invalid-escape');
 
-                        let owner_signature = self.parse_single_owner_signature(signatures);
+                        let owner_signature = self.parse_single_owner_signature(raw_signature);
                         let is_valid = self.is_valid_owner_signature(execution_hash, owner_signature);
                         assert(is_valid, 'argent/invalid-owner-sig');
                         return; // valid
                     }
                     if selector == selector!("change_owners") {
-                        let account_signature = self.parse_signature_array(signatures);
+                        let account_signature = self.parse_account_signature(raw_signature);
                         if !self.has_guardian() {
                             let (owner_guids_to_remove, _, owner_alive_signature) = full_deserialize::<
                                 (Array<felt252>, Array<Signer>, Option<OwnerAliveSignature>),
@@ -687,7 +693,7 @@ pub mod ArgentAccount {
 
                             assert(signer_still_valid || owner_alive_signature.is_some(), 'argent/missing-owner-alive');
                         }
-                        self.assert_valid_span_signature(execution_hash, account_signature);
+                        self.assert_valid_account_signature(execution_hash, account_signature);
                         return; // valid
                     }
                     assert(selector != selector!("execute_after_upgrade"), 'argent/forbidden-call');
@@ -697,32 +703,32 @@ pub mod ArgentAccount {
                 // make sure no call is to the account
                 assert_no_self_call(calls, account_address);
             }
-            let account_signature = self.parse_signature_array(signatures);
-            self.assert_valid_span_signature(execution_hash, :account_signature);
+            let account_signature = self.parse_account_signature(raw_signature);
+            self.assert_valid_account_signature(execution_hash, :account_signature);
         }
 
         // TODO This was the most straight forward to remove to not exceed contract size limit
         // We prob want to re-assess
         // #[inline(always)]
-        fn parse_signature_array(self: @ContractState, mut signatures: Span<felt252>) -> AccountSignature {
+        fn parse_account_signature(self: @ContractState, mut raw_signature: Span<felt252>) -> AccountSignature {
             // Check if it's a legacy signature array, this only supports legacy signature if there is exactly 1 only
             // and a maximum of 1 guardian Legacy signatures are always 2 or 4 items long
             // Shortest signature in modern format is at least 5 items
             //  [array_len, signer_type, signer_pubkey, r, s]
-            if signatures.len() != 2 && signatures.len() != 4 {
+            if raw_signature.len() != 2 && raw_signature.len() != 4 {
                 // manual inlining instead of calling full_deserialize for performance
-                let signature_count = *signatures.pop_front().expect('argent/invalid-signature-format');
+                let signature_count = *raw_signature.pop_front().expect('argent/invalid-signature-format');
                 if signature_count == 1 {
-                    let owner_signature: SignerSignature = Serde::deserialize(ref signatures)
+                    let owner_signature: SignerSignature = Serde::deserialize(ref raw_signature)
                         .expect('argent/invalid-signature-format');
-                    assert(signatures.is_empty(), 'argent/invalid-signature-length');
+                    assert(raw_signature.is_empty(), 'argent/invalid-signature-length');
                     return AccountSignature { owner_signature, guardian_signature: Option::None };
                 } else if signature_count == 2 {
-                    let owner_signature: SignerSignature = Serde::deserialize(ref signatures)
+                    let owner_signature: SignerSignature = Serde::deserialize(ref raw_signature)
                         .expect('argent/invalid-signature-format');
-                    let guardian_signature: SignerSignature = Serde::deserialize(ref signatures)
+                    let guardian_signature: SignerSignature = Serde::deserialize(ref raw_signature)
                         .expect('argent/invalid-signature-format');
-                    assert(signatures.is_empty(), 'argent/invalid-signature-length');
+                    assert(raw_signature.is_empty(), 'argent/invalid-signature-length');
                     return AccountSignature { owner_signature, guardian_signature: Option::Some(guardian_signature) };
                 } else {
                     core::panic_with_felt252('argent/invalid-signature-length');
@@ -736,10 +742,12 @@ pub mod ArgentAccount {
             let owner_signature = SignerSignature::Starknet(
                 (
                     StarknetSigner { pubkey: single_stark_owner.try_into().expect('argent/zero-pubkey') },
-                    StarknetSignature { r: *signatures.pop_front().unwrap(), s: *signatures.pop_front().unwrap() },
+                    StarknetSignature {
+                        r: *raw_signature.pop_front().unwrap(), s: *raw_signature.pop_front().unwrap(),
+                    },
                 ),
             );
-            if signatures.is_empty() {
+            if raw_signature.is_empty() {
                 return AccountSignature { owner_signature, guardian_signature: Option::None };
             }
 
@@ -751,16 +759,18 @@ pub mod ArgentAccount {
             let guardian_signature = SignerSignature::Starknet(
                 (
                     StarknetSigner { pubkey: single_stark_guardian.try_into().expect('argent/zero-pubkey') },
-                    StarknetSignature { r: *signatures.pop_front().unwrap(), s: *signatures.pop_front().unwrap() },
+                    StarknetSignature {
+                        r: *raw_signature.pop_front().unwrap(), s: *raw_signature.pop_front().unwrap(),
+                    },
                 ),
             );
             return AccountSignature { owner_signature, guardian_signature: Option::Some(guardian_signature) };
         }
 
         /// Parses the signature when its expected to be a single owner signature
-        fn parse_single_owner_signature(self: @ContractState, mut signatures: Span<felt252>) -> SignerSignature {
-            if signatures.len() != 2 {
-                let signature_array: Array<SignerSignature> = full_deserialize(signatures)
+        fn parse_single_owner_signature(self: @ContractState, mut raw_signature: Span<felt252>) -> SignerSignature {
+            if raw_signature.len() != 2 {
+                let signature_array: Array<SignerSignature> = full_deserialize(raw_signature)
                     .expect('argent/invalid-signature-format');
                 assert(signature_array.len() == 1, 'argent/invalid-signature-length');
                 return *signature_array.at(0);
@@ -772,15 +782,17 @@ pub mod ArgentAccount {
             SignerSignature::Starknet(
                 (
                     StarknetSigner { pubkey: single_stark_owner.try_into().expect('argent/zero-pubkey') },
-                    StarknetSignature { r: *signatures.pop_front().unwrap(), s: *signatures.pop_front().unwrap() },
+                    StarknetSignature {
+                        r: *raw_signature.pop_front().unwrap(), s: *raw_signature.pop_front().unwrap(),
+                    },
                 ),
             )
         }
 
         /// Parses the signature when its expected to be a single guardian signature
-        fn parse_single_guardian_signature(self: @ContractState, mut signatures: Span<felt252>) -> SignerSignature {
-            if signatures.len() != 2 {
-                let signature_array: Array<SignerSignature> = full_deserialize(signatures)
+        fn parse_single_guardian_signature(self: @ContractState, mut raw_signature: Span<felt252>) -> SignerSignature {
+            if raw_signature.len() != 2 {
+                let signature_array: Array<SignerSignature> = full_deserialize(raw_signature)
                     .expect('argent/invalid-signature-format');
                 assert(signature_array.len() == 1, 'argent/invalid-signature-length');
                 return *signature_array.at(0);
@@ -792,12 +804,14 @@ pub mod ArgentAccount {
             return SignerSignature::Starknet(
                 (
                     StarknetSigner { pubkey: single_stark_guardian.try_into().expect('argent/zero-pubkey') },
-                    StarknetSignature { r: *signatures.pop_front().unwrap(), s: *signatures.pop_front().unwrap() },
+                    StarknetSignature {
+                        r: *raw_signature.pop_front().unwrap(), s: *raw_signature.pop_front().unwrap(),
+                    },
                 ),
             );
         }
 
-        fn assert_valid_span_signature(self: @ContractState, hash: felt252, account_signature: AccountSignature) {
+        fn assert_valid_account_signature(self: @ContractState, hash: felt252, account_signature: AccountSignature) {
             assert(self.is_valid_owner_signature(hash, account_signature.owner_signature), 'argent/invalid-owner-sig');
             if let Option::Some(guardian_signature) = account_signature.guardian_signature {
                 assert(self.is_valid_guardian_signature(hash, guardian_signature), 'argent/invalid-guardian-sig');

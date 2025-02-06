@@ -309,9 +309,7 @@ pub mod ArgentAccount {
         fn finalize_migration(ref self: ContractState) {
             self.owner_manager.assert_valid_storage();
             self.guardian_manager.assert_valid_storage();
-
-            self.reset_escape();
-            self.reset_escape_timestamps();
+            self.clear_escape(escape_completed: false, reset_timestamps: true);
         }
 
         fn migrate_owner(ref self: ContractState, signer_storage_value: SignerStorageValue) {
@@ -407,11 +405,10 @@ pub mod ArgentAccount {
 
             let current_escape = self._escape.read();
             let current_escape_status = self.get_escape_status(current_escape.ready_at);
-            match current_escape_status {
-                EscapeStatus::None => (), // ignore
-                EscapeStatus::NotReady | EscapeStatus::Ready => panic_with_felt252('argent/ongoing-escape'),
-                EscapeStatus::Expired => self._escape.write(Default::default()),
+            if current_escape_status == EscapeStatus::NotReady || current_escape_status == EscapeStatus::Ready {
+                panic_with_felt252('argent/ongoing-escape');
             }
+            self.clear_escape(escape_completed: false, reset_timestamps: true);
             self.escape_security_period.write(new_security_period);
             self.emit(EscapeSecurityPeriodChanged { escape_security_period: new_security_period });
         }
@@ -438,9 +435,7 @@ pub mod ArgentAccount {
             if let Option::Some(owner_alive_signature) = owner_alive_signature {
                 self.assert_valid_owner_alive_signature(owner_alive_signature);
             } // else { validation will ensure it's not needed }
-
-            self.reset_escape();
-            self.reset_escape_timestamps();
+            self.clear_escape(escape_completed: false, reset_timestamps: true);
         }
 
         fn change_guardians(
@@ -448,8 +443,7 @@ pub mod ArgentAccount {
         ) {
             assert_only_self();
             self.guardian_manager.change_guardians(:guardian_guids_to_remove, :guardians_to_add);
-            self.reset_escape();
-            self.reset_escape_timestamps();
+            self.clear_escape(escape_completed: false, reset_timestamps: true);
         }
 
         fn trigger_escape_owner(ref self: ContractState, new_owner: Signer) {
@@ -464,7 +458,8 @@ pub mod ArgentAccount {
                 );
             }
 
-            self.reset_escape();
+            self.clear_escape(escape_completed: false, reset_timestamps: false);
+
             let ready_at = get_block_timestamp() + self.get_escape_security_period();
             let escape = Escape {
                 ready_at, escape_type: EscapeType::Owner, new_signer: Option::Some(new_owner.storage_value()),
@@ -479,8 +474,8 @@ pub mod ArgentAccount {
 
         fn trigger_escape_guardian(ref self: ContractState, new_guardian: Option<Signer>) {
             assert_only_self();
+            self.clear_escape(escape_completed: false, reset_timestamps: false);
 
-            self.reset_escape();
             let (new_guardian_guid, new_guardian_storage_value) = if let Option::Some(guardian) = new_guardian {
                 let guardian_guid = guardian.into_guid();
                 self.emit(SignerLinked { signer_guid: guardian_guid, signer: guardian });
@@ -504,15 +499,12 @@ pub mod ArgentAccount {
             let current_escape_status = self.get_escape_status(current_escape.ready_at);
             assert(current_escape_status == EscapeStatus::Ready, 'argent/invalid-escape');
 
-            self.reset_escape_timestamps();
-
             // update owner
             let new_owner = current_escape.new_signer.unwrap();
             self.owner_manager.complete_owner_escape(new_owner);
             self.emit(OwnerEscapedGuid { new_owner_guid: new_owner.into_guid() });
 
-            // clear escape
-            self._escape.write(Default::default());
+            self.clear_escape(escape_completed: true, reset_timestamps: true);
         }
 
         fn escape_guardian(ref self: ContractState) {
@@ -522,8 +514,6 @@ pub mod ArgentAccount {
             let current_escape = self._escape.read();
             assert(self.get_escape_status(current_escape.ready_at) == EscapeStatus::Ready, 'argent/invalid-escape');
 
-            self.reset_escape_timestamps();
-
             let new_guardian = current_escape.new_signer;
             self.guardian_manager.complete_guardian_escape(new_guardian);
             if let Option::Some(new_guardian) = new_guardian {
@@ -532,8 +522,7 @@ pub mod ArgentAccount {
                 self.emit(GuardianEscapedGuid { new_guardian_guid: 0 });
             }
 
-            // clear escape
-            self._escape.write(Default::default());
+            self.clear_escape(escape_completed: true, reset_timestamps: true);
         }
 
         fn cancel_escape(ref self: ContractState) {
@@ -541,8 +530,7 @@ pub mod ArgentAccount {
             let current_escape = self._escape.read();
             let current_escape_status = self.get_escape_status(current_escape.ready_at);
             assert(current_escape_status != EscapeStatus::None, 'argent/invalid-escape');
-            self.reset_escape();
-            self.reset_escape_timestamps();
+            self.clear_escape(escape_completed: false, reset_timestamps: true);
         }
 
         fn get_escape(self: @ContractState) -> Escape {
@@ -839,26 +827,28 @@ pub mod ArgentAccount {
             EscapeStatus::Ready
         }
 
-        fn reset_escape(ref self: ContractState) {
-            let current_escape_status = self.get_escape_status(self._escape.read().ready_at);
-            if current_escape_status == EscapeStatus::None {
-                return;
-            }
-            self._escape.write(Default::default());
-            if current_escape_status != EscapeStatus::Expired {
-                self.emit(EscapeCanceled {});
-            }
-        }
-
         fn assert_guardian_set(self: @ContractState) {
             assert(self.has_guardian(), 'argent/guardian-required');
         }
 
-        fn reset_escape_timestamps(ref self: ContractState) {
-            self.last_owner_trigger_escape_attempt.write(0);
-            self.last_guardian_trigger_escape_attempt.write(0);
-            self.last_owner_escape_attempt.write(0);
-            self.last_guardian_escape_attempt.write(0);
+        /// Clear the escape from storage
+        /// @param escape_completed Whether the escape was completed successfully, in case it wasn't, EscapeCanceled could be emitted
+        /// @param reset_timestamps Whether to reset the timestamps for gas griefing protection
+        fn clear_escape(ref self: ContractState, escape_completed: bool, reset_timestamps: bool) {
+            if !escape_completed {
+                // Emit Canceled event if needed
+                let current_escape_status = self.get_escape_status(self._escape.read().ready_at);
+                if current_escape_status == EscapeStatus::NotReady || current_escape_status == EscapeStatus::Ready {
+                    self.emit(EscapeCanceled {});
+                }
+            }
+            self._escape.write(Default::default());
+            if reset_timestamps {
+                self.last_owner_trigger_escape_attempt.write(0);
+                self.last_guardian_trigger_escape_attempt.write(0);
+                self.last_owner_escape_attempt.write(0);
+                self.last_guardian_escape_attempt.write(0);
+            }
         }
     }
 

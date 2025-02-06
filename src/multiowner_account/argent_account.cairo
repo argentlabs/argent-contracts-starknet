@@ -832,8 +832,8 @@ pub mod ArgentAccount {
         }
 
         /// Clear the escape from storage
-        /// @param escape_completed Whether the escape was completed successfully, in case it wasn't, EscapeCanceled could be emitted
-        /// @param reset_timestamps Whether to reset the timestamps for gas griefing protection
+        /// @param escape_completed Whether the escape was completed successfully, in case it wasn't, EscapeCanceled
+        /// could be emitted @param reset_timestamps Whether to reset the timestamps for gas griefing protection
         fn clear_escape(ref self: ContractState, escape_completed: bool, reset_timestamps: bool) {
             if !escape_completed {
                 // Emit Canceled event if needed

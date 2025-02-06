@@ -8,6 +8,8 @@ use argent::signer::signer_signature::{
     StarknetSignature, StarknetSigner,
 };
 
+/// @dev Represents a regular signature for the account
+/// Signatures for escape methods don't fit here and will be represented by a single `SignerSignature`
 #[derive(Drop, Copy)]
 pub struct AccountSignature {
     pub owner_signature: SignerSignature,

@@ -101,6 +101,30 @@ describe("ArgentAccount", function () {
       await accountContract.get_owners_guids().should.eventually.deep.equal([newOwner.guid]);
     });
 
+    it("Should not require a signature if owner is still valid", async function () {
+      const { accountContract, account, owner } = await deployAccount();
+      const newOwner = randomStarknetKeyPair();
+      await accountContract.change_owners(
+        CallData.compile([...CallData.compile({ owners_guids_to_remove: [], owners_to_add: [newOwner.signer] }), 1]),
+      );
+
+      const chainId = await manager.getChainId();
+      const currentTimestamp = await manager.getCurrentTimestamp();
+      const signerAliveSignature = await signOwnerAliveMessage(
+        accountContract.address,
+        newOwner,
+        chainId,
+        currentTimestamp + 1000,
+      );
+      const calldata = CallData.compile([
+        ...CallData.compile({ owner_guids_to_remove: [newOwner.guid], owners_to_add: [] }),
+        1,
+      ]);
+      // Can't just do account.change_owners(x, y) because parsing goes wrong...
+      await manager.ensureSuccess(await accountContract.invoke("change_owners", calldata));
+      await accountContract.get_owners_guids().should.eventually.deep.equal([owner.guid]);
+    });
+
     it("Expect parsing error when new_owner is zero", async function () {
       const { accountContract } = await deployAccount();
       const calldata = CallData.compile([

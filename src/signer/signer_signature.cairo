@@ -165,8 +165,7 @@ pub impl SignerTraitImpl of SignerTrait {
                 let mut hash_state = PoseidonTrait::new()
                     .update_with(WEBAUTHN_SIGNER_TYPE)
                     .update_with(signer.origin.len());
-
-                while let Option::Some(byte) = origin.pop_front() {
+                for byte in origin {
                     hash_state = hash_state.update_with(*byte);
                 };
                 hash_state.update_with(rp_id_hash).update_with(pubkey).finalize()
@@ -367,7 +366,7 @@ impl SignerSpanTraitImpl of SignerSpanTrait {
     #[must_use]
     fn to_guid_list(mut self: Span<Signer>) -> Array<felt252> {
         let mut guids = array![];
-        while let Option::Some(signer) = self.pop_front() {
+        for signer in self {
             guids.append((*signer).into_guid());
         };
         guids

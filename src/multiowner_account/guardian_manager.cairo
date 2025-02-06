@@ -1,4 +1,4 @@
-use argent::signer::signer_signature::{Signer, SignerInfo, SignerSignature, SignerStorageValue, SignerType};
+use argent::signer::signer_signature::{Signer, SignerInfo, SignerSignature, SignerType};
 
 #[starknet::interface]
 pub trait IGuardianManager<TContractState> {
@@ -24,29 +24,6 @@ pub trait IGuardianManager<TContractState> {
     fn is_valid_guardian_signature(self: @TContractState, hash: felt252, guardian_signature: SignerSignature) -> bool;
 }
 
-#[starknet::interface]
-trait IGuardianManagerInternal<TContractState> {
-    /// @notice Initializes the contract with the first guardian. Should ony be called in the constructor
-    /// @param guardian The first guardian of the account
-    /// @return The guid of the guardian
-    fn initialize(ref self: TContractState, guardian: Signer) -> felt252;
-    fn migrate_guardians_storage(ref self: TContractState, guardians: Array<SignerStorageValue>);
-
-    fn has_guardian(self: @TContractState) -> bool;
-
-
-    fn change_guardians(
-        ref self: TContractState, guardian_guids_to_remove: Array<felt252>, guardians_to_add: Array<Signer>,
-    );
-
-    fn complete_guardian_escape(ref self: TContractState, new_guardian: Option<SignerStorageValue>);
-
-    fn get_single_stark_guardian_pubkey(self: @TContractState) -> Option<felt252>;
-    fn get_single_guardian(self: @TContractState) -> Option<SignerStorageValue>;
-    fn assert_valid_storage(self: @TContractState);
-    fn assert_single_guardian_signature(self: @TContractState, hash: felt252, raw_signature: Span<felt252>);
-}
-
 /// Managing the account guardians
 #[starknet::component]
 pub mod guardian_manager_component {
@@ -64,7 +41,7 @@ pub mod guardian_manager_component {
     use argent::utils::array_ext::SpanContains;
     use argent::utils::serialization::full_deserialize;
     use argent::utils::transaction_version::is_estimate_transaction;
-    use super::{IGuardianManager, IGuardianManagerInternal};
+    use super::{IGuardianManager};
 
     /// Too many signers could make the account unable to process transactions if we reach a limit
     const MAX_SIGNERS_COUNT: usize = 32;
@@ -133,10 +110,13 @@ pub mod guardian_manager_component {
         }
     }
 
-    #[embeddable_as(GuardianManagerInternalImpl)]
-    impl GuardianManagerInternal<
+    #[generate_trait]
+    pub impl GuardianManagerInternal<
         TContractState, +HasComponent<TContractState>, +IEmitArgentAccountEvent<TContractState>, +Drop<TContractState>,
-    > of IGuardianManagerInternal<ComponentState<TContractState>> {
+    > of IGuardianManagerInternal<TContractState> {
+        /// @notice Initializes the contract with the first guardian. Should ony be called in the constructor
+        /// @param guardian The first guardian of the account
+        /// @return The guid of the guardian
         fn initialize(ref self: ComponentState<TContractState>, guardian: Signer) -> felt252 {
             let guid = self.guardians_storage.insert(guardian.storage_value());
             self.emit_signer_linked_event(SignerLinked { signer_guid: guid, signer: guardian });
@@ -152,6 +132,10 @@ pub mod guardian_manager_component {
                 let guardian_guid = self.guardians_storage.insert(guardian);
                 self.emit_guardian_added(guardian_guid);
             };
+        }
+
+        fn assert_guardian_set(self: @ComponentState<TContractState>) {
+            assert(self.has_guardian(), 'argent/guardian-required');
         }
 
         fn has_guardian(self: @ComponentState<TContractState>) -> bool {

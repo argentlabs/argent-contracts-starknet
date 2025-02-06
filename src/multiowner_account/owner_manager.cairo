@@ -1,4 +1,4 @@
-use argent::signer::signer_signature::{Signer, SignerInfo, SignerSignature, SignerStorageValue, SignerType};
+use argent::signer::signer_signature::{Signer, SignerInfo, SignerSignature, SignerType};
 
 #[starknet::interface]
 pub trait IOwnerManager<TContractState> {
@@ -21,20 +21,6 @@ pub trait IOwnerManager<TContractState> {
     fn is_valid_owner_signature(self: @TContractState, hash: felt252, owner_signature: SignerSignature) -> bool;
 }
 
-trait IOwnerManagerInternal<TContractState> {
-    /// @notice Initializes the contract with the first owner. Should ony be called in the constructor
-    /// @param owner The first owner of the account
-    /// @return The guid of the owner
-    fn initialize(ref self: TContractState, owner: Signer) -> felt252;
-    fn initialize_from_upgrade(ref self: TContractState, signer_storage: SignerStorageValue);
-    fn change_owners(ref self: TContractState, owner_guids_to_remove: Array<felt252>, owners_to_add: Array<Signer>);
-    fn complete_owner_escape(ref self: TContractState, new_owner: SignerStorageValue);
-    fn assert_valid_storage(self: @TContractState);
-    fn get_single_stark_owner_pubkey(self: @TContractState) -> Option<felt252>;
-    fn get_single_owner(self: @TContractState) -> Option<SignerStorageValue>;
-    fn assert_single_owner_signature(self: @TContractState, hash: felt252, raw_signature: Span<felt252>);
-}
-
 /// Managing the list of owners of the account
 #[starknet::component]
 pub mod owner_manager_component {
@@ -52,7 +38,7 @@ pub mod owner_manager_component {
     use argent::utils::array_ext::SpanContains;
     use argent::utils::serialization::full_deserialize;
     use argent::utils::{transaction_version::is_estimate_transaction};
-    use super::{IOwnerManager, IOwnerManagerInternal};
+    use super::IOwnerManager;
 
     /// Too many owners could make the account unable to process transactions if we reach a limit
     const MAX_SIGNERS_COUNT: usize = 32;
@@ -116,9 +102,13 @@ pub mod owner_manager_component {
         }
     }
 
+    #[generate_trait]
     pub impl OwnerManagerInternalImpl<
         TContractState, +HasComponent<TContractState>, +IEmitArgentAccountEvent<TContractState>, +Drop<TContractState>,
-    > of IOwnerManagerInternal<ComponentState<TContractState>> {
+    > of IOwnerManagerInternal<TContractState> {
+        /// @notice Initializes the contract with the first owner. Should ony be called in the constructor
+        /// @param owner The first owner of the account
+        /// @return The guid of the owner
         fn initialize(ref self: ComponentState<TContractState>, owner: Signer) -> felt252 {
             let guid = self.owners_storage.insert(owner.storage_value());
             self.emit_signer_linked_event(SignerLinked { signer_guid: guid, signer: owner });

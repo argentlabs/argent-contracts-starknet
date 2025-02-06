@@ -20,7 +20,7 @@ pub fn to_starknet_signer_signatures(arr: Array<felt252>) -> Array<felt252> {
 pub fn to_starknet_signatures(arr: Array<KeyAndSig>) -> Array<felt252> {
     let mut signatures = array![];
     let mut arr = arr.span();
-    while let Option::Some(item) = arr.pop_front() {
+    for item in arr {
         let pubkey = (*item.pubkey).try_into().expect('argent/zero-pubkey');
         let StarknetSignature { r, s } = *item.sig;
         signatures.append(SignerSignature::Starknet((pubkey, StarknetSignature { r, s })));

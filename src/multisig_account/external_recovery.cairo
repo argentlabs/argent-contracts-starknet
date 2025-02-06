@@ -91,7 +91,6 @@ pub struct EscapeCanceled {
 
 /// This trait must be implemented when using the component `external_recovery`
 pub trait IExternalRecoveryCallback<TContractState> {
-    #[inline(always)]
     fn execute_recovery_call(ref self: TContractState, selector: felt252, calldata: Span<felt252>);
 }
 

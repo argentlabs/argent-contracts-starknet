@@ -29,7 +29,7 @@ pub mod ArgentAccount {
         EscapeSecurityPeriodChanged, GuardianEscapedGuid, OwnerEscapedGuid, SignerLinked, TransactionExecuted,
     };
     use argent::multiowner_account::guardian_manager::{
-        IGuardianManager, guardian_manager_component, guardian_manager_component::GuardianManagerInternalImpl,
+        IGuardianManager, guardian_manager_component, guardian_manager_component::IGuardianManagerInternal,
     };
     use argent::multiowner_account::owner_alive::OwnerAlive;
     use argent::multiowner_account::owner_alive::OwnerAliveSignature;
@@ -38,8 +38,7 @@ pub mod ArgentAccount {
     };
     use argent::multiowner_account::recovery::{Escape, EscapeType};
     use argent::multiowner_account::upgrade_migration::{
-        IUpgradeMigrationCallback, IUpgradeMigrationInternal, upgrade_migration_component,
-        upgrade_migration_component::UpgradeMigrationInternalImpl,
+        IUpgradeMigrationCallback, upgrade_migration_component, upgrade_migration_component::IUpgradeMigrationInternal,
     };
 
     use argent::offchain_message::IOffChainMessageHashRev1;
@@ -49,12 +48,11 @@ pub mod ArgentAccount {
     use argent::recovery::EscapeStatus;
     use argent::session::session::{ISessionCallback, session_component, session_component::InternalTrait};
     use argent::signer::signer_signature::{
-        Signer, SignerSignature, SignerSignatureTrait, SignerStorageTrait, SignerStorageValue, SignerTrait, SignerType,
+        Signer, SignerSignature, SignerSignatureTrait, SignerStorageTrait, SignerStorageValue, SignerTrait,
         StarknetSignature, StarknetSigner,
     };
     use argent::upgrade::{
-        IUpgradableCallback, IUpgradableCallbackOld, IUpgradeInternal, upgrade_component,
-        upgrade_component::UpgradableInternalImpl,
+        IUpgradableCallback, IUpgradableCallbackOld, upgrade_component, upgrade_component::IUpgradeInternal,
     };
     use argent::utils::array_ext::SpanContains;
     use argent::utils::{
@@ -640,7 +638,7 @@ pub mod ArgentAccount {
                         return; // valid
                     }
                     if selector == selector!("trigger_escape_guardian") {
-                        self.assert_guardian_set();
+                        self.guardian_manager.assert_guardian_set();
 
                         if !is_from_outside {
                             assert_valid_escape_parameters(self.last_owner_trigger_escape_attempt.read());
@@ -652,7 +650,7 @@ pub mod ArgentAccount {
                         return; // valid
                     }
                     if selector == selector!("escape_guardian") {
-                        self.assert_guardian_set();
+                        self.guardian_manager.assert_guardian_set();
 
                         if !is_from_outside {
                             assert_valid_escape_parameters(self.last_owner_escape_attempt.read());
@@ -667,7 +665,7 @@ pub mod ArgentAccount {
                     }
                     if selector == selector!("change_owners") {
                         let account_signature = self.parse_account_signature(raw_signature);
-                        if !self.has_guardian() {
+                        if !self.guardian_manager.has_guardian() {
                             let (owner_guids_to_remove, _, owner_alive_signature) = full_deserialize::<
                                 (Array<felt252>, Array<Signer>, Option<OwnerAliveSignature>),
                             >(*call.calldata)
@@ -805,10 +803,6 @@ pub mod ArgentAccount {
             if current_escape_status != EscapeStatus::Expired {
                 self.emit(EscapeCanceled {});
             }
-        }
-
-        fn assert_guardian_set(self: @ContractState) {
-            assert(self.has_guardian(), 'argent/guardian-required');
         }
 
         fn reset_escape_timestamps(ref self: ContractState) {

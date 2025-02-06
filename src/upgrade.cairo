@@ -26,9 +26,6 @@ pub trait IUpgradableCallback<TContractState> {
     fn perform_upgrade(ref self: TContractState, new_implementation: ClassHash, data: Span<felt252>);
 }
 
-pub trait IUpgradeInternal<TContractState> {
-    fn complete_upgrade(ref self: TContractState, new_implementation: ClassHash);
-}
 
 #[starknet::component]
 pub mod upgrade_component {
@@ -70,9 +67,8 @@ pub mod upgrade_component {
         }
     }
 
-    pub impl UpgradableInternalImpl<
-        TContractState, +HasComponent<TContractState>,
-    > of super::IUpgradeInternal<ComponentState<TContractState>> {
+    #[generate_trait]
+    pub impl UpgradableInternalImpl<TContractState, +HasComponent<TContractState>> of IUpgradeInternal<TContractState> {
         fn complete_upgrade(ref self: ComponentState<TContractState>, new_implementation: ClassHash) {
             replace_class_syscall(new_implementation).expect('argent/invalid-upgrade');
             self.emit(AccountUpgraded { new_implementation });

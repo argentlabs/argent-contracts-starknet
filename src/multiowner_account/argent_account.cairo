@@ -225,7 +225,7 @@ pub mod ArgentAccount {
                     .assert_valid_calls_and_signature(
                         calls: calls.span(),
                         execution_hash: tx_info.transaction_hash,
-                        signature: tx_info.signature,
+                        raw_signature: tx_info.signature,
                         is_from_outside: false,
                         account_address: exec_info.contract_address,
                     );
@@ -334,16 +334,16 @@ pub mod ArgentAccount {
     impl OutsideExecutionCallbackImpl of IOutsideExecutionCallback<ContractState> {
         #[inline(always)]
         fn execute_from_outside_callback(
-            ref self: ContractState, calls: Span<Call>, outside_execution_hash: felt252, signature: Span<felt252>,
+            ref self: ContractState, calls: Span<Call>, outside_execution_hash: felt252, raw_signature: Span<felt252>,
         ) -> Array<Span<felt252>> {
-            if self.session.is_session(signature) {
-                self.session.assert_valid_session(calls, outside_execution_hash, signature);
+            if self.session.is_session(raw_signature) {
+                self.session.assert_valid_session(calls, outside_execution_hash, raw_signature);
             } else {
                 self
                     .assert_valid_calls_and_signature(
                         :calls,
                         execution_hash: outside_execution_hash,
-                        :signature,
+                        :raw_signature,
                         is_from_outside: true,
                         account_address: get_contract_address(),
                     );

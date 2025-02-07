@@ -405,9 +405,7 @@ pub mod ArgentAccount {
             assert_only_self();
             assert(new_security_period >= MIN_ESCAPE_SECURITY_PERIOD, 'argent/invalid-security-period');
 
-            let current_escape = self._escape.read();
-            let current_escape_status = self.get_escape_status(current_escape.ready_at);
-            match current_escape_status {
+            match self.get_escape_status() {
                 EscapeStatus::None => (), // ignore
                 EscapeStatus::NotReady | EscapeStatus::Ready => panic_with_felt252('argent/ongoing-escape'),
                 EscapeStatus::Expired => self._escape.write(Default::default()),
@@ -456,12 +454,9 @@ pub mod ArgentAccount {
             assert_only_self();
 
             // no escape if there is a guardian escape triggered by the owner in progress
-            let current_escape = self._escape.read();
+            let (current_escape, current_escape_status) = self.get_escape_and_status();
             if current_escape.escape_type == EscapeType::Guardian {
-                assert(
-                    self.get_escape_status(current_escape.ready_at) == EscapeStatus::Expired,
-                    'argent/cannot-override-escape',
-                );
+                assert(current_escape_status == EscapeStatus::Expired, 'argent/cannot-override-escape');
             }
 
             self.reset_escape();
@@ -499,9 +494,7 @@ pub mod ArgentAccount {
             assert_only_self();
 
             // assert_valid_calls_and_signature(...) guarantees that the escape is of the correct type
-            let current_escape = self._escape.read();
-
-            let current_escape_status = self.get_escape_status(current_escape.ready_at);
+            let (current_escape, current_escape_status) = self.get_escape_and_status();
             assert(current_escape_status == EscapeStatus::Ready, 'argent/invalid-escape');
 
             self.reset_escape_timestamps();
@@ -519,8 +512,9 @@ pub mod ArgentAccount {
             assert_only_self();
 
             // assert_valid_calls_and_signature(...) guarantees that the escape is of the correct type
-            let current_escape = self._escape.read();
-            assert(self.get_escape_status(current_escape.ready_at) == EscapeStatus::Ready, 'argent/invalid-escape');
+
+            let (current_escape, current_escape_status) = self.get_escape_and_status();
+            assert(current_escape_status == EscapeStatus::Ready, 'argent/invalid-escape');
 
             self.reset_escape_timestamps();
 
@@ -538,9 +532,7 @@ pub mod ArgentAccount {
 
         fn cancel_escape(ref self: ContractState) {
             assert_only_self();
-            let current_escape = self._escape.read();
-            let current_escape_status = self.get_escape_status(current_escape.ready_at);
-            assert(current_escape_status != EscapeStatus::None, 'argent/invalid-escape');
+            assert(self.get_escape_status() != EscapeStatus::None, 'argent/invalid-escape');
             self.reset_escape();
             self.reset_escape_timestamps();
         }
@@ -577,7 +569,19 @@ pub mod ArgentAccount {
         /// Current escape if any, and its status
         fn get_escape_and_status(self: @ContractState) -> (Escape, EscapeStatus) {
             let current_escape = self._escape.read();
-            (current_escape, self.get_escape_status(current_escape.ready_at))
+            let escape_ready_at = current_escape.ready_at;
+            if escape_ready_at == 0 {
+                return (current_escape, EscapeStatus::None);
+            }
+
+            let block_timestamp = get_block_timestamp();
+            if block_timestamp < escape_ready_at {
+                return (current_escape, EscapeStatus::NotReady);
+            }
+            if escape_ready_at + self.get_escape_security_period() <= block_timestamp {
+                return (current_escape, EscapeStatus::Expired);
+            }
+            (current_escape, EscapeStatus::Ready)
         }
     }
 
@@ -778,24 +782,13 @@ pub mod ArgentAccount {
             assert(is_valid, 'argent/invalid-alive-sig');
         }
 
-        fn get_escape_status(self: @ContractState, escape_ready_at: u64) -> EscapeStatus {
-            if escape_ready_at == 0 {
-                return EscapeStatus::None;
-            }
-
-            let block_timestamp = get_block_timestamp();
-            if block_timestamp < escape_ready_at {
-                return EscapeStatus::NotReady;
-            }
-            if escape_ready_at + self.get_escape_security_period() <= block_timestamp {
-                return EscapeStatus::Expired;
-            }
-
-            EscapeStatus::Ready
+        fn get_escape_status(self: @ContractState) -> EscapeStatus {
+            let (_, current_escape_status) = self.get_escape_and_status();
+            current_escape_status
         }
 
         fn reset_escape(ref self: ContractState) {
-            let current_escape_status = self.get_escape_status(self._escape.read().ready_at);
+            let current_escape_status = self.get_escape_status();
             if current_escape_status == EscapeStatus::None {
                 return;
             }

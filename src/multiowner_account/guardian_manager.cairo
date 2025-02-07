@@ -24,7 +24,6 @@ pub trait IGuardianManager<TContractState> {
     fn is_valid_guardian_signature(self: @TContractState, hash: felt252, guardian_signature: SignerSignature) -> bool;
 }
 
-
 /// Managing the account guardians
 #[starknet::component]
 pub mod guardian_manager_component {
@@ -37,9 +36,10 @@ pub mod guardian_manager_component {
     use argent::multiowner_account::signer_storage_linked_set::SignerStorageValueLinkedSetConfig;
     use argent::signer::signer_signature::{
         Signer, SignerInfo, SignerSignature, SignerSignatureTrait, SignerStorageTrait, SignerStorageValue, SignerTrait,
-        SignerType,
+        SignerType, StarknetSignature, StarknetSigner,
     };
     use argent::utils::array_ext::SpanContains;
+    use argent::utils::serialization::full_deserialize;
     use argent::utils::transaction_version::is_estimate_transaction;
     use super::{IGuardianManager};
 
@@ -190,12 +190,42 @@ pub mod guardian_manager_component {
         fn assert_valid_storage(self: @ComponentState<TContractState>) {
             self.assert_valid_guardian_count(self.guardians_storage.len());
         }
+
+        fn assert_single_guardian_signature(
+            self: @ComponentState<TContractState>, hash: felt252, raw_signature: Span<felt252>,
+        ) {
+            let guardian_signature = self.parse_single_guardian_signature(raw_signature);
+            let is_valid = self.is_valid_guardian_signature(hash, guardian_signature);
+            assert(is_valid, 'argent/invalid-guardian-sig');
+        }
     }
 
     #[generate_trait]
     impl Private<
         TContractState, +HasComponent<TContractState>, +IEmitArgentAccountEvent<TContractState>, +Drop<TContractState>,
     > of PrivateTrait<TContractState> {
+        fn parse_single_guardian_signature(
+            self: @ComponentState<TContractState>, mut raw_signature: Span<felt252>,
+        ) -> SignerSignature {
+            if raw_signature.len() != 2 {
+                let signature_array: Array<SignerSignature> = full_deserialize(raw_signature)
+                    .expect('argent/invalid-signature-format');
+                assert(signature_array.len() == 1, 'argent/invalid-signature-length');
+                return *signature_array.at(0);
+            }
+            let single_stark_guardian = self
+                .get_single_stark_guardian_pubkey()
+                .expect('argent/no-single-guardian-owner');
+            return SignerSignature::Starknet(
+                (
+                    StarknetSigner { pubkey: single_stark_guardian.try_into().expect('argent/zero-pubkey') },
+                    StarknetSignature {
+                        r: *raw_signature.pop_front().unwrap(), s: *raw_signature.pop_front().unwrap(),
+                    },
+                ),
+            );
+        }
+
         /// @dev it will revert if there's any overlap between the guardians to add and the guardians to remove
         /// @dev it will revert if there are duplicate in the guardians to add or remove
         fn change_guardians_using_storage(

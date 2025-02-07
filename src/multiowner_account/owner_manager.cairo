@@ -33,9 +33,10 @@ pub mod owner_manager_component {
     use argent::multiowner_account::signer_storage_linked_set::SignerStorageValueLinkedSetConfig;
     use argent::signer::signer_signature::{
         Signer, SignerInfo, SignerSignature, SignerSignatureTrait, SignerStorageTrait, SignerStorageValue, SignerTrait,
-        SignerType,
+        SignerType, StarknetSignature, StarknetSigner,
     };
     use argent::utils::array_ext::SpanContains;
+    use argent::utils::serialization::full_deserialize;
     use argent::utils::{transaction_version::is_estimate_transaction};
     use super::IOwnerManager;
 
@@ -160,12 +161,40 @@ pub mod owner_manager_component {
 
             self.change_owners_using_storage(:owner_guids_to_remove, owners_to_add: array![new_owner]);
         }
+
+        fn assert_single_owner_signature(
+            self: @ComponentState<TContractState>, hash: felt252, raw_signature: Span<felt252>,
+        ) {
+            let owner_signature = self.parse_single_owner_signature(raw_signature);
+            let is_valid = self.is_valid_owner_signature(hash, owner_signature);
+            assert(is_valid, 'argent/invalid-owner-sig');
+        }
     }
 
     #[generate_trait]
     impl Private<
         TContractState, +HasComponent<TContractState>, +IEmitArgentAccountEvent<TContractState>, +Drop<TContractState>,
     > of PrivateTrait<TContractState> {
+        fn parse_single_owner_signature(
+            self: @ComponentState<TContractState>, mut raw_signature: Span<felt252>,
+        ) -> SignerSignature {
+            if raw_signature.len() != 2 {
+                let signature_array: Array<SignerSignature> = full_deserialize(raw_signature)
+                    .expect('argent/invalid-signature-format');
+                assert(signature_array.len() == 1, 'argent/invalid-signature-length');
+                return *signature_array.at(0);
+            }
+            let single_stark_owner = self.get_single_stark_owner_pubkey().expect('argent/no-single-stark-owner');
+            SignerSignature::Starknet(
+                (
+                    StarknetSigner { pubkey: single_stark_owner.try_into().expect('argent/zero-pubkey') },
+                    StarknetSignature {
+                        r: *raw_signature.pop_front().unwrap(), s: *raw_signature.pop_front().unwrap(),
+                    },
+                ),
+            )
+        }
+
         /// @dev it will revert if there's any overlap between the owners to add and the owners to remove
         /// @dev it will revert if there are duplicate in the owners to add or remove
         fn change_owners_using_storage(

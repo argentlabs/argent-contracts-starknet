@@ -1,4 +1,4 @@
-use argent::signer::signer_signature::{Signer, SignerInfo, SignerSignature, SignerStorageValue, SignerType};
+use argent::signer::signer_signature::{Signer, SignerInfo, SignerSignature, SignerType};
 
 #[starknet::interface]
 pub trait IGuardianManager<TContractState> {
@@ -24,28 +24,6 @@ pub trait IGuardianManager<TContractState> {
     fn is_valid_guardian_signature(self: @TContractState, hash: felt252, guardian_signature: SignerSignature) -> bool;
 }
 
-#[starknet::interface]
-trait IGuardianManagerInternal<TContractState> {
-    /// @notice Initializes the contract with the first guardian. Should ony be called in the constructor
-    /// @param guardian The first guardian of the account
-    /// @return The guid of the guardian
-    fn initialize(ref self: TContractState, guardian: Signer) -> felt252;
-    fn migrate_guardians_storage(ref self: TContractState, guardians: Array<SignerStorageValue>);
-
-    fn has_guardian(self: @TContractState) -> bool;
-
-
-    fn change_guardians(
-        ref self: TContractState, guardian_guids_to_remove: Array<felt252>, guardians_to_add: Array<Signer>,
-    );
-
-    fn complete_guardian_escape(ref self: TContractState, new_guardian: Option<SignerStorageValue>);
-
-    fn get_single_stark_guardian_pubkey(self: @TContractState) -> Option<felt252>;
-    fn get_single_guardian(self: @TContractState) -> Option<SignerStorageValue>;
-    fn assert_valid_storage(self: @TContractState);
-}
-
 /// Managing the account guardians
 #[starknet::component]
 pub mod guardian_manager_component {
@@ -58,11 +36,12 @@ pub mod guardian_manager_component {
     use argent::multiowner_account::signer_storage_linked_set::SignerStorageValueLinkedSetConfig;
     use argent::signer::signer_signature::{
         Signer, SignerInfo, SignerSignature, SignerSignatureTrait, SignerStorageTrait, SignerStorageValue, SignerTrait,
-        SignerType,
+        SignerType, StarknetSignature, StarknetSigner,
     };
     use argent::utils::array_ext::SpanContains;
+    use argent::utils::serialization::full_deserialize;
     use argent::utils::transaction_version::is_estimate_transaction;
-    use super::{IGuardianManager, IGuardianManagerInternal};
+    use super::{IGuardianManager};
 
     /// Too many signers could make the account unable to process transactions if we reach a limit
     const MAX_SIGNERS_COUNT: usize = 32;
@@ -131,10 +110,13 @@ pub mod guardian_manager_component {
         }
     }
 
-    #[embeddable_as(GuardianManagerInternalImpl)]
-    impl GuardianManagerInternal<
+    #[generate_trait]
+    pub impl GuardianManagerInternal<
         TContractState, +HasComponent<TContractState>, +IEmitArgentAccountEvent<TContractState>, +Drop<TContractState>,
-    > of IGuardianManagerInternal<ComponentState<TContractState>> {
+    > of IGuardianManagerInternal<TContractState> {
+        /// @notice Initializes the contract with the first guardian. Should ony be called in the constructor
+        /// @param guardian The first guardian of the account
+        /// @return The guid of the guardian
         fn initialize(ref self: ComponentState<TContractState>, guardian: Signer) -> felt252 {
             let guid = self.guardians_storage.insert(guardian.storage_value());
             self.emit_signer_linked_event(SignerLinked { signer_guid: guid, signer: guardian });
@@ -150,6 +132,10 @@ pub mod guardian_manager_component {
                 let guardian_guid = self.guardians_storage.insert(guardian);
                 self.emit_guardian_added(guardian_guid);
             };
+        }
+
+        fn assert_guardian_set(self: @ComponentState<TContractState>) {
+            assert(self.has_guardian(), 'argent/guardian-required');
         }
 
         fn has_guardian(self: @ComponentState<TContractState>) -> bool {
@@ -204,12 +190,42 @@ pub mod guardian_manager_component {
         fn assert_valid_storage(self: @ComponentState<TContractState>) {
             self.assert_valid_guardian_count(self.guardians_storage.len());
         }
+
+        fn assert_single_guardian_signature(
+            self: @ComponentState<TContractState>, hash: felt252, raw_signature: Span<felt252>,
+        ) {
+            let guardian_signature = self.parse_single_guardian_signature(raw_signature);
+            let is_valid = self.is_valid_guardian_signature(hash, guardian_signature);
+            assert(is_valid, 'argent/invalid-guardian-sig');
+        }
     }
 
     #[generate_trait]
     impl Private<
         TContractState, +HasComponent<TContractState>, +IEmitArgentAccountEvent<TContractState>, +Drop<TContractState>,
     > of PrivateTrait<TContractState> {
+        fn parse_single_guardian_signature(
+            self: @ComponentState<TContractState>, mut raw_signature: Span<felt252>,
+        ) -> SignerSignature {
+            if raw_signature.len() != 2 {
+                let signature_array: Array<SignerSignature> = full_deserialize(raw_signature)
+                    .expect('argent/invalid-signature-format');
+                assert(signature_array.len() == 1, 'argent/invalid-signature-length');
+                return *signature_array.at(0);
+            }
+            let single_stark_guardian = self
+                .get_single_stark_guardian_pubkey()
+                .expect('argent/no-single-guardian-owner');
+            return SignerSignature::Starknet(
+                (
+                    StarknetSigner { pubkey: single_stark_guardian.try_into().expect('argent/zero-pubkey') },
+                    StarknetSignature {
+                        r: *raw_signature.pop_front().unwrap(), s: *raw_signature.pop_front().unwrap(),
+                    },
+                ),
+            );
+        }
+
         /// @dev it will revert if there's any overlap between the guardians to add and the guardians to remove
         /// @dev it will revert if there are duplicate in the guardians to add or remove
         fn change_guardians_using_storage(

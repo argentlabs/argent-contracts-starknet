@@ -1,5 +1,5 @@
+use argent::multiowner_account::argent_account::AccountSignature;
 use argent::signer::signer_signature::{Signer, SignerSignature};
-
 /// @notice Session struct that the owner and guardian has to sign to initiate a session
 /// @dev The hash of the session is also signed by the guardian (backend) and
 /// the dapp (session key) for every session tx (which may include multiple calls)
@@ -42,7 +42,7 @@ pub trait ISessionCallback<TContractState> {
     /// @return The parsed array of SignerSignature
     fn validate_authorization(
         self: @TContractState, session_hash: felt252, authorization_signature: Span<felt252>,
-    ) -> Array<SignerSignature>;
+    ) -> AccountSignature;
 
     fn is_owner_guid(self: @TContractState, owner_guid: felt252) -> bool;
     fn is_guardian(self: @TContractState, guardian: Signer) -> bool;
@@ -230,9 +230,9 @@ pub mod session_component {
                     return; // authorized
                 }
                 let parsed_session_authorization = state.validate_authorization(session_hash, session_authorization);
-                let owner_guid_from_auth = (*parsed_session_authorization[0]).signer().into_guid();
+                let owner_guid_from_auth = parsed_session_authorization.owner_signature.signer().into_guid();
                 // assert guardian in the token is the same guardian as in the authorization
-                let guardian_from_auth = (*parsed_session_authorization[1]).signer();
+                let guardian_from_auth = parsed_session_authorization.guardian_signature.unwrap().signer();
                 assert(guardian_from_auth == token_guardian, 'session/guardian-key-mismatch');
 
                 self
@@ -242,7 +242,7 @@ pub mod session_component {
                 let parsed_session_authorization = state.validate_authorization(session_hash, session_authorization);
 
                 // assert guardian in the token is the same guardian as in the authorization
-                let guardian_from_auth = (*parsed_session_authorization[1]).signer();
+                let guardian_from_auth = parsed_session_authorization.guardian_signature.unwrap().signer();
                 assert(guardian_from_auth == token_guardian, 'session/guardian-key-mismatch');
             }
         }

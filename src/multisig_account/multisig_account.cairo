@@ -7,7 +7,7 @@ mod ArgentMultisigAccount {
         signer_manager_component, signer_manager_component::SignerManagerInternalImpl,
     };
     use argent::multisig_account::upgrade_migration::{
-        upgrade_migration_component, upgrade_migration_component::UpgradableMigrationInternalImpl,
+        upgrade_migration_component, upgrade_migration_component::IUpgradeMigrationInternal,
     };
     use argent::outside_execution::{
         outside_execution::IOutsideExecutionCallback, outside_execution::outside_execution_component,

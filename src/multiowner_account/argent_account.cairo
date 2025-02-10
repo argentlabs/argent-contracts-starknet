@@ -690,9 +690,7 @@ pub mod ArgentAccount {
             self.assert_valid_account_signature_raw(execution_hash, raw_signature);
         }
 
-        // TODO This was the most straight forward to remove to not exceed contract size limit
-        // We prob want to re-assess
-        // #[inline(always)]
+        #[inline(always)]
         fn parse_account_signature(self: @ContractState, mut raw_signature: Span<felt252>) -> AccountSignature {
             // Check if it's a legacy signature array, this only supports legacy signature if there is exactly 1 only
             // and a maximum of 1 guardian Legacy signatures are always 2 or 4 items long

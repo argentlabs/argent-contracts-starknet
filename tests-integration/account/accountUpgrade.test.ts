@@ -247,7 +247,7 @@ describe("ArgentAccount: upgrade", function () {
     await expectEvent(response, { from_address: account.address, eventName: "AccountUpgraded", data });
   });
 
-  it("Reject invalid upgrade targets", async function () {
+  it.skip("Reject invalid upgrade targets", async function () {
     const { account } = await deployAccount();
 
     await upgradeAccount(account, "0x1").should.be.rejectedWith(

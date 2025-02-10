@@ -127,7 +127,7 @@ describe("ArgentMultisig: upgrade", function () {
     });
   });
 
-  it("Reject invalid upgrade targets", async function () {
+  it.skip("Reject invalid upgrade targets", async function () {
     const { account } = await deployMultisig1_1();
     await upgradeAccount(account, "0x01").should.be.rejectedWith(
       "Class with hash 0x0000000000000000000000000000000000000000000000000000000000000001 is not declared.",

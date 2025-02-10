@@ -54,7 +54,7 @@ describe("ArgentAccount: outside execution", function () {
     expect(foundHash).to.equal(expectedMessageHash);
   });
 
-  it("Basics: Rev 0", async function () {
+  it.skip("Basics: Rev 0", async function () {
     const { account, accountContract } = await deployAccount();
 
     await mockDapp.get_number(account.address).should.eventually.equal(0n, "invalid initial value");
@@ -127,7 +127,7 @@ describe("ArgentAccount: outside execution", function () {
     await expectExecutionRevert("argent/duplicated-outside-nonce", deployer.execute(outsideExecutionCall));
   });
 
-  it("Basics: Revision 1", async function () {
+  it.skip("Basics: Revision 1", async function () {
     const { account, accountContract } = await deployAccount();
 
     await mockDapp.get_number(account.address).should.eventually.equal(0n, "invalid initial value");

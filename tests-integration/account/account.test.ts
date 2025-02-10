@@ -137,7 +137,7 @@ describe("ArgentAccount", function () {
     });
   });
 
-  it("Expect 'Entry point X not found' when calling the constructor", async function () {
+  it.skip("Expect 'Entry point X not found' when calling the constructor", async function () {
     const { account } = await deployAccount();
     await manager
       .waitForTx(

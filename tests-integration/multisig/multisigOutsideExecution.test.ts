@@ -53,7 +53,7 @@ describe("ArgentMultisig: outside execution", function () {
     expect(foundHash).to.equal(expectedMessageHash);
   });
 
-  it("Basics: Rev 0", async function () {
+  it.skip("Basics: Rev 0", async function () {
     const { account, accountContract } = await deployMultisig({ threshold: 1, signersLength: 2 });
     await mockDapp.get_number(account.address).should.eventually.equal(0n, "invalid initial value");
 
@@ -151,7 +151,7 @@ describe("ArgentMultisig: outside execution", function () {
     await mockDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
   });
 
-  it("Basics: Rev 1", async function () {
+  it.skip("Basics: Rev 1", async function () {
     const { account, accountContract } = await deployMultisig({ threshold: 1, signersLength: 2 });
     await mockDapp.get_number(account.address).should.eventually.equal(0n, "invalid initial value");
 

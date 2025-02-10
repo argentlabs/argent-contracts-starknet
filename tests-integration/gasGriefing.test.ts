@@ -8,7 +8,7 @@ describe("Gas griefing", function () {
 
   // run test with both TxV1 and TxV3
   for (const useTxV3 of [false, true]) {
-    it.skip(`Block guardian attempts (TxV3:${useTxV3})`, async function () {
+    it(`Block guardian attempts (TxV3:${useTxV3})`, async function () {
       const { account, guardian, accountContract } = await deployAccount({ useTxV3 });
       account.signer = new ArgentSigner(guardian);
 
@@ -20,7 +20,7 @@ describe("Gas griefing", function () {
     });
   }
 
-  it.skip("Block high fee TxV1", async function () {
+  it("Block high fee TxV1", async function () {
     const { account, accountContract, guardian } = await deployAccount({
       useTxV3: false,
       fundingAmount: 50000000000000001n,
@@ -38,7 +38,7 @@ describe("Gas griefing", function () {
     );
   });
 
-  it.skip("Block high fee TxV3", async function () {
+  it("Block high fee TxV3", async function () {
     const { account, accountContract, guardian } = await deployAccount({
       useTxV3: true,
     });
@@ -127,7 +127,7 @@ describe("Gas griefing", function () {
     );
   });
 
-  it.skip("Block other DA modes", async function () {
+  it("Block other DA modes", async function () {
     const { account, accountContract, guardian } = await deployAccount({ useTxV3: true });
     account.signer = new ArgentSigner(guardian);
     await expectExecutionRevert(
@@ -152,7 +152,7 @@ describe("Gas griefing", function () {
     );
   });
 
-  it.skip("Block deployment data", async function () {
+  it("Block deployment data", async function () {
     const { account, accountContract, guardian } = await deployAccount({ useTxV3: true });
     account.signer = new ArgentSigner(guardian);
     await expectExecutionRevert(

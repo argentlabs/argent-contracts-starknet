@@ -2,6 +2,7 @@ import { expect } from "chai";
 import { Contract, TypedDataRevision, num, shortString } from "starknet";
 import {
   OutsideExecution,
+  deployAccount,
   deployMultisig,
   deployer,
   expectExecutionRevert,
@@ -53,12 +54,14 @@ describe("ArgentMultisig: outside execution", function () {
     expect(foundHash).to.equal(expectedMessageHash);
   });
 
-  it.skip("Basics: Rev 0", async function () {
+  it("Basics: Rev 0", async function () {
     const { account, accountContract } = await deployMultisig({ threshold: 1, signersLength: 2 });
+    const { account: caller } = await deployAccount();
+
     await mockDapp.get_number(account.address).should.eventually.equal(0n, "invalid initial value");
 
     const outsideExecution: OutsideExecution = {
-      caller: deployer.address,
+      caller: caller.address,
       nonce: randomStarknetKeyPair().privateKey,
       execute_after: initialTime - 100,
       execute_before: initialTime + 100,
@@ -73,16 +76,16 @@ describe("ArgentMultisig: outside execution", function () {
 
     // ensure can't be run too early
     await manager.setTime(initialTime - 200);
-    await expectExecutionRevert("argent/invalid-timestamp", deployer.execute(outsideExecutionCall));
+    await expectExecutionRevert("argent/invalid-timestamp", caller.execute(outsideExecutionCall));
 
     // ensure can't be run too late
     await manager.setTime(initialTime + 200);
-    await expectExecutionRevert("argent/invalid-timestamp", deployer.execute(outsideExecutionCall));
+    await expectExecutionRevert("argent/invalid-timestamp", caller.execute(outsideExecutionCall));
 
     // ensure the caller is as expected
     await expectExecutionRevert(
       "argent/invalid-caller",
-      deployer.execute(
+      caller.execute(
         await getOutsideExecutionCall(
           { ...outsideExecution, caller: "0x123" },
           account.address,
@@ -98,13 +101,13 @@ describe("ArgentMultisig: outside execution", function () {
     const wrongAccountCall = await getOutsideExecutionCall(outsideExecution, "0x123", account.signer, legacyRevision);
     await expectExecutionRevert(
       "argent/invalid-signature",
-      deployer.execute({ ...wrongAccountCall, contractAddress: account.address }),
+      caller.execute({ ...wrongAccountCall, contractAddress: account.address }),
     );
 
     // ensure the chain id is checked
     await expectExecutionRevert(
       "argent/invalid-signature",
-      deployer.execute(
+      caller.execute(
         await getOutsideExecutionCall(
           outsideExecution,
           account.address,
@@ -117,12 +120,12 @@ describe("ArgentMultisig: outside execution", function () {
 
     // normal scenario
     await accountContract.is_valid_outside_execution_nonce(outsideExecution.nonce).should.eventually.equal(true);
-    await manager.waitForTx(deployer.execute(outsideExecutionCall));
+    await manager.waitForTx(caller.execute(outsideExecutionCall));
     await mockDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
     await accountContract.is_valid_outside_execution_nonce(outsideExecution.nonce).should.eventually.equal(false);
 
     // ensure a transaction can't be replayed
-    await expectExecutionRevert("argent/duplicated-outside-nonce", deployer.execute(outsideExecutionCall));
+    await expectExecutionRevert("argent/duplicated-outside-nonce", caller.execute(outsideExecutionCall));
   });
 
   it("Avoid caller check if it caller is ANY_CALLER", async function () {
@@ -151,12 +154,14 @@ describe("ArgentMultisig: outside execution", function () {
     await mockDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
   });
 
-  it.skip("Basics: Rev 1", async function () {
+  it("Basics: Rev 1", async function () {
     const { account, accountContract } = await deployMultisig({ threshold: 1, signersLength: 2 });
+    const { account: caller } = await deployAccount();
+
     await mockDapp.get_number(account.address).should.eventually.equal(0n, "invalid initial value");
 
     const outsideExecution: OutsideExecution = {
-      caller: deployer.address,
+      caller: caller.address,
       nonce: randomStarknetKeyPair().publicKey,
       execute_after: initialTime - 100,
       execute_before: initialTime + 100,
@@ -171,16 +176,16 @@ describe("ArgentMultisig: outside execution", function () {
 
     // ensure can't be run too early
     await manager.setTime(initialTime - 200);
-    await expectExecutionRevert("argent/invalid-timestamp", deployer.execute(outsideExecutionCall));
+    await expectExecutionRevert("argent/invalid-timestamp", caller.execute(outsideExecutionCall));
 
     // ensure can't be run too late
     await manager.setTime(initialTime + 200);
-    await expectExecutionRevert("argent/invalid-timestamp", deployer.execute(outsideExecutionCall));
+    await expectExecutionRevert("argent/invalid-timestamp", caller.execute(outsideExecutionCall));
 
     // ensure the caller is as expected
     await expectExecutionRevert(
       "argent/invalid-caller",
-      deployer.execute(
+      caller.execute(
         await getOutsideExecutionCall(
           { ...outsideExecution, caller: "0x123" },
           account.address,
@@ -196,13 +201,13 @@ describe("ArgentMultisig: outside execution", function () {
     const wrongAccountCall = await getOutsideExecutionCall(outsideExecution, "0x123", account.signer, legacyRevision);
     await expectExecutionRevert(
       "argent/invalid-signature",
-      deployer.execute({ ...wrongAccountCall, contractAddress: account.address }),
+      caller.execute({ ...wrongAccountCall, contractAddress: account.address }),
     );
 
     // ensure the chain id is checked
     await expectExecutionRevert(
       "argent/invalid-signature",
-      deployer.execute(
+      caller.execute(
         await getOutsideExecutionCall(
           outsideExecution,
           account.address,
@@ -215,12 +220,12 @@ describe("ArgentMultisig: outside execution", function () {
 
     // normal scenario
     await accountContract.is_valid_outside_execution_nonce(outsideExecution.nonce).should.eventually.equal(true);
-    await manager.waitForTx(deployer.execute(outsideExecutionCall));
+    await manager.waitForTx(caller.execute(outsideExecutionCall));
     await mockDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
     await accountContract.is_valid_outside_execution_nonce(outsideExecution.nonce).should.eventually.equal(false);
 
     // ensure a transaction can't be replayed
-    await expectExecutionRevert("argent/duplicated-outside-nonce", deployer.execute(outsideExecutionCall));
+    await expectExecutionRevert("argent/duplicated-outside-nonce", caller.execute(outsideExecutionCall));
   });
 
   it("Avoid caller check if it caller is ANY_CALLER", async function () {

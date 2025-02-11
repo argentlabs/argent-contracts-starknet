@@ -10,7 +10,7 @@ WORKDIR /app
 
 # Clone the repo and checkout a specific commit
 RUN git clone https://github.com/0xSpaceShard/starknet-devnet-rs . && \
-    git checkout 5a05a6e23f30c60ffbe6f90b0a58782113f1eb49
+    git checkout 0380d0acdf15d01e5a4e811c445ed590df154c22
 
 # Build the project explicitly as a binary
 RUN cargo build --bin starknet-devnet

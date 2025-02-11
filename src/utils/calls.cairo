@@ -1,6 +1,7 @@
 use argent::utils::array_ext::ArrayExtTrait;
 use starknet::{account::Call, syscalls::call_contract_syscall};
 
+#[inline(always)]
 pub fn execute_multicall(mut calls: Span<Call>) {
     let mut index = 0;
     for call in calls {

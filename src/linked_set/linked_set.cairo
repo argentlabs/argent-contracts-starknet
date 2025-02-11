@@ -4,7 +4,7 @@ use starknet::storage::{
 };
 ///
 /// A LinkedSet is storage structure that allows to store multiple items making it efficient to check if an item is in
-/// the set LinkedSet doesn't allow duplicate items. The order of the items is preserved.
+/// the set. LinkedSet doesn't allow duplicate items. The order of the items is preserved.
 /// In terms of storage. It will use the same number of storage slots as storing all items in succession plus the
 /// equivalent of another item to store the end marker.
 /// Searching a given item in the list can be done with O(1) complexity, that means that we only need to check the

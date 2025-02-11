@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-import { RpcProvider } from "starknet";
+import { RpcProvider, config } from "starknet";
 import { WithContracts } from "./contracts";
 import { WithDevnet, devnetBaseUrl } from "./devnet";
 import { WithReceipts } from "./receipts";
@@ -26,6 +26,8 @@ if (process.env.RPC_URL && !process.argv.includes(`--allow-rpc-url-env`)) {
   console.log("When using RPC_URL, you must pass --allow-rpc-url-env");
   process.exit(1);
 }
+
+config.update({ logLevel: "ERROR" });
 
 export const manager = new Manager(process.env.RPC_URL || `${devnetBaseUrl}`);
 

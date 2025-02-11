@@ -173,6 +173,7 @@ pub impl SignerTraitImpl of SignerTrait {
         }
     }
 
+    #[inline(always)]
     fn storage_value(self: Signer) -> SignerStorageValue {
         match self {
             Signer::Starknet(signer) => SignerStorageValue {
@@ -267,8 +268,7 @@ pub trait SignerSignatureTrait {
 }
 
 impl SignerSignatureImpl of SignerSignatureTrait {
-    // TODO re-assess later
-    // #[inline(always)]
+    #[inline(always)]
     fn is_valid_signature(self: SignerSignature, hash: felt252) -> bool {
         match self {
             SignerSignature::Starknet((signer, signature)) => is_valid_starknet_signature(hash, signer, signature),

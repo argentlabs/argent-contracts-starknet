@@ -3,10 +3,7 @@ use argent::multiowner_account::argent_account::ArgentAccount::Event;
 pub trait IEmitArgentAccountEvent<TContractState> {
     fn emit_event_callback(ref self: TContractState, event: Event);
 }
-use argent::signer::signer_signature::{
-    Signer, SignerSignature, SignerSignatureTrait, SignerStorageTrait, SignerStorageValue, SignerTrait, SignerType,
-    StarknetSignature, StarknetSigner,
-};
+use argent::signer::signer_signature::SignerSignature;
 
 /// @dev Represents a regular signature for the account
 /// Signatures for escape methods don't fit here and will be represented by a single `SignerSignature`

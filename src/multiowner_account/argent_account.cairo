@@ -3,10 +3,7 @@ use argent::multiowner_account::argent_account::ArgentAccount::Event;
 pub trait IEmitArgentAccountEvent<TContractState> {
     fn emit_event_callback(ref self: TContractState, event: Event);
 }
-use argent::signer::signer_signature::{
-    Signer, SignerSignature, SignerSignatureTrait, SignerStorageTrait, SignerStorageValue, SignerTrait, SignerType,
-    StarknetSignature, StarknetSigner,
-};
+use argent::signer::signer_signature::SignerSignature;
 
 /// @dev Represents a regular signature for the account
 /// Signatures for escape methods don't fit here and will be represented by a single `SignerSignature`
@@ -621,9 +618,7 @@ pub mod ArgentAccount {
                             assert_valid_escape_parameters(self.last_guardian_trigger_escape_attempt.read());
                             self.last_guardian_trigger_escape_attempt.write(get_block_timestamp());
                         }
-
-                        let new_owner = full_deserialize::<Signer>(*call.calldata).expect('argent/invalid-calldata');
-                        assert(!self.is_owner(new_owner), 'argent/invalid-owner-replace'); // TODO is this needed?
+                        full_deserialize::<Signer>(*call.calldata).expect('argent/invalid-calldata');
                         // valid guardian signature also asserts that a guardian is set
                         self.guardian_manager.assert_single_guardian_signature(execution_hash, raw_signature);
                         return; // valid
@@ -694,9 +689,7 @@ pub mod ArgentAccount {
             self.assert_valid_account_signature_raw(execution_hash, raw_signature);
         }
 
-        // TODO This was the most straight forward to remove to not exceed contract size limit
-        // We prob want to re-assess
-        // #[inline(always)]
+        #[inline(always)]
         fn parse_account_signature(self: @ContractState, mut raw_signature: Span<felt252>) -> AccountSignature {
             // Check if it's a legacy signature array, this only supports legacy signature if there is exactly 1 only
             // and a maximum of 1 guardian Legacy signatures are always 2 or 4 items long

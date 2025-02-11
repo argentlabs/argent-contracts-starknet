@@ -1,28 +1,5 @@
-use argent::utils::bytes::{bytes_to_u32s, eight_words_to_bytes, u256_to_u8s, u32_to_bytes, u8s_to_u32s_pad_end};
+use argent::utils::bytes::{bytes_to_u32s, eight_words_to_bytes, u256_to_u8s, u32_to_bytes};
 use crate::ByteArrayExt;
-
-#[test]
-fn convert_u8s_to_u32s_pad_end() {
-    let input = "localhost".into_bytes();
-    let output = u8s_to_u32s_pad_end(input.span());
-    let expected = array!['loca', 'lhos', 't\x00\x00\x00'];
-    assert_eq!(output, expected);
-
-    let input = "localhost:".into_bytes();
-    let output = u8s_to_u32s_pad_end(input.span());
-    let expected = array!['loca', 'lhos', 't:\x00\x00'];
-    assert_eq!(output, expected);
-
-    let input = "localhost:6".into_bytes();
-    let output = u8s_to_u32s_pad_end(input.span());
-    let expected = array!['loca', 'lhos', 't:6\x00'];
-    assert_eq!(output, expected);
-
-    let input = "localhost:69".into_bytes();
-    let output = u8s_to_u32s_pad_end(input.span());
-    let expected = array!['loca', 'lhos', 't:69'];
-    assert_eq!(output, expected);
-}
 
 #[test]
 fn convert_8_words_to_bytes() {

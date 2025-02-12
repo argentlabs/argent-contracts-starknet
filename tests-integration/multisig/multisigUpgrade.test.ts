@@ -1,6 +1,7 @@
 import { expect } from "chai";
 import { Account, CallData, Contract, uint256 } from "starknet";
 import {
+  ContractWithClass,
   KeyPair,
   LegacyMultisigKeyPair,
   MultisigSigner,
@@ -30,6 +31,7 @@ interface UpgradeDataEntry {
 
 describe("ArgentMultisig: upgrade", function () {
   const artifactNames: UpgradeDataEntry[] = [];
+  let mockDapp: ContractWithClass;
 
   before(async () => {
     const v010 = "0.1.0";
@@ -54,6 +56,7 @@ describe("ArgentMultisig: upgrade", function () {
         deployMultisig({ classHash: classHashV020, threshold, signersLength: threshold }),
       getGuidsSelector: "get_signer_guids",
     });
+    mockDapp = await manager.deployContract("MockDapp");
   });
 
   it("Upgrade from current version to FutureVersionMultisig", async function () {
@@ -107,7 +110,6 @@ describe("ArgentMultisig: upgrade", function () {
               }
             }
 
-            const strkContract = await manager.tokens.strkContract();
             const newSigners = sortByGuid(keys.map((key: any) => new StarknetKeyPair(key.privateKey)));
             account.signer = new MultisigSigner(newSigners);
 
@@ -116,11 +118,10 @@ describe("ArgentMultisig: upgrade", function () {
             expect(getSignerGuids.length).to.equal(newSigners.length);
             const newSignersGuids = newSigners.map((signer) => signer.guid);
             expect(getSignerGuids).to.have.members(newSignersGuids);
-            // Perform a transfer to make sure nothing is broken
-            strkContract.connect(account);
-            const recipient = "0xabde1";
-            const amount = uint256.bnToUint256(1n);
-            await manager.ensureSuccess(strkContract.transfer(recipient, amount, { maxFee: 5e14 }));
+            // Perform a simple dapp interaction to make sure nothing is broken
+            mockDapp.connect(account);
+            // For some reason old accounts estimation is too low, so gotta hardcode it
+            await manager.ensureSuccess(mockDapp.set_number(42, { maxFee: 1e14 }));
           });
         }
       }

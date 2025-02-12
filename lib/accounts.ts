@@ -106,21 +106,6 @@ export const deployer = (() => {
   throw new Error("Missing deployer address or private key, please set ADDRESS and PRIVATE_KEY env variables.");
 })();
 
-export const deployerV3 = setDefaultTransactionVersionV3(deployer);
-
-export function setDefaultTransactionVersion(account: ArgentAccount, newVersion: boolean): ArgentAccount {
-  // TODO Do we gotta do anything?
-  const newDefaultVersion = newVersion ? RPC.ETransactionVersion.V3 : RPC.ETransactionVersion.V2;
-  if (account.transactionVersion === newDefaultVersion) {
-    return account;
-  }
-  return new ArgentAccount(account, account.address, account.signer, account.cairoVersion, newDefaultVersion);
-}
-
-export function setDefaultTransactionVersionV3(account: ArgentAccount): ArgentAccount {
-  return setDefaultTransactionVersion(account, true);
-}
-
 console.log("Deployer:", deployer.address);
 
 export async function deployOldAccountWithProxy(

@@ -1,7 +1,7 @@
 import { pick } from "lodash-es";
 import { Call, uint256 } from "starknet";
 import { deployer, manager } from "../lib";
-
+// TODO what should be done with this script?
 //////////////////// Configure the tx to send here: ///////////
 const eth = await manager.tokens.ethContract();
 const call = await eth.populateTransaction.transfer(deployer.address, uint256.bnToUint256(1000000000000000n));

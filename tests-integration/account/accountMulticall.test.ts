@@ -41,7 +41,7 @@ describe("ArgentAccount: multicall", function () {
     const amount1 = uint256.bnToUint256(1000);
     const recipient2 = "43";
     const amount2 = uint256.bnToUint256(42000);
-    await manager.tokens.fundAccount(account.address, 1000 + 42000,"ETH");
+    await manager.tokens.fundAccount(account.address, 1000 + 42000, "ETH");
 
     const senderInitialBalance = await manager.tokens.strkBalance(account.address);
     const recipient1InitialBalance = await manager.tokens.strkBalance(recipient1);

@@ -13,7 +13,7 @@ const { account, keys } = await deployMultisig({
   signersLength: 2,
   classHash: multisigClassHash,
   fundingAmount: 0.0002 * 1e18,
-  useTxV3: false,
+  useTxV3: false, // TODO
 });
 
 console.log("Account address:", account.address);

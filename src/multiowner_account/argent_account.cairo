@@ -314,7 +314,7 @@ pub mod ArgentAccount {
         fn finalize_migration(ref self: ContractState) {
             self.owner_manager.assert_valid_storage();
             self.guardian_manager.assert_valid_storage();
-            self.clear_escape(escape_completed: false, reset_timestamps: true);
+            self.clear_escape(escape_canceled: true, reset_timestamps: true);
         }
 
         fn migrate_owner(ref self: ContractState, signer_storage_value: SignerStorageValue) {
@@ -404,7 +404,7 @@ pub mod ArgentAccount {
             if current_escape_status == EscapeStatus::NotReady || current_escape_status == EscapeStatus::Ready {
                 panic_with_felt252('argent/ongoing-escape');
             }
-            self.clear_escape(escape_completed: false, reset_timestamps: true);
+            self.clear_escape(escape_canceled: true, reset_timestamps: true);
             self.escape_security_period.write(new_security_period);
             self.emit(EscapeSecurityPeriodChanged { escape_security_period: new_security_period });
         }
@@ -431,7 +431,7 @@ pub mod ArgentAccount {
             if let Option::Some(owner_alive_signature) = owner_alive_signature {
                 self.assert_valid_owner_alive_signature(owner_alive_signature);
             } // else { validation will ensure it's not needed }
-            self.clear_escape(escape_completed: false, reset_timestamps: true);
+            self.clear_escape(escape_canceled: true, reset_timestamps: true);
         }
 
         fn change_guardians(
@@ -439,7 +439,7 @@ pub mod ArgentAccount {
         ) {
             assert_only_self();
             self.guardian_manager.change_guardians(:guardian_guids_to_remove, :guardians_to_add);
-            self.clear_escape(escape_completed: false, reset_timestamps: true);
+            self.clear_escape(escape_canceled: true, reset_timestamps: true);
         }
 
         fn trigger_escape_owner(ref self: ContractState, new_owner: Signer) {
@@ -451,7 +451,7 @@ pub mod ArgentAccount {
                 assert(current_escape_status == EscapeStatus::Expired, 'argent/cannot-override-escape');
             }
 
-            self.clear_escape(escape_completed: false, reset_timestamps: false);
+            self.clear_escape(escape_canceled: true, reset_timestamps: false);
 
             let ready_at = get_block_timestamp() + self.get_escape_security_period();
             let escape = Escape {
@@ -467,7 +467,7 @@ pub mod ArgentAccount {
 
         fn trigger_escape_guardian(ref self: ContractState, new_guardian: Option<Signer>) {
             assert_only_self();
-            self.clear_escape(escape_completed: false, reset_timestamps: false);
+            self.clear_escape(escape_canceled: true, reset_timestamps: false);
 
             let (new_guardian_guid, new_guardian_storage_value) = if let Option::Some(guardian) = new_guardian {
                 let guardian_guid = guardian.into_guid();
@@ -495,7 +495,7 @@ pub mod ArgentAccount {
             self.owner_manager.complete_owner_escape(new_owner);
             self.emit(OwnerEscapedGuid { new_owner_guid: new_owner.into_guid() });
 
-            self.clear_escape(escape_completed: true, reset_timestamps: true);
+            self.clear_escape(escape_canceled: false, reset_timestamps: true);
         }
 
         fn escape_guardian(ref self: ContractState) {
@@ -514,13 +514,13 @@ pub mod ArgentAccount {
                 self.emit(GuardianEscapedGuid { new_guardian_guid: 0 });
             }
 
-            self.clear_escape(escape_completed: true, reset_timestamps: true);
+            self.clear_escape(escape_canceled: false, reset_timestamps: true);
         }
 
         fn cancel_escape(ref self: ContractState) {
             assert_only_self();
             assert(self.get_escape_status() != EscapeStatus::None, 'argent/invalid-escape');
-            self.clear_escape(escape_completed: false, reset_timestamps: true);
+            self.clear_escape(escape_canceled: true, reset_timestamps: true);
         }
 
         fn get_escape(self: @ContractState) -> Escape {
@@ -772,8 +772,8 @@ pub mod ArgentAccount {
         /// Clear the escape from storage
         /// @param escape_completed Whether the escape was completed successfully, in case it wasn't, EscapeCanceled
         /// could be emitted @param reset_timestamps Whether to reset the timestamps for gas griefing protection
-        fn clear_escape(ref self: ContractState, escape_completed: bool, reset_timestamps: bool) {
-            if !escape_completed {
+        fn clear_escape(ref self: ContractState, escape_canceled: bool, reset_timestamps: bool) {
+            if escape_canceled {
                 // Emit Canceled event if needed
                 let current_escape_status = self.get_escape_status();
                 if current_escape_status == EscapeStatus::NotReady || current_escape_status == EscapeStatus::Ready {

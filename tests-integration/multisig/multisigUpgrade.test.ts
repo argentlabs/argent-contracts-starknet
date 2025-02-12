@@ -63,11 +63,11 @@ describe("ArgentMultisig: upgrade", function () {
     const { account } = await deployMultisig1_1();
     await upgradeAccount(account, argentMultisigFutureClassHash);
     expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentMultisigFutureClassHash));
-    const ethContract = await manager.tokens.ethContract();
-    ethContract.connect(account);
+    const strkContract = await manager.tokens.strkContract();
+    strkContract.connect(account);
     const recipient = "0xabde1";
     const amount = uint256.bnToUint256(1n);
-    await manager.ensureSuccess(ethContract.transfer(recipient, amount, { maxFee: 5e14 }));
+    await manager.ensureSuccess(strkContract.transfer(recipient, amount, { maxFee: 5e14 }));
   });
 
   it("Shouldn't be possible to upgrade from current version to FutureVersionMultisig with extra calldata", async function () {
@@ -107,7 +107,7 @@ describe("ArgentMultisig: upgrade", function () {
               }
             }
 
-            const ethContract = await manager.tokens.ethContract();
+            const strkContract = await manager.tokens.strkContract();
             const newSigners = sortByGuid(keys.map((key: any) => new StarknetKeyPair(key.privateKey)));
             account.signer = new MultisigSigner(newSigners);
 
@@ -117,10 +117,10 @@ describe("ArgentMultisig: upgrade", function () {
             const newSignersGuids = newSigners.map((signer) => signer.guid);
             expect(getSignerGuids).to.have.members(newSignersGuids);
             // Perform a transfer to make sure nothing is broken
-            ethContract.connect(account);
+            strkContract.connect(account);
             const recipient = "0xabde1";
             const amount = uint256.bnToUint256(1n);
-            await manager.ensureSuccess(ethContract.transfer(recipient, amount, { maxFee: 5e14 }));
+            await manager.ensureSuccess(strkContract.transfer(recipient, amount, { maxFee: 5e14 }));
           });
         }
       }

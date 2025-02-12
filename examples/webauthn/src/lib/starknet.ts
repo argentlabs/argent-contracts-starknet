@@ -54,7 +54,7 @@ export async function loadDeployer(provider: ProviderType) {
     env.PUBLIC_DEPLOYER_ADDRESS,
     env.PUBLIC_DEPLOYER_PRIVATE_KEY,
     undefined,
-    RPC.ETransactionVersion.V2,
+    RPC.ETransactionVersion.V3,
   );
 }
 

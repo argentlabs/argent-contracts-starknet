@@ -109,6 +109,7 @@ export const deployer = (() => {
 export const deployerV3 = setDefaultTransactionVersionV3(deployer);
 
 export function setDefaultTransactionVersion(account: ArgentAccount, newVersion: boolean): ArgentAccount {
+  // TODO Do we gotta do anything?
   const newDefaultVersion = newVersion ? RPC.ETransactionVersion.V3 : RPC.ETransactionVersion.V2;
   if (account.transactionVersion === newDefaultVersion) {
     return account;

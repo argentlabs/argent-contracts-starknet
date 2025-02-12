@@ -40,7 +40,7 @@ export async function deployMultisig(params: DeployMultisigParams): Promise<Mult
     ...params,
     classHash: params.classHash ?? (await manager.declareLocalContract("ArgentMultisigAccount")),
     salt: params.salt ?? num.toHex(randomStarknetKeyPair().privateKey),
-    useTxV3: params.useTxV3 ?? false,
+    useTxV3: params.useTxV3 ?? true,
     selfDeploy: params.selfDeploy ?? false,
     selfDeploymentIndexes: params.selfDeploymentIndexes ?? [0],
   };
@@ -120,6 +120,7 @@ export async function deployLegacyMultisig(classHash: string, threshold = 1): Pr
   const constructorCalldata = CallData.compile({ threshold, signers: signersPublicKeys });
   const contractAddress = hash.calculateContractAddressFromHash(salt, classHash, constructorCalldata, 0);
   await fundAccount(contractAddress, 1e15, "ETH"); // 0.001 ETH
+  await fundAccount(contractAddress, 1e18, "STRK"); // 1 STRK
   const deploySigner = new LegacyMultisigSigner([keys[0]]);
   const account = new Account(manager, contractAddress, deploySigner, "1");
 

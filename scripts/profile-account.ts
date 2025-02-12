@@ -68,9 +68,9 @@ const guardian = new StarknetKeyPair(42n);
     new LegacyStarknetKeyPair(guardian.privateKey),
     "0xDE",
   );
-  await fundAccount(account.address, 1e18, "STRK"); 
-  strkContract.connect(account);  
-  
+  await fundAccount(account.address, 1e18, "STRK");
+  strkContract.connect(account);
+
   await profiler.profile("Transfer - Old account with guardian", await strkContract.transfer(recipient, amount));
 }
 
@@ -139,7 +139,10 @@ const guardian = new StarknetKeyPair(42n);
     cacheOwnerGuid: owner.guid,
   });
   strkContract.connect(accountWithDappSigner);
-  await profiler.profile("Transfer - With Session - Caching Values (1)", await strkContract.transfer(recipient, amount));
+  await profiler.profile(
+    "Transfer - With Session - Caching Values (1)",
+    await strkContract.transfer(recipient, amount),
+  );
   await profiler.profile("Transfer - With Session - Cached (2)", await strkContract.transfer(recipient, amount));
 }
 

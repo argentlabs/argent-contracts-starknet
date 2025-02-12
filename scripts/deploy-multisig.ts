@@ -12,8 +12,8 @@ const { account, keys } = await deployMultisig({
   threshold: 1,
   signersLength: 2,
   classHash: multisigClassHash,
-  fundingAmount: 0.0002 * 1e18,
-  useTxV3: false, // TODO
+  fundingAmount: 2 * 1e18,
+  useTxV3: true,
 });
 
 console.log("Account address:", account.address);

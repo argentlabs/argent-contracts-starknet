@@ -1,9 +1,8 @@
 import { expect } from "chai";
-import { CairoOption, CairoOptionVariant, CallData } from "starknet";
+import { CallData } from "starknet";
 import {
   ArgentSigner,
   ArgentWallet,
-  ArgentWalletWithGuardian,
   ESCAPE_EXPIRY_PERIOD,
   ESCAPE_SECURITY_PERIOD,
   ESCAPE_TYPE_GUARDIAN,
@@ -38,51 +37,9 @@ describe("ArgentAccount: escape mechanism", function () {
     other: KeyPair;
   }
 
-  interface ArgentWalletWithGuardians extends ArgentWallet {
-    guardians: KeyPair[];
-  }
-
-  interface ArgentWalletWithOwners extends ArgentWalletWithGuardian {
-    owners: KeyPair[];
-  }
-
   async function buildAccount(): Promise<ArgentWalletWithOther> {
-    const { account, accountContract, owner, guardian } = await deployAccount();
-    return { account, accountContract, owner, other: guardian };
-  }
-
-  // TODO: maybe put this function in `lib/` ??
-  // As of now there is `ArgentWallet.guardian` and `ArgentWallet.guardians`
-  async function buildAccountWithMoreGuardians(n = 3): Promise<ArgentWalletWithGuardians> {
-    const wallet = await deployAccount();
-    const guardians = new Array(n).fill(0).map(() => randomStarknetKeyPair());
-
-    const calldata = CallData.compile([
-      { guardian_guids_to_remove: [], guardians_to_add: guardians.map((guardian) => guardian.signer) },
-    ]);
-
-    await wallet.accountContract.invoke("change_guardians", calldata);
-
-    return { ...wallet, guardians };
-  }
-
-  // TODO: maybe put this function in `lib/` ??
-  // As of now there is `ArgentWallet.owner` and `ArgentWallet.owners`
-  async function buildAccountWithMoreOwners(n = 3): Promise<ArgentWalletWithOwners> {
-    const wallet = await deployAccount();
-    const owners = new Array(n).fill(0).map(() => randomStarknetKeyPair());
-
-    const calldata = CallData.compile([
-      {
-        owners_guids_to_remove: [],
-        owners_to_add: owners.map((owner) => owner.signer),
-        owner_alive_signature: new CairoOption(CairoOptionVariant.None),
-      },
-    ]);
-
-    await wallet.accountContract.invoke("change_owners", calldata);
-
-    return { ...wallet, owners };
+    const account = await deployAccount();
+    return { ...account, other: account.guardian };
   }
 
   before(async () => {
@@ -705,7 +662,9 @@ describe("ArgentAccount: escape mechanism", function () {
     });
 
     it("Expect the escape to be canceled by another guardian when trigger_escape_owner", async function () {
-      const { account, accountContract, owner, guardians } = await buildAccountWithMoreGuardians();
+      const { account, accountContract, owner, guardians } = await deployAccount({
+        guardians: new Array(4).fill(0).map(() => randomStarknetKeyPair()),
+      });
       account.signer = new ArgentSigner(guardians[0]);
       await accountContract.trigger_escape_owner(newKeyPair.compiledSigner);
       await hasOngoingEscape(accountContract).should.eventually.be.true;
@@ -716,7 +675,9 @@ describe("ArgentAccount: escape mechanism", function () {
     });
 
     it("Expect the escape to be canceled by another owner when trigger_escape_owner", async function () {
-      const { account, accountContract, guardian, owners } = await buildAccountWithMoreOwners();
+      const { account, accountContract, guardian, owners } = await deployAccount({
+        owners: new Array(4).fill(0).map(() => randomStarknetKeyPair()),
+      });
       account.signer = new ArgentSigner(guardian);
       await accountContract.trigger_escape_owner(newKeyPair.compiledSigner);
       await hasOngoingEscape(accountContract).should.eventually.be.true;

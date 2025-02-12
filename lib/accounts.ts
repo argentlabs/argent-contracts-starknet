@@ -96,12 +96,12 @@ export const deployer = (() => {
   if (manager.isDevnet) {
     const devnetAddress = "0x64b48806902a367c8598f4f95c305e8c1a1acba5f082d294a43793113115691";
     const devnetPrivateKey = "0x71d7bb07b9a64f6f78ac4c816aff4da9";
-    return new Account(manager, devnetAddress, devnetPrivateKey, undefined, RPC.ETransactionVersion.V2);
+    return new Account(manager, devnetAddress, devnetPrivateKey, undefined, RPC.ETransactionVersion.V3);
   }
   const address = process.env.ADDRESS;
   const privateKey = process.env.PRIVATE_KEY;
   if (address && privateKey) {
-    return new Account(manager, address, privateKey, undefined, RPC.ETransactionVersion.V2);
+    return new Account(manager, address, privateKey, undefined, RPC.ETransactionVersion.V3);
   }
   throw new Error("Missing deployer address or private key, please set ADDRESS and PRIVATE_KEY env variables.");
 })();
@@ -189,7 +189,7 @@ async function deployAccountInner(params: DeployAccountParams): Promise<
     classHash: params.classHash ?? (await manager.declareLocalContract("ArgentAccount")),
     salt: params.salt ?? num.toHex(randomStarknetKeyPair().privateKey),
     owner: params.owner ?? randomStarknetKeyPair(),
-    useTxV3: params.useTxV3 ?? false,
+    useTxV3: params.useTxV3 ?? true,
     selfDeploy: params.selfDeploy ?? false,
   };
   const guardian = finalParams.guardian

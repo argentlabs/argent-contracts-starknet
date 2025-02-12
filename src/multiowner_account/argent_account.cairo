@@ -814,17 +814,12 @@ pub mod ArgentAccount {
             // Limit the maximum tip and maximum total fee while escaping
             let mut max_fee: u128 = 0;
             let mut max_tip: u128 = 0;
-            loop {
-                match tx_info.resource_bounds.pop_front() {
-                    Option::Some(bound) => {
-                        let max_resource_amount: u128 = (*bound.max_amount).into();
-                        max_fee += *bound.max_price_per_unit * max_resource_amount;
-                        if *bound.resource == 'L2_GAS' {
-                            max_tip += tx_info.tip * max_resource_amount;
-                        }
-                    },
-                    Option::None => { break; },
-                };
+            for bound in tx_info.resource_bounds {
+                let max_resource_amount: u128 = (*bound.max_amount).into();
+                max_fee += *bound.max_price_per_unit * max_resource_amount;
+                if *bound.resource == 'L2_GAS' {
+                    max_tip += tx_info.tip * max_resource_amount;
+                }
             };
             max_fee += max_tip;
             assert(max_tip <= MAX_ESCAPE_TIP_STRK, 'argent/tip-too-high');

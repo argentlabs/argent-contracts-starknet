@@ -126,6 +126,7 @@ describe("ArgentMultisig: upgrade", function () {
             await fundAccount(accountV3.address, 1e18, "STRK");
 
             // Default estimation is too low, we need to increase it
+            mockDapp.connect(accountV3);
             const estimate = await mockDapp.estimateFee.set_number(42);
             estimate.resourceBounds.l1_gas.max_amount = estimate.resourceBounds.l1_gas.max_amount * 4;
             // Perform a simple dapp interaction to make sure nothing is broken

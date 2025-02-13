@@ -117,7 +117,7 @@ mod ArgentMultisigAccount {
             assert(tx_info.paymaster_data.is_empty(), 'argent/unsupported-paymaster');
             assert(tx_info.account_deployment_data.is_empty(), 'argent/invalid-deployment-data');
             self.assert_valid_calls(calls.span());
-            self.assert_valid_signatures(tx_info.transaction_hash, tx_info.signature);
+            self.assert_valid_signature(tx_info.transaction_hash, tx_info.signature);
             VALIDATED
         }
 
@@ -140,8 +140,8 @@ mod ArgentMultisigAccount {
             if self
                 .signer_manager
                 .is_valid_signature_with_threshold(
-                    hash,
-                    self.signer_manager.threshold.read(),
+                    :hash,
+                    threshold: self.signer_manager.threshold.read(),
                     signer_signatures: parse_signature_array(signature.span()),
                 ) {
                 VALIDATED
@@ -171,7 +171,9 @@ mod ArgentMultisigAccount {
             let is_valid = self
                 .signer_manager
                 .is_valid_signature_with_threshold(
-                    tx_info.transaction_hash, threshold: 1, signer_signatures: parse_signature_array(tx_info.signature),
+                    hash: tx_info.transaction_hash,
+                    threshold: 1,
+                    signer_signatures: parse_signature_array(tx_info.signature),
                 );
             assert(is_valid, 'argent/invalid-signature');
             VALIDATED
@@ -190,12 +192,12 @@ mod ArgentMultisigAccount {
     impl OutsideExecutionCallbackImpl of IOutsideExecutionCallback<ContractState> {
         #[inline(always)]
         fn execute_from_outside_callback(
-            ref self: ContractState, calls: Span<Call>, outside_execution_hash: felt252, signature: Span<felt252>,
+            ref self: ContractState, calls: Span<Call>, outside_execution_hash: felt252, raw_signature: Span<felt252>,
         ) -> Array<Span<felt252>> {
             // validate calls
             self.assert_valid_calls(calls);
             // validate signatures
-            self.assert_valid_signatures(outside_execution_hash, signature);
+            self.assert_valid_signature(outside_execution_hash, raw_signature);
 
             let retdata = execute_multicall_with_result(calls);
             self.emit(TransactionExecuted { hash: outside_execution_hash });
@@ -263,13 +265,13 @@ mod ArgentMultisigAccount {
             }
         }
 
-        fn assert_valid_signatures(self: @ContractState, execution_hash: felt252, signature: Span<felt252>) {
+        fn assert_valid_signature(self: @ContractState, execution_hash: felt252, raw_signature: Span<felt252>) {
             let valid = self
                 .signer_manager
                 .is_valid_signature_with_threshold(
-                    execution_hash,
-                    self.signer_manager.threshold.read(),
-                    signer_signatures: parse_signature_array(signature),
+                    hash: execution_hash,
+                    threshold: self.signer_manager.threshold.read(),
+                    signer_signatures: parse_signature_array(raw_signature),
                 );
             assert(valid, 'argent/invalid-signature');
         }

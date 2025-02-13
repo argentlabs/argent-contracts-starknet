@@ -129,7 +129,7 @@ describe("ArgentMultisig: upgrade", function () {
             const estimate = await mockDapp.estimateFee.set_number(42);
             estimate.resourceBounds.l1_gas.max_amount = estimate.resourceBounds.l1_gas.max_amount * 4;
             // Perform a simple dapp interaction to make sure nothing is broken
-          await manager.ensureSuccess(accountV3.execute(mockDapp.populateTransaction.set_number(42), estimate));
+            await manager.ensureSuccess(accountV3.execute(mockDapp.populateTransaction.set_number(42), estimate));
           });
         }
       }

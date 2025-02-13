@@ -11,7 +11,6 @@ import {
   deployAccountWithoutGuardians,
   deployOldAccountWithProxy,
   deployOpenZeppelinAccount,
-  fundAccount,
   manager,
   setupSession,
 } from "../lib";
@@ -31,6 +30,7 @@ if (manager.isDevnet) {
 }
 
 const strkContract = await manager.tokens.strkContract();
+const ethContract = await manager.tokens.ethContract();
 const recipient = "0xadbe1";
 const amount = uint256.bnToUint256(1);
 const starknetOwner = new StarknetKeyPair(privateKey);
@@ -68,10 +68,8 @@ const guardian = new StarknetKeyPair(42n);
     new LegacyStarknetKeyPair(guardian.privateKey),
     "0xDE",
   );
-  await fundAccount(account.address, 1e18, "STRK");
-  strkContract.connect(account);
-
-  await profiler.profile("Transfer - Old account with guardian", await strkContract.transfer(recipient, amount));
+  ethContract.connect(account);
+  await profiler.profile("Transfer - Old account with guardian", await ethContract.transfer(recipient, amount));
 }
 
 {

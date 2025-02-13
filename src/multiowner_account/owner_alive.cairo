@@ -4,27 +4,30 @@ use core::hash::{HashStateExTrait, HashStateTrait};
 use core::poseidon::PoseidonTrait;
 use starknet::{get_contract_address, get_tx_info};
 
-
+/// @notice Message to sign proving a specific owner is still valid
+/// @dev Prevents accidentally bricking the account by requiring proof that at least one remaining owner can sign
+/// @param new_owner_guid GUID of the owner that must prove signing capability
+/// @param signature_expiration Timestamp after which this proof becomes invalid
 #[derive(Drop, Copy, Hash)]
 pub struct OwnerAlive {
     pub new_owner_guid: felt252,
     pub signature_expiration: u64,
 }
 
-///  Required to prevent changing to an owner which is not in control of the user
+/// @notice Container for the signature and expiration of an OwnerAlive message
+/// @param owner_signature Signature of the SNIP-12 V1 compliant OwnerAlive message
+/// @param signature_expiration Timestamp when this proof expires
+/// @dev The expiration must be within 24 hours of the transaction timestamp
 #[derive(Drop, Copy, Serde)]
 pub struct OwnerAliveSignature {
-    /// It is the signature of the SNIP-12 V1 compliant object OwnerAlive
     pub owner_signature: SignerSignature,
-    /// Signature expiration in seconds. Cannot be more than 24 hours in the future
     pub signature_expiration: u64,
 }
 
-
+/// @notice SNIP-12 V1 type hash for OwnerAlive message
 const OWNER_ALIVE_TYPE_HASH: felt252 = selector!(
     "\"Owner Alive\"(\"Owner GUID\":\"felt\",\"Signature expiration\":\"timestamp\")",
 );
-
 
 impl StructHashOwnerAliveRev1 of IStructHashRev1<OwnerAlive> {
     fn get_struct_hash_rev_1(self: @OwnerAlive) -> felt252 {
@@ -35,7 +38,6 @@ impl StructHashOwnerAliveRev1 of IStructHashRev1<OwnerAlive> {
             .finalize()
     }
 }
-
 
 impl OffChainMessageOwnerAliveRev1 of IOffChainMessageHashRev1<OwnerAlive> {
     fn get_message_hash_rev_1(self: @OwnerAlive) -> felt252 {

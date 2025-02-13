@@ -14,8 +14,9 @@ pub struct AccountCreated {
 
 /// @notice Emitted on initialization with the the owner and guardian (or 0 if none) guid's
 /// @dev Emitted exactly once when the account is initialized
-/// @param owner_guid The owner guid
-/// @param guardian_guid The guardian's guid or 0 if there is no guardian
+/// @dev Emitted exactly once when the account is initialized
+/// @param owner_guid GUID of the owner
+/// @param guardian_guid GUID of the guardian, or 0 if none
 #[derive(Drop, starknet::Event)]
 pub struct AccountCreatedGuid {
     #[key]
@@ -32,10 +33,10 @@ pub struct TransactionExecuted {
     pub hash: felt252,
 }
 
-/// @notice A new signer was linked
-/// @dev This is the only way to get the signer struct from a guid
-/// @param signer_guid the guid of the signer derived from the signer
-/// @param signer the signer being added
+/// @notice Links a signer to its GUID for future reference as the account is not storing all the Signer data
+/// @dev This is the only way to get the Signer data from a GUID
+/// @param signer_guid Identified derived from the signer
+/// @param signer The Signer details
 #[derive(Drop, Serde, starknet::Event)]
 pub struct SignerLinked {
     #[key]
@@ -43,68 +44,72 @@ pub struct SignerLinked {
     pub signer: Signer,
 }
 
-/// @notice Emitted when an account owner is added, including when the account is created.
+/// @notice Emitted when an owner is added
+/// @dev Also emitted during account creation and when upgrading from a version that didn't emit the event
+/// @param new_owner_guid GUID of the new owner
 #[derive(Drop, starknet::Event)]
 pub struct OwnerAddedGuid {
     #[key]
     pub new_owner_guid: felt252,
 }
 
-/// @notice Emitted when an account owner is removed
+/// @notice Emitted when an owner is removed
+/// @param removed_owner_guid GUID of the removed owner
 #[derive(Drop, starknet::Event)]
 pub struct OwnerRemovedGuid {
     #[key]
     pub removed_owner_guid: felt252,
 }
 
-/// @notice Emitted when an account guardian is added, including when the account is created.
+/// @notice Emitted when a guardian is added
+/// @dev Could also emitted during account creation and when upgrading from older versions that didn't emit the event
+/// @param new_guardian_guid GUID of the new guardian
 #[derive(Drop, starknet::Event)]
 pub struct GuardianAddedGuid {
     #[key]
     pub new_guardian_guid: felt252,
 }
 
-/// @notice Emitted when an account guardian is removed
+/// @notice Emitted when a guardian is removed
 #[derive(Drop, starknet::Event)]
 pub struct GuardianRemovedGuid {
     #[key]
     pub removed_guardian_guid: felt252,
 }
 
-/// @notice Owner escape was triggered by the guardian
-/// @param ready_at when the escape can be completed
-/// @param new_owner_guid new guid to be set after the security period
+/// @notice Owner escape initiated by a guardian
+/// @param ready_at Timestamp when escape becomes ready for completion
+/// @param new_owner_guid GUID of the proposed new owner
 #[derive(Drop, starknet::Event)]
 pub struct EscapeOwnerTriggeredGuid {
     pub ready_at: u64,
     pub new_owner_guid: felt252,
 }
 
-/// @notice Guardian escape was triggered by the owner
-/// @param ready_at when the escape can be completed
-/// @param new_guardian_guid to be set after the security period or O when the guardian will be
-/// removed
+/// @notice Guardian escape initiated by an owner
+/// @param ready_at Timestamp when escape becomes ready for completion
+/// @param new_guardian_guid GUID of the proposed new guardian, or 0 to remove guardians
 #[derive(Drop, starknet::Event)]
 pub struct EscapeGuardianTriggeredGuid {
     pub ready_at: u64,
     pub new_guardian_guid: felt252,
 }
 
-/// @notice Owner escape was completed and there is a new account owner
-/// @param new_owner_guid new owner guid
+/// @notice Owner escape completed successfully
+/// @param new_owner_guid GUID of the new owner
 #[derive(Drop, starknet::Event)]
 pub struct OwnerEscapedGuid {
     pub new_owner_guid: felt252,
 }
 
-/// @notice Guardian escape was completed and there is a new account guardian
-/// @param new_guardian_guid guid of the new guardian or 0 if it was removed
+/// @notice Guardian escape completed successfully
+/// @param new_guardian_guid GUID of the new guardian, or 0 if all guardians were removed
 #[derive(Drop, starknet::Event)]
 pub struct GuardianEscapedGuid {
     pub new_guardian_guid: felt252,
 }
 
-/// @notice An ongoing escape was canceled
+/// @notice Emitted when an escape is canceled
 #[derive(Drop, starknet::Event)]
 pub struct EscapeCanceled {}
 

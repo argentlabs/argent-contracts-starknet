@@ -2,21 +2,35 @@ use argent::signer::signer_signature::{Signer, SignerInfo, SignerSignature, Sign
 
 #[starknet::interface]
 pub trait IOwnerManager<TContractState> {
-    /// @notice Returns the public key if the requested role is Starknet, Eip191 or Secp256k1 and panic for other types
-    /// @dev Fails if there is more than one owner
+    /// @notice Returns the public key of the single owner
+    /// @dev Reverts if there is more than one owner
+    /// @dev Reverts if owner type is not Starknet, Eip191 or Secp256k1
     fn get_owner(self: @TContractState) -> felt252;
+
+    /// @notice Returns the signer type of the single owner
+    /// @dev Reverts if there is more than one owner
     fn get_owner_type(self: @TContractState) -> SignerType;
+
+    /// @notice Returns the GUID of the single owner
+    /// @dev Reverts if there is more than one owner
     fn get_owner_guid(self: @TContractState) -> felt252;
 
-    /// @notice Returns the guid of all the owners
+    /// @notice Returns the GUIDs of all owners
     fn get_owners_guids(self: @TContractState) -> Array<felt252>;
+
+    /// @notice Returns detailed information about all account owners
     fn get_owners_info(self: @TContractState) -> Array<SignerInfo>;
+
+    /// @notice Checks if a given signer is an owner
     fn is_owner(self: @TContractState, owner: Signer) -> bool;
+
+    /// @notice Checks if a given GUID belongs to an owner
     fn is_owner_guid(self: @TContractState, owner_guid: felt252) -> bool;
 
-    /// @notice Verifies whether a provided signature is valid and comes from one of the owners.
-    /// @param hash Hash of the message being signed
-    /// @param owner_signature Signature to be verified
+    /// @notice Verifies a signature from an owner
+    /// @param hash Message hash that was signed
+    /// @param owner_signature The signature to verify
+    /// @return True if the signature is valid and from a valid owner
     #[must_use]
     fn is_valid_owner_signature(self: @TContractState, hash: felt252, owner_signature: SignerSignature) -> bool;
 }
@@ -40,7 +54,7 @@ pub mod owner_manager_component {
     use argent::utils::{transaction_version::is_estimate_transaction};
     use super::IOwnerManager;
 
-    /// Too many owners could make the account unable to process transactions if we reach a limit
+    /// @notice Maximum number of owners to prevent transaction size limits
     const MAX_SIGNERS_COUNT: usize = 32;
 
     #[storage]

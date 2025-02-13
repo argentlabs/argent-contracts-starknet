@@ -1,6 +1,5 @@
 use argent::signer::signer_signature::SignerStorageValue;
 
-
 pub trait IUpgradeMigrationCallback<TContractState> {
     fn finalize_migration(ref self: TContractState);
     fn migrate_owner(ref self: TContractState, signer_storage_value: SignerStorageValue);

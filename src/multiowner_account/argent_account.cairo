@@ -425,7 +425,7 @@ pub mod ArgentAccount {
             owner_alive_signature: Option<OwnerAliveSignature>,
         ) {
             assert_only_self();
-            self.owner_manager.change_owners(:owner_guids_to_remove, :owners_to_add);
+            self.owner_manager.change_owners(owner_guids_to_remove, owners_to_add);
 
             if let Option::Some(owner_alive_signature) = owner_alive_signature {
                 self.assert_valid_owner_alive_signature(:owner_alive_signature);

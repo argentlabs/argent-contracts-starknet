@@ -34,4 +34,4 @@ RUN chmod +x /usr/local/bin/starknet-devnet
 EXPOSE 5050
 
 # Set default command to run the container
-CMD ["/usr/local/bin/starknet-devnet", "--host", "0.0.0.0", "--seed", "0", "--gas-price", "6000000000", "--data-gas-price", "1", "--timeout", "320", "--lite-mode", "--gas-price-fri", "35000000000000", "--data-gas-price-fri", "1", "--initial-balance", "1000000000000000000000000"]
+CMD ["/usr/local/bin/starknet-devnet", "--host", "0.0.0.0", "--request-body-size-limit", "2000000",  "--seed", "0", "--gas-price", "6000000000", "--data-gas-price", "1", "--timeout", "320", "--lite-mode", "--gas-price-fri", "35000000000000", "--data-gas-price-fri", "1", "--initial-balance", "1000000000000000000000000"]

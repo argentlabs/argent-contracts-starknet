@@ -80,9 +80,9 @@ pub mod ArgentAccount {
     const TIME_BETWEEN_TWO_ESCAPES: u64 = 12 * 60 * 60;
 
     /// Limits fee in escapes
-    const MAX_ESCAPE_MAX_FEE_ETH: u128 = 5000000000000000; // 0.005 ETH
-    const MAX_ESCAPE_MAX_FEE_STRK: u128 = 5_000000000000000000; // 5 STRK
-    const MAX_ESCAPE_TIP_STRK: u128 = 1_000000000000000000; // 1 STRK
+    const MAX_ESCAPE_MAX_FEE_ETH: u128 = 2000000000000000; // 0.002 ETH
+    const MAX_ESCAPE_MAX_FEE_STRK: u128 = 12_000000000000000000; // 12 STRK
+    const MAX_ESCAPE_TIP_STRK: u128 = 4_000000000000000000; // 4 STRK
 
     /// Minimum time for the escape security period
     const MIN_ESCAPE_SECURITY_PERIOD: u64 = 60 * 10; // 10 minutes;

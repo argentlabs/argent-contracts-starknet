@@ -220,9 +220,9 @@ pub mod ArgentAccount {
             } else {
                 self
                     .assert_valid_calls_and_signature(
-                        calls.span(),
-                        tx_info.transaction_hash,
-                        tx_info.signature,
+                        calls: calls.span(),
+                        execution_hash: tx_info.transaction_hash,
+                        raw_signature: tx_info.signature,
                         is_from_outside: false,
                         account_address: exec_info.contract_address,
                     );
@@ -329,16 +329,16 @@ pub mod ArgentAccount {
     impl OutsideExecutionCallbackImpl of IOutsideExecutionCallback<ContractState> {
         #[inline(always)]
         fn execute_from_outside_callback(
-            ref self: ContractState, calls: Span<Call>, outside_execution_hash: felt252, signature: Span<felt252>,
+            ref self: ContractState, calls: Span<Call>, outside_execution_hash: felt252, raw_signature: Span<felt252>,
         ) -> Array<Span<felt252>> {
-            if self.session.is_session(signature) {
-                self.session.assert_valid_session(calls, outside_execution_hash, signature);
+            if self.session.is_session(raw_signature) {
+                self.session.assert_valid_session(calls, outside_execution_hash, raw_signature);
             } else {
                 self
                     .assert_valid_calls_and_signature(
-                        calls,
-                        outside_execution_hash,
-                        signature,
+                        :calls,
+                        execution_hash: outside_execution_hash,
+                        :raw_signature,
                         is_from_outside: true,
                         account_address: get_contract_address(),
                     );
@@ -418,7 +418,6 @@ pub mod ArgentAccount {
             }
         }
 
-
         fn change_owners(
             ref self: ContractState,
             owner_guids_to_remove: Array<felt252>,
@@ -429,7 +428,7 @@ pub mod ArgentAccount {
             self.owner_manager.change_owners(owner_guids_to_remove, owners_to_add);
 
             if let Option::Some(owner_alive_signature) = owner_alive_signature {
-                self.assert_valid_owner_alive_signature(owner_alive_signature);
+                self.assert_valid_owner_alive_signature(:owner_alive_signature);
             } // else { validation will ensure it's not needed }
             self.clear_escape(escape_canceled: true, reset_timestamps: true);
         }
@@ -492,7 +491,7 @@ pub mod ArgentAccount {
 
             // update owner
             let new_owner = current_escape.new_signer.unwrap();
-            self.owner_manager.complete_owner_escape(new_owner);
+            self.owner_manager.complete_owner_escape(:new_owner);
             self.emit(OwnerEscapedGuid { new_owner_guid: new_owner.into_guid() });
 
             self.clear_escape(escape_canceled: false, reset_timestamps: true);
@@ -507,7 +506,7 @@ pub mod ArgentAccount {
             assert(current_escape_status == EscapeStatus::Ready, 'argent/invalid-escape');
 
             let new_guardian = current_escape.new_signer;
-            self.guardian_manager.complete_guardian_escape(new_guardian);
+            self.guardian_manager.complete_guardian_escape(:new_guardian);
             if let Option::Some(new_guardian) = new_guardian {
                 self.emit(GuardianEscapedGuid { new_guardian_guid: new_guardian.into_guid() });
             } else {

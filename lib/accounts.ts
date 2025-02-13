@@ -77,16 +77,50 @@ export class ArgentAccount extends Account {
   }
 }
 
-export interface ArgentWallet {
-  account: ArgentAccount;
-  accountContract: Contract;
-  owner: KeyPair;
-  owners: KeyPair[];
-}
+export class ArgentWallet implements ArgentWallet {
+  constructor(
+    public readonly account: ArgentAccount,
+    public readonly classHash: string,
+    public readonly owners: KeyPair[],
+    public readonly guardians: KeyPair[],
+    public readonly salt: string,
+    public readonly transactionHash: string,
+    public readonly accountContract: Contract,
+  ) {}
 
-export interface ArgentWalletWithGuardian extends ArgentWallet {
-  guardian: KeyPair;
-  guardians: KeyPair[];
+  public get owner(): KeyPair {
+    if (this.owners.length > 1) throw new Error("Cannot get owner when there are multiple owners");
+    return this.owners[0];
+  }
+
+  public get guardian(): KeyPair | undefined {
+    if (this.guardians.length > 1) throw new Error("Cannot get guardian when there are multiple guardians");
+    return this.guardians.at(0);
+  }
+
+  static async create(
+    finalParams: DeployAccountParams & {
+      account: ArgentAccount;
+      classHash: string;
+      owners: KeyPair[];
+      guardians: KeyPair[];
+      salt: string;
+      transactionHash: string;
+    },
+  ): Promise<ArgentWallet> {
+    const accountContract = await manager.loadContract(finalParams.account.address);
+    accountContract.connect(finalParams.account);
+
+    return new ArgentWallet(
+      finalParams.account,
+      finalParams.classHash,
+      finalParams.owners,
+      finalParams.guardians,
+      finalParams.salt,
+      finalParams.transactionHash,
+      accountContract,
+    );
+  }
 }
 
 interface LegacyArgentWallet {
@@ -178,51 +212,7 @@ async function deployOldAccountWithProxyInner(
   return { account, accountContract, owner, guardian };
 }
 
-export class DeployedAccount implements ArgentWallet {
-  constructor(
-    public account: ArgentAccount,
-    public classHash: string,
-    public owners: KeyPair[],
-    public guardians: KeyPair[],
-    public salt: string,
-    public transactionHash: string,
-    public accountContract: Contract,
-  ) {}
-
-  public get owner(): KeyPair {
-    return this.owners[0];
-  }
-
-  public get guardian(): KeyPair | undefined {
-    return this.guardians.at(0);
-  }
-
-  static async create(
-    finalParams: DeployAccountParams & {
-      account: ArgentAccount;
-      classHash: string;
-      owners: KeyPair[];
-      guardians: KeyPair[];
-      salt: string;
-      transactionHash: string;
-    },
-  ): Promise<DeployedAccount> {
-    const accountContract = await manager.loadContract(finalParams.account.address);
-    accountContract.connect(finalParams.account);
-
-    return new DeployedAccount(
-      finalParams.account,
-      finalParams.classHash,
-      finalParams.owners,
-      finalParams.guardians,
-      finalParams.salt,
-      finalParams.transactionHash,
-      accountContract,
-    );
-  }
-}
-
-async function deployAccountInner(params: DeployAccountParams): Promise<DeployedAccount> {
+async function deployAccountInner(params: DeployAccountParams): Promise<ArgentWallet> {
   if (params.guardian && params.guardians) throw new Error("Cannot deploy with guardian and guardians both defined");
   if (params.owner && params.owners) throw new Error("Cannot deploy with owner and owners both defined");
 
@@ -273,7 +263,7 @@ async function deployAccountInner(params: DeployAccountParams): Promise<Deployed
         },
       ]);
 
-      await accountContract.invoke("change_guardians", calldata);
+      await accountContract.invoke("change_owners", calldata);
     }
     if (finalParams.guardians.length > 1) {
       const calldata = CallData.compile([
@@ -331,7 +321,7 @@ async function deployAccountInner(params: DeployAccountParams): Promise<Deployed
   }
 
   await manager.waitForTransaction(transactionHash);
-  return await DeployedAccount.create({ ...finalParams, account, transactionHash });
+  return await ArgentWallet.create({ ...finalParams, account, transactionHash });
 }
 
 export type DeployAccountParams = {
@@ -346,21 +336,18 @@ export type DeployAccountParams = {
   selfDeploy?: boolean;
 };
 
-export async function deployAccount(
-  params: DeployAccountParams = {},
-): Promise<ArgentWalletWithGuardian & { transactionHash: string }> {
+export async function deployAccount(params: DeployAccountParams = {}): Promise<ArgentWallet & { guardian: KeyPair }> {
   if (!params.guardian && !params.guardians) {
     params.guardians = [randomStarknetKeyPair()];
   }
   const deployedAccount = await deployAccountInner(params);
-  return { ...deployedAccount, owner: deployedAccount.owner, guardian: deployedAccount.guardian! };
+  return deployedAccount as ArgentWallet & { guardian: KeyPair };
 }
 
 export async function deployAccountWithoutGuardians(
   params: Omit<DeployAccountParams, "guardian"> = {},
-): Promise<ArgentWallet & { transactionHash: string }> {
-  const deployedAccount = await deployAccountInner(params);
-  return { ...deployedAccount, owner: deployedAccount.owner };
+): Promise<ArgentWallet> {
+  return await deployAccountInner(params);
 }
 
 export async function deployLegacyAccount(classHash: string): Promise<LegacyArgentWallet> {

@@ -102,24 +102,18 @@ describe("ArgentAccount", function () {
     });
 
     it("Should not require a signature if owner is still valid", async function () {
-      const { accountContract, account, owner } = await deployAccount();
-      const newOwner = randomStarknetKeyPair();
-      await accountContract.change_owners(
-        CallData.compile([...CallData.compile({ owners_guids_to_remove: [], owners_to_add: [newOwner.signer] }), 1]),
-      );
+      const { accountContract, account, owners } = await deployAccount({
+        owners: Array.from({ length: 2 }, () => randomStarknetKeyPair()),
+      });
+      const [owner, newOwner] = owners;
 
       const chainId = await manager.getChainId();
       const currentTimestamp = await manager.getCurrentTimestamp();
-      const signerAliveSignature = await signOwnerAliveMessage(
-        accountContract.address,
-        newOwner,
-        chainId,
-        currentTimestamp + 1000,
-      );
-      const calldata = CallData.compile([
-        ...CallData.compile({ owner_guids_to_remove: [newOwner.guid], owners_to_add: [] }),
-        1,
-      ]);
+      const calldata = CallData.compile({
+        owner_guids_to_remove: [newOwner.guid],
+        owners_to_add: [],
+        owner_alive_signature: new CairoOption(CairoOptionVariant.None),
+      });
       // Can't just do account.change_owners(x, y) because parsing goes wrong...
       await manager.ensureSuccess(await accountContract.invoke("change_owners", calldata));
       await accountContract.get_owners_guids().should.eventually.deep.equal([owner.guid]);

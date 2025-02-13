@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { Account, CallData, Contract, uint256 } from "starknet";
+import { Account, CallData, Contract, RPC, uint256 } from "starknet";
 import {
   ContractWithClass,
   KeyPair,
@@ -11,6 +11,7 @@ import {
   deployMultisig,
   deployMultisig1_1,
   expectEvent,
+  fundAccount,
   manager,
   signerTypeToCustomEnum,
   sortByGuid,
@@ -118,10 +119,17 @@ describe("ArgentMultisig: upgrade", function () {
             expect(getSignerGuids.length).to.equal(newSigners.length);
             const newSignersGuids = newSigners.map((signer) => signer.guid);
             expect(getSignerGuids).to.have.members(newSignersGuids);
+
+            // As old version might be in V1 or V2, we need to create a new account with V3
+            const accountV3 = new Account(account, account.address, account.signer, "1", RPC.ETransactionVersion.V3);
+            // Need some STRK for v3 transactions
+            await fundAccount(accountV3.address, 1e18, "STRK");
+
+            // Default estimation is too low, we need to increase it
+            const estimate = await mockDapp.estimateFee.set_number(42);
+            estimate.resourceBounds.l1_gas.max_amount = estimate.resourceBounds.l1_gas.max_amount * 4;
             // Perform a simple dapp interaction to make sure nothing is broken
-            mockDapp.connect(account);
-            // For some reason old accounts estimation is too low, so gotta hardcode it
-            await manager.ensureSuccess(mockDapp.set_number(42, { maxFee: 1e14 }));
+          await manager.ensureSuccess(accountV3.execute(mockDapp.populateTransaction.set_number(42), estimate));
           });
         }
       }

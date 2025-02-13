@@ -146,8 +146,8 @@ pub mod session_component {
         TContractState, +HasComponent<TContractState>, +IAccount<TContractState>, +ISessionCallback<TContractState>,
     > of InternalTrait<TContractState> {
         #[inline(always)]
-        fn is_session(self: @ComponentState<TContractState>, signature: Span<felt252>) -> bool {
-            match signature.get(0) {
+        fn is_session(self: @ComponentState<TContractState>, raw_signature: Span<felt252>) -> bool {
+            match raw_signature.get(0) {
                 Option::Some(session_magic) => *session_magic.unbox() == SESSION_MAGIC,
                 Option::None => false,
             }
@@ -157,15 +157,15 @@ pub mod session_component {
             ref self: ComponentState<TContractState>,
             calls: Span<Call>,
             transaction_hash: felt252,
-            signature: Span<felt252>,
+            raw_signature: Span<felt252>,
         ) {
             let state = self.get_contract();
             let account_address = get_contract_address();
 
             assert_no_self_call(calls, account_address);
-            assert(self.is_session(signature), 'session/invalid-magic-value');
+            assert(self.is_session(raw_signature), 'session/invalid-magic-value');
 
-            let token: SessionToken = full_deserialize(signature.slice(1, signature.len() - 1))
+            let token: SessionToken = full_deserialize(raw_signature.slice(1, raw_signature.len() - 1))
                 .expect('session/invalid-calldata');
 
             let session_hash = token.session.get_message_hash_rev_1();

@@ -735,7 +735,7 @@ pub mod ArgentAccount {
             return AccountSignature { owner_signature, guardian_signature: Option::Some(guardian_signature) };
         }
 
-        // #[inline(always)] => This one doesn't affect the contract size
+        #[inline(always)]
         fn assert_valid_account_signature_raw(self: @ContractState, hash: felt252, raw_signature: Span<felt252>) {
             self.assert_valid_account_signature(hash, self.parse_account_signature(raw_signature));
         }

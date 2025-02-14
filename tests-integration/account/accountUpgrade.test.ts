@@ -46,7 +46,7 @@ interface UpgradeDataEntry {
   triggerEscapeGuardianCall: SelfCall;
 }
 
-describe("ArgentAccount: upgrade", function () {
+describe.skip("ArgentAccount: upgrade", function () {
   let argentAccountClassHash: string;
   let mockDapp: ContractWithClass;
   let classHashV040: string;

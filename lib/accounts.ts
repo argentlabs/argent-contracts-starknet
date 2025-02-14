@@ -257,7 +257,7 @@ async function deployLegacyAccountInner(
   const constructorCalldata = CallData.compile({ owner: owner.publicKey, guardian: guardian?.publicKey || 0 });
   const contractAddress = hash.calculateContractAddressFromHash(salt, classHash, constructorCalldata, 0);
   await fundAccount(contractAddress, 1e15, "ETH"); // 0.001 ETH
-  const account = new Account(manager, contractAddress, owner, "1");
+  const account = new Account(manager, contractAddress, owner, "1", RPC.ETransactionVersion.V3);
   account.signer = new LegacyArgentSigner(owner, guardian);
 
   const { transaction_hash } = await account.deploySelf({
@@ -277,17 +277,13 @@ export async function upgradeAccount(
   newClassHash: string,
   calldata: RawCalldata = [],
 ): Promise<TransactionReceipt> {
-  // TODO
+  console.log(accountToUpgrade.transactionVersion);
   return await manager.ensureSuccess(
-    accountToUpgrade.execute(
-      {
-        contractAddress: accountToUpgrade.address,
-        entrypoint: "upgrade",
-        calldata: CallData.compile({ implementation: newClassHash, calldata }),
-      },
-      undefined,
-      { maxFee: 1e14 },
-    ),
+    accountToUpgrade.execute({
+      contractAddress: accountToUpgrade.address,
+      entrypoint: "upgrade",
+      calldata: CallData.compile({ implementation: newClassHash, calldata }),
+    }),
   );
 }
 

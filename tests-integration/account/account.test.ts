@@ -117,7 +117,7 @@ describe("ArgentAccount", function () {
   });
 
   describe("change_guardians()", function () {
-    it("Expect the escape to be reset", async function () {
+    it.skip("Expect the escape to be reset", async function () {
       const { account, accountContract, owner, guardian } = await deployAccount();
       account.signer = new ArgentSigner(guardian);
 

@@ -47,7 +47,7 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
       }
       const payload = getDeclareContractPayload(contractName, folder);
       let details: UniversalDetails | undefined;
-      
+
       // Setting resourceBounds skips estimate
       if (this.isDevnet) {
         details = {

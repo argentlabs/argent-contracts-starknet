@@ -39,9 +39,11 @@ describe("ArgentMultisig: upgrade", function () {
     const classHashV010 = await manager.declareArtifactMultisigContract(v010);
     artifactNames.push({
       name: v010,
-      deployMultisig: (threshold: number) => deployLegacyMultisig(classHashV010, threshold),
+      // Doesn't support V3 transactions
+      deployMultisig: (threshold: number) => deployLegacyMultisig(classHashV010, threshold, RPC.ETransactionVersion.V2),
       getGuidsSelector: "get_signers",
     });
+    // Start of support for V3 transactions
     const v011 = "0.1.1";
     const classHashV011 = await manager.declareArtifactMultisigContract(v011);
     artifactNames.push({

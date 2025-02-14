@@ -101,6 +101,22 @@ describe("ArgentAccount", function () {
       await accountContract.get_owners_guids().should.eventually.deep.equal([newOwner.guid]);
     });
 
+    it("Should not require a signature if owner is still valid", async function () {
+      const { accountContract, account, owners } = await deployAccount({
+        owners: Array.from({ length: 2 }, () => randomStarknetKeyPair()),
+      });
+      const [owner, newOwner] = owners;
+
+      const calldata = CallData.compile({
+        owner_guids_to_remove: [newOwner.guid],
+        owners_to_add: [],
+        owner_alive_signature: new CairoOption(CairoOptionVariant.None),
+      });
+      // Can't just do account.change_owners(x, y) because parsing goes wrong...
+      await manager.ensureSuccess(await accountContract.invoke("change_owners", calldata));
+      await accountContract.get_owners_guids().should.eventually.deep.equal([owner.guid]);
+    });
+
     it("Expect parsing error when new_owner is zero", async function () {
       const { accountContract } = await deployAccount();
       const calldata = CallData.compile([

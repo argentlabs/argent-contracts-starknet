@@ -282,7 +282,7 @@ async function deployAccountInner(params: DeployAccountParams): Promise<ArgentWa
         caller: deployer.address,
         nonce: randomStarknetKeyPair().publicKey,
         execute_after: 0,
-        execute_before: (await manager.getCurrentTimestamp()) + 3600,
+        execute_before: 9999999999,
         calls: [
           {
             to: contractAddress,
@@ -302,7 +302,7 @@ async function deployAccountInner(params: DeployAccountParams): Promise<ArgentWa
         caller: deployer.address,
         nonce: randomStarknetKeyPair().publicKey,
         execute_after: 0,
-        execute_before: (await manager.getCurrentTimestamp()) + 3600,
+        execute_before: 9999999999,
         calls: [
           {
             to: contractAddress,
@@ -345,8 +345,8 @@ export async function deployAccount(params: DeployAccountParams = {}): Promise<A
 }
 
 export async function deployAccountWithoutGuardians(
-  params: Omit<DeployAccountParams, "guardian"> = {},
-): Promise<ArgentWallet> {
+  params: Omit<DeployAccountParams, "guardian" | "guardians"> = {},
+): Promise<Omit<ArgentWallet, "guardian" | "guardians">> {
   return await deployAccountInner(params);
 }
 

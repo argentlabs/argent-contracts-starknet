@@ -107,8 +107,6 @@ describe("ArgentAccount", function () {
       });
       const [owner, newOwner] = owners;
 
-      const chainId = await manager.getChainId();
-      const currentTimestamp = await manager.getCurrentTimestamp();
       const calldata = CallData.compile({
         owner_guids_to_remove: [newOwner.guid],
         owners_to_add: [],

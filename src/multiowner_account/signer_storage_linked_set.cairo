@@ -2,6 +2,9 @@ use argent::linked_set::linked_set::LinkedSetConfig;
 use argent::signer::signer_signature::{SignerStorageTrait, SignerStorageValue, SignerType};
 use starknet::storage::{StoragePath, StoragePointerReadAccess};
 
+
+/// @notice Config for the linked set of signers. For each Signer we only store the SignerStorageValue. For the hashes
+/// function we use the GUID as it's already satisfies the requirements.
 pub impl SignerStorageValueLinkedSetConfig of LinkedSetConfig<SignerStorageValue> {
     const END_MARKER: SignerStorageValue = SignerStorageValue {
         stored_value: 'end', signer_type: SignerType::Starknet,

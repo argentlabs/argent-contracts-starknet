@@ -65,6 +65,7 @@ pub struct OwnerRemovedGuid {
     pub removed_owner_guid: felt252,
 }
 
+/// @notice Config for the linked set of signers. For each signer, we only store the GUID.
 impl SignerGuidLinkedSetConfig of LinkedSetConfig<felt252> {
     const END_MARKER: felt252 = 'end';
 

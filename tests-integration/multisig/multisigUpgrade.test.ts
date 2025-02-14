@@ -71,7 +71,7 @@ describe("ArgentMultisig: upgrade", function () {
     strkContract.connect(account);
     const recipient = "0xabde1";
     const amount = uint256.bnToUint256(1n);
-    await manager.ensureSuccess(strkContract.transfer(recipient, amount, { maxFee: 5e14 }));
+    await manager.ensureSuccess(strkContract.transfer(recipient, amount));
   });
 
   it("Shouldn't be possible to upgrade from current version to FutureVersionMultisig with extra calldata", async function () {

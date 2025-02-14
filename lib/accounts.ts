@@ -239,25 +239,37 @@ export async function deployAccountWithoutGuardians(
   return { account, accountContract, owner, transactionHash };
 }
 
-export async function deployLegacyAccount(classHash: string): Promise<LegacyArgentWallet> {
+export async function deployLegacyAccount(
+  classHash: string,
+  transactionVersion = RPC.ETransactionVersion.V3,
+): Promise<LegacyArgentWallet> {
   const guardian = new LegacyStarknetKeyPair();
-  return deployLegacyAccountInner(classHash, guardian);
+  return deployLegacyAccountInner(classHash, guardian, transactionVersion);
 }
 
-export async function deployLegacyAccountWithoutGuardian(classHash: string): Promise<LegacyArgentWallet> {
-  return deployLegacyAccountInner(classHash);
+export async function deployLegacyAccountWithoutGuardian(
+  classHash: string,
+  transactionVersion = RPC.ETransactionVersion.V3,
+): Promise<LegacyArgentWallet> {
+  return deployLegacyAccountInner(classHash, undefined, transactionVersion);
 }
 
 async function deployLegacyAccountInner(
   classHash: string,
   guardian?: LegacyStarknetKeyPair,
+  transactionVersion = RPC.ETransactionVersion.V3,
 ): Promise<LegacyArgentWallet> {
   const owner = new LegacyStarknetKeyPair();
   const salt = num.toHex(owner.privateKey);
   const constructorCalldata = CallData.compile({ owner: owner.publicKey, guardian: guardian?.publicKey || 0 });
   const contractAddress = hash.calculateContractAddressFromHash(salt, classHash, constructorCalldata, 0);
-  await fundAccount(contractAddress, 1e15, "ETH"); // 0.001 ETH
-  const account = new Account(manager, contractAddress, owner, "1", RPC.ETransactionVersion.V3);
+  if (transactionVersion === RPC.ETransactionVersion.V3) {
+    await fundAccount(contractAddress, 1e18, "STRK");
+  } else {
+    await fundAccount(contractAddress, 1e15, "ETH");
+  }
+
+  const account = new Account(manager, contractAddress, owner, "1", transactionVersion);
   account.signer = new LegacyArgentSigner(owner, guardian);
 
   const { transaction_hash } = await account.deploySelf({
@@ -277,7 +289,6 @@ export async function upgradeAccount(
   newClassHash: string,
   calldata: RawCalldata = [],
 ): Promise<TransactionReceipt> {
-  console.log(accountToUpgrade.transactionVersion);
   return await manager.ensureSuccess(
     accountToUpgrade.execute({
       contractAddress: accountToUpgrade.address,

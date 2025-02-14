@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { CairoOption, CairoOptionVariant, CallData, Contract, hash, RawArgs } from "starknet";
+import { CairoOption, CairoOptionVariant, CallData, Contract, hash, RawArgs, RPC } from "starknet";
 import {
   ArgentAccount,
   ArgentSigner,
@@ -46,7 +46,7 @@ interface UpgradeDataEntry {
   triggerEscapeGuardianCall: SelfCall;
 }
 
-describe.skip("ArgentAccount: upgrade", function () {
+describe("ArgentAccount: upgrade", function () {
   let argentAccountClassHash: string;
   let mockDapp: ContractWithClass;
   let classHashV040: string;
@@ -73,12 +73,14 @@ describe.skip("ArgentAccount: upgrade", function () {
     const triggerEscapeGuardianCallV03 = { entrypoint: "trigger_escape_guardian", calldata: [12] };
     upgradeData.push({
       name: v030,
-      deployAccount: async () => deployLegacyAccount(classHashV030),
-      deployAccountWithoutGuardians: async () => deployLegacyAccountWithoutGuardian(classHashV030),
+      deployAccount: async () => deployLegacyAccount(classHashV030, RPC.ETransactionVersion.V2),
+      deployAccountWithoutGuardians: async () =>
+        deployLegacyAccountWithoutGuardian(classHashV030, RPC.ETransactionVersion.V2),
       triggerEscapeOwnerCall: triggerEscapeOwnerCallV03,
       triggerEscapeGuardianCall: triggerEscapeGuardianCallV03,
     });
 
+    // From here on we begin support for V3 transactions
     const v031 = "0.3.1";
     const classHashV031 = await manager.declareArtifactAccountContract(v031);
     upgradeData.push({

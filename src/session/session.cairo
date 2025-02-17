@@ -1,7 +1,7 @@
 use argent::multiowner_account::argent_account::AccountSignature;
 use argent::signer::signer_signature::{Signer, SignerSignature};
 /// @notice Configuration for a session that allows a session key to execute transactions
-/// @dev The session must have and authorization to be usable. The authorization is a signature over the session by one
+/// @dev The session must have an authorization to be usable. The authorization is a signature over the session by one
 /// owner and one guardian
 /// @param expires_at Timestamp when the session becomes invalid (in seconds since the Unix epoch)
 /// @param allowed_methods_root Merkle root of allowed methods
@@ -19,7 +19,7 @@ pub struct Session {
 /// @param session The session configuration
 /// @param cache_owner_guid GUID of the owner that signed the `session_authorization`, or 0 to skip caching
 /// @param session_authorization Signatures from one owner and one guardian over the session. It can be empty if the
-/// session is was cached
+/// session is cached
 /// @param session_signature Session key's signature over poseidon(tx_hash, session_hash, cache_owner_guid)
 /// @param guardian_signature A guardian's signature over poseidon(tx_hash, session_hash, cache_owner_guid). The
 /// guardian signing here must be the same guardian used in the authorization
@@ -36,7 +36,8 @@ pub struct SessionToken {
 
 /// @notice Required callbacks for the session component
 pub trait ISessionCallback<TContractState> {
-    /// @notice Validates session authorization signature. Reverts if invalid
+    /// @notice Validates session authorization signature.
+    /// @dev Reverts if invalid session
     /// @param session_hash Hash of the session
     /// @param authorization_signature Signatures from one owner and one guardian over the session
     /// @return The parsed owner and guardian signatures

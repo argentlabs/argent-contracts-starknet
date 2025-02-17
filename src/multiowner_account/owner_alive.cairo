@@ -7,7 +7,7 @@ use starknet::{get_contract_address, get_tx_info};
 /// @notice Message to sign proving a specific owner is still valid
 /// @dev Prevents accidentally bricking the account by requiring proof that at least one remaining owner can sign
 /// @param new_owner_guid GUID of the owner that must prove signing capability
-/// @param signature_expiration Timestamp after which this proof becomes invalid
+/// @param signature_expiration Timestamp after which this proof becomes invalid (in seconds since the Unix epoch)
 #[derive(Drop, Copy, Hash)]
 pub struct OwnerAlive {
     pub new_owner_guid: felt252,
@@ -16,7 +16,7 @@ pub struct OwnerAlive {
 
 /// @notice Container for the signature and expiration of an OwnerAlive message
 /// @param owner_signature Signature of the SNIP-12 V1 compliant OwnerAlive message
-/// @param signature_expiration Timestamp when this proof expires
+/// @param signature_expiration Timestamp when this proof expires (in seconds since the Unix epoch)
 /// @dev The expiration must be within 24 hours of the transaction timestamp
 #[derive(Drop, Copy, Serde)]
 pub struct OwnerAliveSignature {

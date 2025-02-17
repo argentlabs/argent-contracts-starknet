@@ -11,7 +11,7 @@ pub enum EscapeType {
 }
 
 /// @notice Configuration for an escape process
-/// @param ready_at Timestamp when the escape can be completed
+/// @param ready_at Timestamp when the escape can be completed (in seconds since the Unix epoch)
 /// @param escape_type Type of escape in progress
 /// @param new_signer Replacement signer for the escaped role, or None if there's no replacement
 #[derive(Drop, Copy, Serde, Default)]

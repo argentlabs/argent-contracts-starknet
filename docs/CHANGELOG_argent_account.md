@@ -8,11 +8,16 @@ events
 removed methods
 deprecated methods
 - **Session cache issue** include backwards compatibility issue
-- **Session better estimates**
+- **Session better estimates**See [Accurate Estimates](accurate_estimates.md)
 - **Web authn fix** breaking changes and removed cairo0
 - Other changes:
   TransactionExecuted was changed
   Compiler version
+
+
+
+
+This account restricts the guardian role to only StarknetSigner.
 https://www.notion.so/argenthq/New-Account-0-5-0-112605a214fb800180c6f323036152f1
 
 
@@ -23,8 +28,8 @@ https://www.notion.so/argenthq/New-Account-0-5-0-112605a214fb800180c6f323036152f
 - **Outside Execution V2:** See [Outside Execution](outside_execution.md)
 - **Configurable escape security period**
   Starting on this version, users can change the security period used for escapes. It will still default to 1 week but it's now possible to change. Changing the security window will also affect the expiration time. For instance changing the security period to 48 hours means that, you need to wait 48h before the update is ready to be completed, and also, it needs to be completed in the following 48h or it will expire
-- **Better gas estimates:**
-  Even if you don't have access to all the signer private keys, you can estimate a transaction including the validation part. By using an estimate tx version (0x100000000000000000000000000000000 + the actual transaction version). When doing so, the signature verification will still pass even if the signatures are not correct. Note that you still need to provide the signature in a valid format
+- **Accurate gas estimates:**
+  See [Accurate Estimates](accurate_estimates.md). Note that in this version, accurate estimates are not supported for sessions
 
 - **Gas griefing mitigation changes:**
   Before this version the account would only pay for a fixed number of escape transactions (where only one of the two signatures are needed). To complete an escape after the limit was reached, it was needed to submit a transaction using outside execution

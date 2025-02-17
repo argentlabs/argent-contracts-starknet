@@ -49,12 +49,6 @@ struct SignerLinked {
 
 # Signatures
 
-### Concise Signatures
-Besides the format specified here, the argent account also supports concise signatures.
-
-**⚠️** The use of concise signatures is **discouraged** as they will stop working more than one owner or guardian is added to the account
-
- See [Signatures](./argent_account.md#Signatures)
 
 Signatures are provided as an `Array<SignerSignature>`
 
@@ -87,3 +81,12 @@ Here is an example of a signature with two starknet signers
 ```
 
 [More info about Cairo serialization](https://docs.starknet.io/documentation/architecture_and_concepts/Smart_Contracts/serialization_of_Cairo_types/#data_types_of_252_bits_or_less)
+
+
+
+### Concise Signatures
+Besides the format specified here, the argent account also supports concise signatures.
+
+**⚠️** The use of concise signatures is **discouraged** as they will stop working more than one owner or guardian is added to the account
+
+ See more details [here](./argent_account.md#Concise_Format)

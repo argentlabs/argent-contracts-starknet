@@ -4,13 +4,16 @@
 
 See [Argent Account](./docs/argent_account.md) and [Argent Multisig](./docs/multisig.md) for more details.
 
+## Release Notes
+
+See [CHANGELOG](./CHANGELOG.md) for the release notes for all versions.
+
+
 ## Deployments
 
 See deployed class hashes can be found here for the [Argent Account](./deployments/account.txt), and here for the [Argent Multisig](./deployments/multisig.txt)
 
 Other deployment artifacts are located in [/deployments/](./deployments/)
-
-Find the release notes for all versions in [CHANGELOG](./CHANGELOG.md)
 
 ## Development
 

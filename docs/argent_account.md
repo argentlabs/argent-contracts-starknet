@@ -43,21 +43,33 @@ Adding multiple guardians can also be used as the as the ultimate censorship res
 ## Signer types
 
 There's more information about it in [Signers](./signers_and_signatures.md#Multiple_Signer_Types).
-This account restricts the guardian role to only StarknetSigner. Note that the guardian backup supports every type
 
 ## Signature format
 
-The information available in [Signatures](./signers_and_signatures.md#Signatures) is also applicable for the argent account.
+### Recommended Format
+The information available in [Signatures](./signers_and_signatures.md#Signatures) is also applicable for the argent account. The first signature is the owner and the second one is the guardian (if the account has any guardian)
 
-Additionally, this account also supports providing signatures in a concise way when al signers involved are StarknetSigners
 
-The account will accept the format
-[first_signer_r, first_signer_s]
+### Concise Format
+
+Besides the format specified here, the argent account also supports concise signatures if these two conditions are met:
+
+- There is only one owner and it's a StarknetSigner
+- There is no guardian or there's only one guardian and it's a StarknetSigner
+
+**⚠️** The use of concise signatures is **discouraged** as they will stop working more than one owner or guardian is added to the account
+
+The format of the concise signatures is the following:
+`[first_signer_r, first_signer_s]`
 
 And also
-[first_signer_r, first_signer_s, second_signer_r, second_signer_s]
+`[first_signer_r, first_signer_s, second_signer_r, second_signer_s]`
 
-## Change owner signature
+## Accurate Estimates
+
+The argent multisig can accurate estimates for transactions with Signers that use significant resources during validations. This also supports accurate estimates for sessions. See [Accurate Estimates](./accurate_estimates.md) for more information.
+
+## Change owner signature TODO
 
 To prevent mistakes where someone changes the owner to some key they don't control, the account will require a signature from the new owner as an argument to the `change_owner` function.
 

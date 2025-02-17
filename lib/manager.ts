@@ -32,3 +32,4 @@ config.update({ logLevel: "ERROR" });
 export const manager = new Manager(process.env.RPC_URL || `${devnetBaseUrl}`);
 
 console.log("Provider:", manager.channel.nodeUrl);
+console.log("RPC version:", await manager.channel.getSpecVersion());

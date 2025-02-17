@@ -20,7 +20,7 @@ describe("Multisig: Signers types", function () {
   const accounts: Account[] = [];
   const recipient = "0xadbe1";
   const amount = uint256.bnToUint256(1);
-  let ethContract: Contract;
+  let strkContract: Contract;
   const keyPairs = [
     { name: "Starknet signature", keyPair: randomStarknetKeyPair },
     { name: "Ethereum signature", keyPair: randomEthKeyPair },
@@ -30,7 +30,7 @@ describe("Multisig: Signers types", function () {
   ];
 
   before(async () => {
-    ethContract = await manager.tokens.ethContract();
+    strkContract = await manager.tokens.strkContract();
 
     for (const { name, keyPair } of keyPairs) {
       const { account: oneSigner } = await deployMultisig({ threshold: 1, keys: [keyPair()] });
@@ -52,8 +52,8 @@ describe("Multisig: Signers types", function () {
     describe("Simple transfer", function () {
       for (const { name, account } of accounts) {
         it(`Using "${name}"`, async function () {
-          ethContract.connect(account);
-          await manager.ensureSuccess(ethContract.transfer(recipient, amount));
+          strkContract.connect(account);
+          await manager.ensureSuccess(strkContract.transfer(recipient, amount));
         });
       }
     });

@@ -62,7 +62,7 @@ pub struct OwnerRemovedGuid {
 }
 
 /// @notice Emitted when a guardian is added
-/// @dev Could also emitted during account creation and when upgrading from older versions that didn't emit the event
+/// @dev Emitted during account creation and when upgrading from older versions that didn't emit the event
 /// @param new_guardian_guid GUID of the new guardian
 #[derive(Drop, starknet::Event)]
 pub struct GuardianAddedGuid {

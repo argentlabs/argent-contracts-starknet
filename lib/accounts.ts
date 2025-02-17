@@ -134,29 +134,15 @@ export const deployer = (() => {
   if (manager.isDevnet) {
     const devnetAddress = "0x64b48806902a367c8598f4f95c305e8c1a1acba5f082d294a43793113115691";
     const devnetPrivateKey = "0x71d7bb07b9a64f6f78ac4c816aff4da9";
-    return new Account(manager, devnetAddress, devnetPrivateKey, undefined, RPC.ETransactionVersion.V2);
+    return new Account(manager, devnetAddress, devnetPrivateKey, undefined, RPC.ETransactionVersion.V3);
   }
   const address = process.env.ADDRESS;
   const privateKey = process.env.PRIVATE_KEY;
   if (address && privateKey) {
-    return new Account(manager, address, privateKey, undefined, RPC.ETransactionVersion.V2);
+    return new Account(manager, address, privateKey, undefined, RPC.ETransactionVersion.V3);
   }
   throw new Error("Missing deployer address or private key, please set ADDRESS and PRIVATE_KEY env variables.");
 })();
-
-export const deployerV3 = setDefaultTransactionVersionV3(deployer);
-
-export function setDefaultTransactionVersion(account: ArgentAccount, newVersion: boolean): ArgentAccount {
-  const newDefaultVersion = newVersion ? RPC.ETransactionVersion.V3 : RPC.ETransactionVersion.V2;
-  if (account.transactionVersion === newDefaultVersion) {
-    return account;
-  }
-  return new ArgentAccount(account, account.address, account.signer, account.cairoVersion, newDefaultVersion);
-}
-
-export function setDefaultTransactionVersionV3(account: ArgentAccount): ArgentAccount {
-  return setDefaultTransactionVersion(account, true);
-}
 
 console.log("Deployer:", deployer.address);
 
@@ -224,7 +210,7 @@ async function deployAccountInner(params: DeployAccountParams): Promise<ArgentWa
     salt: params.salt ?? num.toHex(randomStarknetKeyPair().privateKey),
     owners: owners ?? [randomStarknetKeyPair()],
     guardians: guardians ?? [],
-    useTxV3: params.useTxV3 ?? false,
+    useTxV3: params.useTxV3 ?? true,
     selfDeploy: params.selfDeploy ?? false,
   };
   const guardian =
@@ -350,25 +336,37 @@ export async function deployAccountWithoutGuardians(
   return await deployAccountInner(params);
 }
 
-export async function deployLegacyAccount(classHash: string): Promise<LegacyArgentWallet> {
+export async function deployLegacyAccount(
+  classHash: string,
+  transactionVersion = RPC.ETransactionVersion.V3,
+): Promise<LegacyArgentWallet> {
   const guardian = new LegacyStarknetKeyPair();
-  return deployLegacyAccountInner(classHash, guardian);
+  return deployLegacyAccountInner(classHash, guardian, transactionVersion);
 }
 
-export async function deployLegacyAccountWithoutGuardian(classHash: string): Promise<LegacyArgentWallet> {
-  return deployLegacyAccountInner(classHash);
+export async function deployLegacyAccountWithoutGuardian(
+  classHash: string,
+  transactionVersion = RPC.ETransactionVersion.V3,
+): Promise<LegacyArgentWallet> {
+  return deployLegacyAccountInner(classHash, undefined, transactionVersion);
 }
 
 async function deployLegacyAccountInner(
   classHash: string,
   guardian?: LegacyStarknetKeyPair,
+  transactionVersion = RPC.ETransactionVersion.V3,
 ): Promise<LegacyArgentWallet> {
   const owner = new LegacyStarknetKeyPair();
   const salt = num.toHex(owner.privateKey);
   const constructorCalldata = CallData.compile({ owner: owner.publicKey, guardian: guardian?.publicKey || 0 });
   const contractAddress = hash.calculateContractAddressFromHash(salt, classHash, constructorCalldata, 0);
-  await fundAccount(contractAddress, 1e15, "ETH"); // 0.001 ETH
-  const account = new Account(manager, contractAddress, owner, "1");
+  if (transactionVersion === RPC.ETransactionVersion.V3) {
+    await fundAccount(contractAddress, 1e18, "STRK");
+  } else {
+    await fundAccount(contractAddress, 1e15, "ETH");
+  }
+
+  const account = new Account(manager, contractAddress, owner, "1", transactionVersion);
   account.signer = new LegacyArgentSigner(owner, guardian);
 
   const { transaction_hash } = await account.deploySelf({
@@ -389,15 +387,11 @@ export async function upgradeAccount(
   calldata: RawCalldata = [],
 ): Promise<TransactionReceipt> {
   return await manager.ensureSuccess(
-    accountToUpgrade.execute(
-      {
-        contractAddress: accountToUpgrade.address,
-        entrypoint: "upgrade",
-        calldata: CallData.compile({ implementation: newClassHash, calldata }),
-      },
-      undefined,
-      { maxFee: 1e14 },
-    ),
+    accountToUpgrade.execute({
+      contractAddress: accountToUpgrade.address,
+      entrypoint: "upgrade",
+      calldata: CallData.compile({ implementation: newClassHash, calldata }),
+    }),
   );
 }
 

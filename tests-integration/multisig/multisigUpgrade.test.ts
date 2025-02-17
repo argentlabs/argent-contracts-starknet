@@ -1,6 +1,7 @@
 import { expect } from "chai";
-import { Account, CallData, Contract, uint256 } from "starknet";
+import { Account, CallData, Contract, RPC, uint256 } from "starknet";
 import {
+  ContractWithClass,
   KeyPair,
   LegacyMultisigKeyPair,
   MultisigSigner,
@@ -10,6 +11,7 @@ import {
   deployMultisig,
   deployMultisig1_1,
   expectEvent,
+  fundAccount,
   manager,
   signerTypeToCustomEnum,
   sortByGuid,
@@ -30,15 +32,18 @@ interface UpgradeDataEntry {
 
 describe("ArgentMultisig: upgrade", function () {
   const artifactNames: UpgradeDataEntry[] = [];
+  let mockDapp: ContractWithClass;
 
   before(async () => {
     const v010 = "0.1.0";
     const classHashV010 = await manager.declareArtifactMultisigContract(v010);
     artifactNames.push({
       name: v010,
-      deployMultisig: (threshold: number) => deployLegacyMultisig(classHashV010, threshold),
+      // Doesn't support V3 transactions
+      deployMultisig: (threshold: number) => deployLegacyMultisig(classHashV010, threshold, RPC.ETransactionVersion.V2),
       getGuidsSelector: "get_signers",
     });
+    // Start of support for V3 transactions
     const v011 = "0.1.1";
     const classHashV011 = await manager.declareArtifactMultisigContract(v011);
     artifactNames.push({
@@ -54,6 +59,7 @@ describe("ArgentMultisig: upgrade", function () {
         deployMultisig({ classHash: classHashV020, threshold, signersLength: threshold }),
       getGuidsSelector: "get_signer_guids",
     });
+    mockDapp = await manager.deployContract("MockDapp");
   });
 
   it("Upgrade from current version to FutureVersionMultisig", async function () {
@@ -63,11 +69,11 @@ describe("ArgentMultisig: upgrade", function () {
     const { account } = await deployMultisig1_1();
     await upgradeAccount(account, argentMultisigFutureClassHash);
     expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentMultisigFutureClassHash));
-    const ethContract = await manager.tokens.ethContract();
-    ethContract.connect(account);
+    const strkContract = await manager.tokens.strkContract();
+    strkContract.connect(account);
     const recipient = "0xabde1";
     const amount = uint256.bnToUint256(1n);
-    await manager.ensureSuccess(ethContract.transfer(recipient, amount, { maxFee: 5e14 }));
+    await manager.ensureSuccess(strkContract.transfer(recipient, amount));
   });
 
   it("Shouldn't be possible to upgrade from current version to FutureVersionMultisig with extra calldata", async function () {
@@ -107,7 +113,6 @@ describe("ArgentMultisig: upgrade", function () {
               }
             }
 
-            const ethContract = await manager.tokens.ethContract();
             const newSigners = sortByGuid(keys.map((key: any) => new StarknetKeyPair(key.privateKey)));
             account.signer = new MultisigSigner(newSigners);
 
@@ -116,11 +121,18 @@ describe("ArgentMultisig: upgrade", function () {
             expect(getSignerGuids.length).to.equal(newSigners.length);
             const newSignersGuids = newSigners.map((signer) => signer.guid);
             expect(getSignerGuids).to.have.members(newSignersGuids);
-            // Perform a transfer to make sure nothing is broken
-            ethContract.connect(account);
-            const recipient = "0xabde1";
-            const amount = uint256.bnToUint256(1n);
-            await manager.ensureSuccess(ethContract.transfer(recipient, amount, { maxFee: 5e14 }));
+
+            // As old version might be in V1 or V2, we need to create a new account with V3
+            const accountV3 = new Account(account, account.address, account.signer, "1", RPC.ETransactionVersion.V3);
+            // Need some STRK for v3 transactions
+            await fundAccount(accountV3.address, 1e18, "STRK");
+
+            // Default estimation is too low, we need to increase it
+            mockDapp.connect(accountV3);
+            const estimate = await mockDapp.estimateFee.set_number(42);
+            estimate.resourceBounds.l1_gas.max_amount = estimate.resourceBounds.l1_gas.max_amount * 4;
+            // Perform a simple dapp interaction to make sure nothing is broken
+            await manager.ensureSuccess(accountV3.execute(mockDapp.populateTransaction.set_number(42), estimate));
           });
         }
       }

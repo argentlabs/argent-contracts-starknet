@@ -8,10 +8,10 @@ const newClassHash = "0x2fadbf77a721b94bdcc3032d86a8921661717fa55145bccf88160ee2
 const classHashToUse = newClassHash;
 /////////////////////////////////////////////
 
-const ethBalance = await manager.tokens.ethBalance(deployer.address);
-console.log(`eth balance: ${ethBalance}`);
-if (ethBalance == 0n) {
-  throw new Error("eth balance is 0");
+const strkBalance = await manager.tokens.strkBalance(deployer.address);
+console.log(`strk balance: ${strkBalance}`);
+if (strkBalance == 0n) {
+  throw new Error("strk balance is 0");
 }
 
 const pubKey = BigInt(await deployer.signer.getPubKey());
@@ -21,13 +21,10 @@ const contractAddress = hash.calculateContractAddressFromHash(salt, classHashToU
 if (contractAddress != deployer.address) {
   throw new Error("calculated address doesn't match deployer address");
 }
-const { transaction_hash } = await deployer.deploySelf(
-  {
-    classHash: newClassHash,
-    constructorCalldata,
-    addressSalt: salt,
-  },
-  { maxFee: ethBalance },
-);
+const { transaction_hash } = await deployer.deploySelf({
+  classHash: newClassHash,
+  constructorCalldata,
+  addressSalt: salt,
+});
 console.log(`transaction_hash: ${transaction_hash}`);
 await manager.waitForTx(transaction_hash);

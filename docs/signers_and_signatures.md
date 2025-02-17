@@ -1,6 +1,6 @@
 # Multiple Signer Types
 
-Starting from argent [account](./argent-account.md) v0.4.0 and [multisig](./multisig.md) v0.2.0, the accounts will allow the use of other signatures types, besides the Starknet native one. We support the following:
+Starting from argent [account](./argent_account.md) v0.4.0 and [multisig](./multisig.md) v0.2.0, the accounts will allow the use of other signatures types besides the Starknet native one. We support the following:
 
 - **Starknet**: native starknet key signature, it will be the most efficient in terms of gas usage
 - **Secp256k1**: Uses the curve used by Ethereum and other cryptocurrencies
@@ -49,11 +49,16 @@ struct SignerLinked {
 
 # Signatures
 
-**NOTE** Besides the format specified here, the argent account also supports concise signatures. See [Signatures](./argent_account.md#Signatures)
+### Concise Signatures
+Besides the format specified here, the argent account also supports concise signatures.
+
+**⚠️** The use of concise signatures is **discouraged** as they will stop working more than one owner or guardian is added to the account
+
+ See [Signatures](./argent_account.md#Signatures)
 
 Signatures are provided as an `Array<SignerSignature>`
 
-```
+```rust
 enum SignerSignature {
   Starknet: (StarknetSigner, StarknetSignature),
   Secp256k1: (Secp256k1Signer, Secp256k1Signature),

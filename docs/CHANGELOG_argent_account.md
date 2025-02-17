@@ -1,6 +1,22 @@
 # Argent Account Changelog
 
 # Version 0.4.0
+- **Allow multiple owners and multiple guardians**
+new reset owners methods requires signature
+new escape
+events
+removed methods
+deprecated methods
+- **Session cache issue** include backwards compatibility issue
+- **Session better estimates**
+- **Web authn fix** breaking changes and removed cairo0
+- Other changes:
+  TransactionExecuted was changed
+  Compiler version
+https://www.notion.so/argenthq/New-Account-0-5-0-112605a214fb800180c6f323036152f1
+
+
+# Version 0.4.0
 
 - **Multiple signer types:** See [Signers and signatures](signers_and_signatures.md)
 - **Sessions:** See [Sessions](sessions.md)

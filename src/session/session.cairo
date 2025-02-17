@@ -19,7 +19,7 @@ pub struct Session {
 /// @param session The session configuration
 /// @param cache_owner_guid GUID of the owner that signed the `session_authorization`, or 0 to skip caching
 /// @param session_authorization Signatures from one owner and one guardian over the session. It can be empty if the
-/// session is was cached
+/// session is cached
 /// @param session_signature Session key's signature over poseidon(tx_hash, session_hash, cache_owner_guid)
 /// @param guardian_signature A guardian's signature over poseidon(tx_hash, session_hash, cache_owner_guid). The
 /// guardian signing here must be the same guardian used in the authorization

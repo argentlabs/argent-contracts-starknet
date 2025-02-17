@@ -273,7 +273,7 @@ pub mod external_recovery_component {
         }
     }
 }
-#[inline(always)]
+
 pub fn get_escape_call_hash(escape_call: @EscapeCall) -> felt252 {
     core::poseidon::poseidon_hash_span(serialize(escape_call).span())
 }

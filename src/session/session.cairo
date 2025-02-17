@@ -1,7 +1,7 @@
 use argent::multiowner_account::argent_account::AccountSignature;
 use argent::signer::signer_signature::{Signer, SignerSignature};
 /// @notice Configuration for a session that allows a session key to execute transactions
-/// @dev The session must have and authorization to be usable. The authorization is a signature over the session by one
+/// @dev The session must have an authorization to be usable. The authorization is a signature over the session by one
 /// owner and one guardian
 /// @param expires_at Timestamp when the session becomes invalid (in seconds since the Unix epoch)
 /// @param allowed_methods_root Merkle root of allowed methods

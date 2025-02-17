@@ -124,11 +124,7 @@ describe("Session Account: execute caching", function () {
       });
 
       const calls = [mockDappContract.populateTransaction.set_number_double(2)];
-
-      await expectRevertWithErrorMessage(
-        "session/guardian-key-mismatch",
-        accountWithDappSigner.execute(calls, undefined, { maxFee: 1e16 }),
-      );
+      await expectRevertWithErrorMessage("session/guardian-key-mismatch", accountWithDappSigner.execute(calls));
     });
 
     it(`Fail if a different dapp key signed session token (caching: ${useCaching})`, async function () {

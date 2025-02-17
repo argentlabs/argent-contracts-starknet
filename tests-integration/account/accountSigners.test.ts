@@ -19,7 +19,7 @@ interface Account {
 describe("ArgentAccount: Signer types", function () {
   const recipient = "0xadbe1";
   const amount = uint256.bnToUint256(1);
-  let ethContract: Contract;
+  let strkContract: Contract;
 
   const accounts: Account[] = [];
   const signerTypes = [
@@ -31,7 +31,7 @@ describe("ArgentAccount: Signer types", function () {
   ];
 
   before(async () => {
-    ethContract = await manager.tokens.ethContract();
+    strkContract = await manager.tokens.strkContract();
 
     for (const { name, keyPair } of signerTypes) {
       const { account: withGuardian } = await deployAccount({ owner: keyPair() });
@@ -45,8 +45,8 @@ describe("ArgentAccount: Signer types", function () {
     describe("Simple transfer", function () {
       for (const { name, account } of accounts) {
         it(`Using "${name}"`, async function () {
-          ethContract.connect(account);
-          await manager.ensureSuccess(ethContract.transfer(recipient, amount));
+          strkContract.connect(account);
+          await manager.ensureSuccess(strkContract.transfer(recipient, amount));
         });
       }
     });

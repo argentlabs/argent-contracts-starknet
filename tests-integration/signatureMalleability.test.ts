@@ -4,7 +4,8 @@ import { ContractWithClass, EthKeyPair, Secp256r1KeyPair, manager, randomStarkne
 describe("Signature malleability", function () {
   const iterations = 1000;
   let signatureVerifier: ContractWithClass;
-  this.beforeAll(async function () {
+
+  before(async () => {
     signatureVerifier = await manager.deployContract("SignatureVerifier");
   });
 

@@ -173,10 +173,7 @@ describe("ArgentAccount: session basics", function () {
 
     // Expired session
     await manager.setTime(expiresAt + 7200n);
-    await expectRevertWithErrorMessage(
-      "session/expired",
-      accountWithDappSigner.execute(calls, undefined, { maxFee: 1e16 }),
-    );
+    await expectRevertWithErrorMessage("session/expired", accountWithDappSigner.execute(calls));
     await mockDappContract.get_number(accountContract.address).should.eventually.equal(4n);
   });
 
@@ -196,14 +193,10 @@ describe("ArgentAccount: session basics", function () {
 
     await account.waitForTransaction(transaction_hash);
     await mockDappContract.get_number(accountContract.address).should.eventually.equal(4n);
-
     // Revoke Session
     await accountContract.revoke_session(sessionHash);
     await accountContract.is_session_revoked(sessionHash).should.eventually.be.true;
-    await expectRevertWithErrorMessage(
-      "session/revoked",
-      accountWithDappSigner.execute(calls, undefined, { maxFee: 1e16 }),
-    );
+    await expectRevertWithErrorMessage("session/revoked", accountWithDappSigner.execute(calls));
     await mockDappContract.get_number(accountContract.address).should.eventually.equal(4n);
 
     await expectRevertWithErrorMessage("session/already-revoked", accountContract.revoke_session(sessionHash));

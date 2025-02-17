@@ -36,7 +36,8 @@ pub struct SessionToken {
 
 /// @notice Required callbacks for the session component
 pub trait ISessionCallback<TContractState> {
-    /// @notice Validates session authorization signature. Reverts if invalid
+    /// @notice Validates session authorization signature. 
+    /// @dev Reverts if invalid session
     /// @param session_hash Hash of the session
     /// @param authorization_signature Signatures from one owner and one guardian over the session
     /// @return The parsed owner and guardian signatures

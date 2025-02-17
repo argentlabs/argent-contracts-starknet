@@ -15,7 +15,7 @@ trait IRecoveryFromLegacyUpgrade<TContractState> {
     fn recovery_from_legacy_upgrade(ref self: TContractState);
 }
 
-/// @notice Legacy escape data structure from pre-0.4.0 versions
+/// @notice Legacy escape data structure for <0.4.0 versions
 /// @dev Used to read escape data during upgrades
 #[derive(Drop, Copy, Serde, Default, starknet::Store)]
 struct LegacyEscape {

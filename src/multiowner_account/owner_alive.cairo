@@ -16,7 +16,7 @@ pub struct OwnerAlive {
 
 /// @notice Container for the signature and expiration of an OwnerAlive message
 /// @param owner_signature Signature of the SNIP-12 V1 compliant OwnerAlive message
-/// @param signature_expiration Timestamp when this proof expires
+/// @param signature_expiration Timestamp when this proof expires (in seconds since the Unix epoch)
 /// @dev The expiration must be within 24 hours of the transaction timestamp
 #[derive(Drop, Copy, Serde)]
 pub struct OwnerAliveSignature {

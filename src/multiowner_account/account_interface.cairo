@@ -17,7 +17,7 @@ pub trait IArgentMultiOwnerAccount<TContractState> {
 
     /// @notice Updates the security period for escapes
     /// @param new_security_period Delay in seconds before an escape can be completed. The escape will expire after the
-    /// same delay. 
+    /// same delay.
     /// @dev Must be >= 10 minutes
     /// @dev Must be called by the account and authorized by one owner and one guardian (if set)
     /// @dev Reverts if there is an ongoing escape

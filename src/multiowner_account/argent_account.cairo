@@ -6,7 +6,8 @@ pub trait IEmitArgentAccountEvent<TContractState> {
 use argent::signer::signer_signature::SignerSignature;
 
 /// @dev Represents a regular signature for the account
-/// @dev Escape-related signatures use a single SignerSignature instead
+/// @dev Escape-related signatures use a single SignerSignature instead. This are signatures for methods that only
+/// require one of the two roles to sign the transaction
 #[derive(Drop, Copy)]
 pub struct AccountSignature {
     pub owner_signature: SignerSignature,

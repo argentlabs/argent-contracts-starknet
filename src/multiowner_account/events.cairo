@@ -12,8 +12,7 @@ pub struct AccountCreated {
     pub guardian: felt252,
 }
 
-/// @notice Emitted on initialization with the the owner and guardian (or 0 if none) guid's
-/// @dev Emitted exactly once when the account is initialized
+/// @notice Emitted on account creation with the the owner and guardian guid's
 /// @dev Emitted exactly once when the account is initialized
 /// @param owner_guid GUID of the owner
 /// @param guardian_guid GUID of the guardian, or 0 if none
@@ -62,7 +61,7 @@ pub struct OwnerRemovedGuid {
 }
 
 /// @notice Emitted when a guardian is added
-/// @dev Emitted during account creation and when upgrading from older versions that didn't emit the event
+/// @dev Also emitted during account creation and when upgrading from older versions that didn't emit the event
 /// @param new_guardian_guid GUID of the new guardian
 #[derive(Drop, starknet::Event)]
 pub struct GuardianAddedGuid {
@@ -78,7 +77,7 @@ pub struct GuardianRemovedGuid {
 }
 
 /// @notice Owner escape initiated by a guardian
-/// @param ready_at Timestamp when escape becomes ready for completion
+/// @param ready_at Timestamp (in seconds) when escape becomes ready for completion
 /// @param new_owner_guid GUID of the proposed new owner
 #[derive(Drop, starknet::Event)]
 pub struct EscapeOwnerTriggeredGuid {
@@ -87,7 +86,7 @@ pub struct EscapeOwnerTriggeredGuid {
 }
 
 /// @notice Guardian escape initiated by an owner
-/// @param ready_at Timestamp when escape becomes ready for completion
+/// @param ready_at Timestamp (in seconds) when escape becomes ready for completion
 /// @param new_guardian_guid GUID of the proposed new guardian, or 0 to remove guardians
 #[derive(Drop, starknet::Event)]
 pub struct EscapeGuardianTriggeredGuid {

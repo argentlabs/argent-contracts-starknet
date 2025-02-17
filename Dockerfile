@@ -13,10 +13,10 @@ RUN git clone https://github.com/0xSpaceShard/starknet-devnet-rs . && \
     git checkout febf11e9c20fa14511a54d157805ac4a7be62d4d
 
 # Build the project explicitly as a binary
-RUN cargo build --bin starknet-devnet
+RUN cargo build --bin starknet-devnet --release
 
 # Verify the binary exists
-RUN ls -lah /app/target/debug/
+RUN ls -lah /app/target/release/
 
 # Create a minimal runtime image
 FROM ubuntu:latest
@@ -25,7 +25,7 @@ FROM ubuntu:latest
 WORKDIR /app
 
 # Copy the built binary from the builder stage
-COPY --from=builder /app/target/debug/starknet-devnet /usr/local/bin/starknet-devnet
+COPY --from=builder /app/target/release/starknet-devnet /usr/local/bin/starknet-devnet
 
 # Ensure the binary is executable
 RUN chmod +x /usr/local/bin/starknet-devnet

@@ -2,7 +2,7 @@ import { randomBytes } from "crypto";
 import { ContractWithClass, EthKeyPair, Secp256r1KeyPair, manager, randomStarknetKeyPair } from "../lib";
 
 describe("Signature malleability", function () {
-  const iterations = 100;
+  const iterations = 1000;
   let signatureVerifier: ContractWithClass;
 
   before(async () => {

@@ -11,7 +11,6 @@ pub const TX_V3_ESTIMATE: felt252 = 0x100000000000000000000000000000000 + 3; // 
 pub const DA_MODE_L1: u32 = 0;
 const DA_MODE_L2: u32 = 1;
 
-#[inline(always)]
 pub fn assert_correct_invoke_version(tx_version: felt252) {
     assert(
         tx_version == TX_V3 || tx_version == TX_V1 || tx_version == TX_V3_ESTIMATE || tx_version == TX_V1_ESTIMATE,
@@ -19,7 +18,6 @@ pub fn assert_correct_invoke_version(tx_version: felt252) {
     )
 }
 
-#[inline(always)]
 pub fn assert_correct_deploy_account_version(tx_version: felt252) {
     assert(
         tx_version == TX_V3 || tx_version == TX_V1 || tx_version == TX_V3_ESTIMATE || tx_version == TX_V1_ESTIMATE,
@@ -27,7 +25,6 @@ pub fn assert_correct_deploy_account_version(tx_version: felt252) {
     )
 }
 
-#[inline(always)]
 pub fn assert_correct_declare_version(tx_version: felt252) {
     assert(
         tx_version == TX_V3 || tx_version == TX_V2 || tx_version == TX_V3_ESTIMATE || tx_version == TX_V2_ESTIMATE,
@@ -35,7 +32,6 @@ pub fn assert_correct_declare_version(tx_version: felt252) {
     )
 }
 
-#[inline(always)]
 fn is_estimate_version(tx_version: felt252) -> bool {
     tx_version == TX_V3_ESTIMATE || tx_version == TX_V2_ESTIMATE || tx_version == TX_V1_ESTIMATE
 }

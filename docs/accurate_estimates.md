@@ -6,7 +6,7 @@ When sending a transaction to the network, the sender needs to provide gas limit
 
 There are two common approaches to transaction simulation, each with drawbacks:
 
-1. **Skip Validation**: Using the `SKIP_VALIDATE` flag allows to simulate without signatures by skipping the validation phase. This  results in low estimates and it can lead to failed transactions if the overhead is not enough to cover the validation work. The error can happen frequently when the resources uses for validations are higher, for instance to validate Webauthn Signers, or multisigs with a high threshold.
+1. **Skip Validation**: Using the `SKIP_VALIDATE` flag allows to simulate without signatures by skipping the validation phase. This results in low estimates and it can lead to failed transactions if the overhead is not enough to cover the validation work. The error can happen frequently when the resources uses for validations are higher, for instance to validate Webauthn Signers, or multisigs with a high threshold.
 
 2. **Real Signatures**: While more accurate, using real signatures for estimation is problematic because:
    - It might require user interaction (WebAuthn, hardware wallets)

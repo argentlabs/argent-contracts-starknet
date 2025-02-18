@@ -8,7 +8,6 @@ See [Argent Account](./docs/argent_account.md) and [Argent Multisig](./docs/mult
 
 See [CHANGELOG](./CHANGELOG.md) for the release notes for all versions.
 
-
 ## Deployments
 
 See deployed class hashes can be found here for the [Argent Account](./deployments/account.txt), and here for the [Argent Multisig](./deployments/multisig.txt)

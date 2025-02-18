@@ -1,6 +1,5 @@
 # Argent Multisig
 
-
 ## High-Level Specification
 
 The Argent Multisig is a secure n-of-m multisig account implementation for Starknet that requires multiple signatures to authorize any operation.
@@ -14,7 +13,6 @@ A valid account signature is a list of `threshold` individual owner signatures. 
 Any operation that changes the security parameters of the account, like adding/removing/changing owners, upgrading, or changing the threshold will also require the approval (signature) of `threshold` owners.
 
 By default the account can execute a sequence of operations such as calling external contracts in a multicall. A multicall will fail if one of the inner call fails. Whenever a function of the account must be called (`add_signers`, `remove_signers`, `upgrade`, etc), it should be the only call performed in this multicall.
-
 
 ## Signer types
 
@@ -49,6 +47,7 @@ In addition to regular Starknet transactions, the account also can be used via m
 Theres is an opt-in feature to enable recovering lost accounts. See [Multisig Recovery](multisig_recovery.md)
 
 ## Release Notes
+
 Find the Multisig Release notes [here](./CHANGELOG_multisig.md)
 
 ## Deployments

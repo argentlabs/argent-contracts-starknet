@@ -1,11 +1,11 @@
 # Argent Multisig Changelog
 
 # Version 0.3.0
+
 webauthn
 txexecuted??
 compiler version
 
-TODO create document about better estimates
 # Version 0.2.0
 
 - **Multiple signer types:** See [Signers and signatures](signers_and_signatures.md)

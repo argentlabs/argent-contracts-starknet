@@ -42,9 +42,8 @@ The message to follow this SNIP-12 V1 typed data:
 ```
 
 where:
+
 - `ownerGuid` is the GUID of the owner that will sign the message
 - `signatureExpiration` is the timestamp of the signature in seconds since the Unix epoch. The signature will be valid until this timestamp, but the timestamp can only be 24h in the future
 
-
 The message will then be signed by one of the owners that are still valid after the modifications on `change_owner` are applied
-

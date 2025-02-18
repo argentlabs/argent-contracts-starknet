@@ -6,23 +6,30 @@ This feature is only available to argent accounts where there's a guardian
 
 Many of these restrictions are guaranteed onchain by the contract but others could rely on the account guardian.
 
-In order to start a session a dapp must generate a key pair (dapp key), and request the account to sign an offchain message with the session parameters.
+## Flow
 
-If the message is signed, then the dapp can trigger transactions without the need for user interactions using the session signed in the previous step - plus a guardian and a dapp key signature for every new transaction
+In order to **create a session** a dapp must generate a key pair (dapp key), and request the wallet to sign an offchain message with the session parameters. The resulting signature is called the **"Session Authorization"**.
 
-![Sessions diagram](session.png)
+![Sessions creation](session_creation.png)
+
+To **use a session** the dapp will need to trigger a transaction using the session signed in the previous step - plus a guardian and a dapp key signature for every new transaction
+Note that the user is not involved in the process. 
+
+![Sessions usage](session_usage.png)
+
+
+
+### Onchain checks by the account:
+
+- Methods to call (contract address and selector)
+- Backend and dapp signatures for every transaction
+- Check if session is revoked (see [Session Revocation ](#session-revocation))
+- Session expiration: it can only be done with some level precision during validation because of starknet restrictions to timestamps during validation, but the check will be also performed on execution with a more accurate timestamp. This could allow the dapp to perform some gas griefing but it is mitigated by the fact the guardian is also performing the check offchain
 
 ### Offchain checks by guardian:
 
 - Session expiration
 - Anything included in the `Metadata` field
-
-### Onchain checks by the account:
-
-- Methods to call
-- Backend and dapp signatures
-- Check if session is revoked (see [Session Revocation ](#session-revocation))
-- Session expiration: it can only be done with some level precision during validation because of starknet restrictions to timestamps during validation, but the check will be also performed on execution with a more accurate timestamp. This could allow the dapp to perform some gas griefing but it is mitigated by the fact the guardian is also performing the check offchain
 
 ### Session revocation:
 
@@ -60,26 +67,31 @@ fn is_session_authorization_cached(self: @ComponentState<TContractState>, sessio
 To use sessions, the tx signature should start with `SESSION_MAGIC` followed by the serialized SessionToken. Where `SESSION_MAGIC` is the shortstring `session-token`
 
 ```rust
-struct SessionToken {
-  /// Data of the session signed during creation
-  session: Session,
-  /// Flag indicating whether to cache the authorization signature for the session
-  cache_authorization: bool
-  /// the owner and guardian session signatures from the session creation phase
-  session_authorization: Span<felt252>,
-  /// the session key signature over poseidon(transaction_hash, session_hash)
-  session_signature: SignerSignature,
-  /// the session key signature over poseidon(transaction_hash, session_hash)
-  guardian_signature: SignerSignature,
-  /// a proof for each call to execute
-  proofs: Span<Span<felt252>>,
+struct Session {
+  // Timestamp when the session becomes invalid
+  expires_at: u64,
+  // Merkle root of allowed methods
+  allowed_methods_root: felt252,
+  // Hash of the session metadata JSON string
+  metadata_hash: felt252,
+  // GUID of the session key
+  session_key_guid: felt252,
 }
 
-struct Session {
-  expires_at: u64,
-  allowed_methods_root: felt252,
-  metadata_hash: felt252,
-  session_key_guid: felt252,
+// Container for session data and signatures needed to execute a given transaction
+struct SessionToken {
+  // The session configuration
+  session: Session,
+  // GUID of the owner that signed the `session_authorization`, or 0 to skip caching
+  cache_owner_guid: felt252,
+  // Signatures from one owner and one guardian over the session. It can be empty if the session is cached
+  session_authorization: Span<felt252>,
+  // Session key's signature over poseidon(tx_hash, session_hash, cache_owner_guid)
+  session_signature: SignerSignature,
+  // A guardian's signature over poseidon(tx_hash, session_hash, cache_owner_guid). The guardian signing here must be the same guardian used in the authorization
+  guardian_signature: SignerSignature,
+  // Merkle proofs for the transaction calls
+  proofs: Span<Span<felt252>>,
 }
 ```
 
@@ -112,9 +124,9 @@ struct Session {
   primaryType: 'Session',
   domain: {
     name: 'SessionAccount.session',
-    version: '1',
-    chainId: 'SN_SEPOLIA',
-    revision: '1'
+    version: encodeShortString("1"),
+    chainId: chainId,
+    revision: 1
   },
   message: {
     'Expires At': '117090256870',
@@ -137,3 +149,13 @@ Session can also be used in conjunction with [Outside Execution](./outside_execu
 ### Examples
 
 There are some examples in typescript about how to use this feature [here](../lib/session/) and [here](../tests-integration/sessionAccount.test.ts)
+
+
+### Backwards compatibility
+
+Sessions were introduced in version 0.4.0 of the Argent Account.
+
+The format suffered some changes in version 0.5.0. But it's backwards compatible if sessions caching is not used.
+
+The `SessionToken`field `cache_authorization: bool` was replaced by `cache_owner_guid: felt252` in version 0.5.0.
+Cache is still disabled if `cache_owner_guid` is set to 0, but passing `0x1` (true) won't work starting from version 0.5.0. Instead, the SessionToken should include the GUID if the owner who signed the session authorization.

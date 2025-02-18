@@ -1,25 +1,28 @@
 # Argent Account Changelog
 
 # Version 0.4.0
+
+This version introduces supports for multiple owners and multiple guardians.
+It also improves WebAuthn support compatibility with more browsers.
+
+
 - **Allow multiple owners and multiple guardians**
-new reset owners methods requires signature
-new escape
-events
-removed methods
-deprecated methods
-- **Session cache issue** include backwards compatibility issue
-- **Session better estimates**See [Accurate Estimates](accurate_estimates.md)
+  new reset owners methods requires signature
+  events
+  removed methods
+  deprecated methods
+  new escape
+- **Session changes** 
+  - To support multiple owners, the session signature (session token) was changed. This **breaks backwards compatibility** if the session caching is used. [More details](sessions.md#Backwards-compatibility)
+  - Sessions can now be used with **ANY guardian**. In the previous versions sessions were restricted to the MAIN guardian. The account checks that the Session Token is signed by the same guardian used in the authorization, but a second guardian can also sign the authorization. So the wallet or the user can't enforce that a specific guardian is used for a session.
 - **Web authn fix** breaking changes and removed cairo0
-- Other changes:
-  TransactionExecuted was changed
-  Compiler version
+- **TransactionExecuted** was changed
 
+- **Session better estimates** Added support for [Accurate Estimates](accurate_estimates.md) in the context of sessions
+- Compiled with Cairo v2.10.0
+- **Main guardian type** was restricted to StarknetSigner. Now it's possible to use any signer type.
 
-
-
-This account restricts the guardian role to only StarknetSigner.
-https://www.notion.so/argenthq/New-Account-0-5-0-112605a214fb800180c6f323036152f1
-
+TODO https://www.notion.so/argenthq/New-Account-0-5-0-112605a214fb800180c6f323036152f1
 
 # Version 0.4.0
 

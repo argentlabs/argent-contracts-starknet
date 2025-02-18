@@ -15,10 +15,10 @@ build-external-contracts = ["openzeppelin_presets::account::AccountUpgradeable"]
 starknet = "2.10.0"
 assert_macros = "2.10.0"
 snforge_std = "0.37.0"
-alexandria_encoding = { git = "https://github.com/gaetbout/quaireaux.git", rev = "0f5a47b" }
-alexandria_merkle_tree = { git = "https://github.com/gaetbout/quaireaux.git", rev="0f5a47b" }
-openzeppelin_security = { git = "https://github.com/gaetbout/cairo-contracts.git", rev="9ac1411" }
-openzeppelin_presets = { git = "https://github.com/gaetbout/cairo-contracts.git", rev="9ac1411" }
+alexandria_encoding = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "162bed1" }
+alexandria_merkle_tree = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev="162bed1" }
+openzeppelin_security = "0.20.0"
+openzeppelin_presets = "0.20.0"
 
 [tool.fmt]
 max-line-length = 120

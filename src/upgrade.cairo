@@ -2,27 +2,35 @@ use starknet::ClassHash;
 
 #[starknet::interface]
 pub trait IUpgradeable<TContractState> {
-    /// @notice Upgrades the implementation of the account by doing a library call to `perform_upgrade` on the new
-    /// implementation @param new_implementation The class hash of the new implementation
-    /// @param data Data to be passed in `perform_upgrade` in the `data` argument
+    /// @notice Upgrades the account implementation to a new class hash
+    /// @dev Validates that the new implementation supports SRC5_ACCOUNT_INTERFACE_ID
+    /// @dev Makes a library call to perform_upgrade on the new implementation
+    /// @dev Must be called by the account itself
+    /// @param new_implementation Class hash to upgrade to
+    /// @param data Additional data passed to perform_upgrade, depends on the target version
     fn upgrade(ref self: TContractState, new_implementation: ClassHash, data: Array<felt252>);
 }
 
 #[starknet::interface]
 pub trait IUpgradableCallbackOld<TContractState> {
-    /// Called after upgrading when coming from old accounts (argent account < 0.4.0 and multisig < 0.2.0)
-    /// @dev Logic to execute after an upgrade
-    /// Can only be called by the account after a call to `upgrade`
-    /// @param data Generic call data that can be passed to the function for future upgrade logic
+    /// @notice Legacy callback for accounts upgrading from old versions
+    /// @dev Used when upgrading from Argent account <0.4.0 or multisig <0.2.0
+    /// @dev Can only be called by the account itself during upgrade
+    /// @param data Implementation-specific upgrade data
+    /// @return Arbitrary data depending on target version
     fn execute_after_upgrade(ref self: TContractState, data: Array<felt252>) -> Array<felt252>;
 }
 
 #[starknet::interface]
 pub trait IUpgradableCallback<TContractState> {
-    /// Called to upgrade to given implementation
-    /// This function is responsible for performing the actual class replacement and emitting the events
-    /// The methods can only be called by the account after a call to `upgrade`
-    /// @param new_implementation The class hash of the new implementation
+    /// @notice Executes the actual upgrade to a new implementation
+    /// @dev Called as a library call by the account before replacing the class hash
+    /// @dev This behavior allows for extra flexibility as the upgrade logic is not defined in the old version but
+    /// determined by the new implementation
+    /// @dev Can only be called by the account itself during upgrade
+    /// @dev Must handle class hash replacement and event emission
+    /// @param new_implementation Class hash that will replace the current implementation
+    /// @param data Implementation-specific upgrade data
     fn perform_upgrade(ref self: TContractState, new_implementation: ClassHash, data: Span<felt252>);
 }
 
@@ -69,6 +77,8 @@ pub mod upgrade_component {
 
     #[generate_trait]
     pub impl UpgradableInternalImpl<TContractState, +HasComponent<TContractState>> of IUpgradeInternal<TContractState> {
+        /// @notice Completes the upgrade by replacing class hash and emitting event
+        /// @dev Should only be called from perform_upgrade
         fn complete_upgrade(ref self: ComponentState<TContractState>, new_implementation: ClassHash) {
             replace_class_syscall(new_implementation).expect('argent/invalid-upgrade');
             self.emit(AccountUpgraded { new_implementation });

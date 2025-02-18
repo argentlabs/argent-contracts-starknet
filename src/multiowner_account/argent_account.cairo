@@ -6,7 +6,8 @@ pub trait IEmitArgentAccountEvent<TContractState> {
 use argent::signer::signer_signature::SignerSignature;
 
 /// @dev Represents a regular signature for the account
-/// Signatures for escape methods don't fit here and will be represented by a single `SignerSignature`
+/// @dev Escape-related signatures use a single SignerSignature instead. These are signatures for methods that only
+/// require one of the two roles to sign the transaction
 #[derive(Drop, Copy)]
 pub struct AccountSignature {
     pub owner_signature: SignerSignature,
@@ -76,8 +77,8 @@ pub mod ArgentAccount {
     /// ready and can be completed for this duration
     const DEFAULT_ESCAPE_SECURITY_PERIOD: u64 = 7 * 24 * 60 * 60; // 7 days
 
-    /// Limit to one escape every X hours
-    const TIME_BETWEEN_TWO_ESCAPES: u64 = 12 * 60 * 60; // 12 hours;
+    /// Minimum delay between escape attempts (12 hours)
+    const TIME_BETWEEN_TWO_ESCAPES: u64 = 12 * 60 * 60;
 
     /// Limits fee in escapes
     const MAX_ESCAPE_MAX_FEE_ETH: u128 = 2000000000000000; // 0.002 ETH

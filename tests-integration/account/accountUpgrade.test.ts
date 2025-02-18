@@ -392,10 +392,8 @@ describe("ArgentAccount: upgrade", function () {
 });
 
 async function getAccountV3(account: Account): Promise<Account> {
-  if (account.transactionVersion == RPC.ETransactionVersion.V3) {
-    return account;
+  if (account.transactionVersion == RPC.ETransactionVersion.V2) {
+    await fundAccount(account.address, 1e18, "STRK");
   }
-  const accountV3 = new Account(account, account.address, account.signer, "1", RPC.ETransactionVersion.V3);
-  await fundAccount(accountV3.address, 1e18, "STRK");
-  return accountV3;
+  return new ArgentAccount(account, account.address, account.signer, "1", RPC.ETransactionVersion.V3);
 }

@@ -122,7 +122,13 @@ describe("ArgentMultisig: upgrade", function () {
             expect(getSignerGuids).to.have.members(newSignersGuids);
 
             // As old version might be in V1 or V2, we need to create a new account with V3
-            const accountV3 = new Account(account, account.address, new MultisigSigner(newSigners), "1", RPC.ETransactionVersion.V3);
+            const accountV3 = new Account(
+              account,
+              account.address,
+              new MultisigSigner(newSigners),
+              "1",
+              RPC.ETransactionVersion.V3,
+            );
             // Need some STRK for v3 transactions
             await fundAccount(accountV3.address, 1e18, "STRK");
 

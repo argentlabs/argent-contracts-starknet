@@ -1,6 +1,5 @@
 use argent::signer::signer_signature::SignerStorageValue;
 
-
 pub trait IUpgradeMigrationCallback<TContractState> {
     fn finalize_migration(ref self: TContractState);
     fn migrate_owner(ref self: TContractState, signer_storage_value: SignerStorageValue);
@@ -16,13 +15,15 @@ trait IRecoveryFromLegacyUpgrade<TContractState> {
     fn recovery_from_legacy_upgrade(ref self: TContractState);
 }
 
+/// @notice Legacy escape data structure for <0.4.0 versions
+/// @dev Used to read escape data during upgrades
 #[derive(Drop, Copy, Serde, Default, starknet::Store)]
 struct LegacyEscape {
-    // timestamp for activation of escape mode, 0 otherwise
+    // Timestamp when escape becomes active (0 if no escape)
     ready_at: u64,
-    // None (0x0), Guardian (0x1), Owner (0x2)
+    // Type of escape: None (0x0), Guardian (0x1), Owner (0x2)
     escape_type: felt252,
-    // new owner or new guardian address
+    // starknet pub key of the new owner/guardian
     new_signer: felt252,
 }
 
@@ -47,20 +48,21 @@ pub mod upgrade_migration_component {
 
     #[storage]
     pub struct Storage {
-        // proxy implementation before 0.3.0
+        // Implementation address for proxy used before 0.3.0
         _implementation: felt252,
-        // single owner starkey pubkey before 0.5.0
+        // Single owner's Starknet public key before 0.5.0
         _signer: felt252,
-        // introduced in 0.4.0, removed in 0.5.0
+        // Non-Starknet type owner data (added in 0.4.0, removed in 0.5.0)
         _signer_non_stark: Map<felt252, felt252>,
-        // main guardian starkey pubkey before 0.5.0
+        // Main guardian's Starknet public key before 0.5.0
         _guardian: felt252,
-        // backup guardian starkey pubkey before 0.5.0
+        // Backup guardian's Starknet public key before 0.5.0
         _guardian_backup: felt252,
-        // backup guardian storage values by SignerType. introduced in 0.4.0, removed in 0.5.0
+        // Non-Starknet type backup guardian data (added in 0.4.0, removed in 0.5.0)
         _guardian_backup_non_stark: Map<felt252, felt252>,
-        // storage layout used to be different before 0.4.0
+        // Legacy escape data before 0.4.0 (different storage layout)
         _escape: LegacyEscape,
+        // Legacy escape attempt counters
         guardian_escape_attempts: felt252,
         owner_escape_attempts: felt252,
     }

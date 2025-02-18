@@ -2,24 +2,35 @@ use argent::signer::signer_signature::{Signer, SignerInfo, SignerSignature, Sign
 
 #[starknet::interface]
 pub trait IGuardianManager<TContractState> {
-    /// @notice Returns the starknet pub key or 0 if there's no guardian.
-    /// @dev Panics if there are multiple guardians.
+    /// @notice Returns the public key of the single guardian or 0 if there are no guardians
+    /// @dev Reverts if there are multiple guardians
+    /// @dev Reverts if there is just one guardian but its type is not Starknet, Eip191 or Secp256k1
     fn get_guardian(self: @TContractState) -> felt252;
+
+    /// @notice Returns the GUID of the single guardian or None if there are no guardians
+    /// @dev Reverts if there are multiple guardians
     fn get_guardian_guid(self: @TContractState) -> Option<felt252>;
-    /// @notice Returns the guardian type if there's any guardian. None if there is no guardian.
-    /// @dev Panics if there are multiple guardians.
+
+    /// @notice Returns the signer type of the single guardian or None if there are no guardians
+    /// @dev Reverts if there are multiple guardians
     fn get_guardian_type(self: @TContractState) -> Option<SignerType>;
 
-    /// @notice Returns the guid of all the guardians
+    /// @notice Returns the GUIDs of all guardians
     fn get_guardians_guids(self: @TContractState) -> Array<felt252>;
+
+    /// @notice Returns detailed information about all guardians
     fn get_guardians_info(self: @TContractState) -> Array<SignerInfo>;
 
+    /// @notice Checks if a signer is a guardian
     fn is_guardian(self: @TContractState, guardian: Signer) -> bool;
+
+    /// @notice Checks if a GUID belongs to a guardian
     fn is_guardian_guid(self: @TContractState, guardian_guid: felt252) -> bool;
 
-    /// @notice Verifies whether a provided signature is valid and comes from one of the guardians.
-    /// @param hash Hash of the message being signed
-    /// @param guardian_signature Signature to be verified
+    /// @notice Verifies a signature from a guardian
+    /// @param hash Message hash that was signed
+    /// @param guardian_signature The signature to verify
+    /// @return True if the signature is valid and from a valid guardian
     #[must_use]
     fn is_valid_guardian_signature(self: @TContractState, hash: felt252, guardian_signature: SignerSignature) -> bool;
 }
@@ -226,7 +237,7 @@ pub mod guardian_manager_component {
         }
 
         /// @dev it will revert if there's any overlap between the guardians to add and the guardians to remove
-        /// @dev it will revert if there are duplicate in the guardians to add or remove
+        /// @dev it will revert if there are duplicates in the guardians to add or remove
         fn change_guardians_using_storage(
             ref self: ComponentState<TContractState>,
             guardian_guids_to_remove: Array<felt252>,

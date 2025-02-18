@@ -67,7 +67,6 @@ pub trait IOutsideExecutionCallback<TContractState> {
     /// @param calls The calls to be performed
     /// @param outside_execution_hash The hash of OutsideExecution
     /// @param raw_signature The signature that the user gave for this transaction
-    #[inline(always)]
     fn execute_from_outside_callback(
         ref self: TContractState, calls: Span<Call>, outside_execution_hash: felt252, raw_signature: Span<felt252>,
     ) -> Array<Span<felt252>>;

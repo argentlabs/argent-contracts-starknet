@@ -72,7 +72,6 @@ pub impl LinkedSetWithHeadReadImpl<
         LinkedSetConfig::path_read_value(path: self.head_entry())
     }
 
-    #[inline(always)]
     fn single(self: StorageBase<LinkedSetWithHead<T>>) -> Option<T> {
         if !self.get_tail_list().is_empty() {
             return Option::None; // More than one item
@@ -151,7 +150,6 @@ impl LinkedSetWithHeadReadPrivateImpl<
         StorageBase { __base_address__: self.__base_address__ }.as_path()
     }
 
-    #[inline(always)]
     fn get_tail_list(self: StorageBase<LinkedSetWithHead<T>>) -> StorageBase<LinkedSet<T>> {
         StorageBase { __base_address__: self.__base_address__ }
     }
@@ -198,12 +196,10 @@ pub impl LinkedSetWithHeadWriteImpl<
 impl LinkedSetWithHeadWritePrivateImpl<
     T, +Drop<T>, +PartialEq<T>, +Copy<T>, +Store<T>, +LinkedSetConfig<T>, +Default<T>,
 > of LinkedSetWithHeadWritePrivate<T> {
-    #[inline(always)]
     fn head_entry(self: StorageBase<Mutable<LinkedSetWithHead<T>>>) -> StoragePath<Mutable<T>> {
         StorageBase { __base_address__: self.__base_address__ }.as_path()
     }
 
-    #[inline(always)]
     fn get_tail_list(self: StorageBase<Mutable<LinkedSetWithHead<T>>>) -> StorageBase<Mutable<LinkedSet<T>>> {
         StorageBase { __base_address__: self.__base_address__ }
     }
@@ -215,7 +211,6 @@ pub impl MutableLinkedSetWithHeadReadImpl<
 > of LinkedSetWithHeadRead<StorageBase<Mutable<LinkedSetWithHead<T>>>> {
     type Value = T;
 
-    #[inline(always)]
     fn first(self: StorageBase<Mutable<LinkedSetWithHead<T>>>) -> Option<T> {
         self.as_read_only().first()
     }

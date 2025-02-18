@@ -70,7 +70,6 @@ pub mod guardian_manager_component {
             self.guardians_storage.get_all().span().to_signer_info()
         }
 
-        #[inline(always)]
         fn is_guardian(self: @ComponentState<TContractState>, guardian: Signer) -> bool {
             self.guardians_storage.contains(guardian.storage_value())
         }

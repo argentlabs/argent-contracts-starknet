@@ -23,7 +23,11 @@ use starknet::contract_address_const;
 const VALID_UNTIL: u64 = 1100;
 
 fn NEW_OWNER() -> (Signer, OwnerAliveSignature) {
-    let new_owner = KeyPairTrait::from_secret_key('NEW_OWNER');
+    NEW_OWNER_FROM_KEY('NEW_OWNER')
+}
+
+fn NEW_OWNER_FROM_KEY(key: felt252) -> (Signer, OwnerAliveSignature) {
+    let new_owner = KeyPairTrait::from_secret_key(key);
     let (r, s) = new_owner.sign(new_owner_message_hash()).unwrap();
     let signer = StarknetSigner { pubkey: new_owner.public_key.try_into().expect('argent/zero-pubkey') };
     (
@@ -92,31 +96,49 @@ fn change_owner() {
     assert_eq!(account.get_owner_guid(), old_owner_guid);
 
     let (signer, _) = NEW_OWNER();
+    let (other_signer, _) = NEW_OWNER_FROM_KEY('OTHER_SIGNER');
+
     account
         .change_owners(
             owner_guids_to_remove: array![old_owner_guid],
-            owners_to_add: array![signer],
+            owners_to_add: array![signer, other_signer],
             owner_alive_signature: Option::None,
         );
     let new_owner_guid = signer.into_guid();
-    assert_eq!(account.get_owner_guid(), new_owner_guid);
+    let owners_info = account.get_owners_info();
+    assert_eq!(owners_info.len(), 2);
+    assert_eq!(*owners_info[0], signer.storage_value().into());
+    assert_eq!(*owners_info[1], other_signer.storage_value().into());
 
-    assert_eq!(spy.get_events().events.len(), 3);
+    assert_eq!(spy.get_events().events.len(), 5);
     // owner_manager events
     let guid_removed_event = owner_manager_component::Event::OwnerRemovedGuid(
         OwnerRemovedGuid { removed_owner_guid: old_owner_guid },
     );
     let guid_added_event = owner_manager_component::Event::OwnerAddedGuid(OwnerAddedGuid { new_owner_guid });
+    let other_guid_added_event = owner_manager_component::Event::OwnerAddedGuid(
+        OwnerAddedGuid { new_owner_guid: other_signer.into_guid() },
+    );
     spy
         .assert_emitted(
-            @array![(account.contract_address, guid_removed_event), (account.contract_address, guid_added_event)],
+            @array![
+                (account.contract_address, guid_removed_event),
+                (account.contract_address, guid_added_event),
+                (account.contract_address, other_guid_added_event),
+            ],
         );
 
     // ArgentAccount events
     let signer_link_event = ArgentAccount::Event::SignerLinked(
         SignerLinked { signer_guid: new_owner_guid, signer: signer },
     );
-    spy.assert_emitted(@array![(account.contract_address, signer_link_event)]);
+    let other_signer_link_event = ArgentAccount::Event::SignerLinked(
+        SignerLinked { signer_guid: other_signer.into_guid(), signer: other_signer },
+    );
+    spy
+        .assert_emitted(
+            @array![(account.contract_address, signer_link_event), (account.contract_address, other_signer_link_event)],
+        );
 }
 
 #[test]
@@ -135,6 +157,20 @@ fn change_owner_with_alive_signature() {
         );
     let new_owner_guid = signer.into_guid();
     assert_eq!(account.get_owner_guid(), new_owner_guid);
+}
+
+#[test]
+#[should_panic(expected: ('argent/invalid-signers-len',))]
+fn change_owner_remove_all_owners() {
+    let account = initialize_account_without_guardian();
+
+    let old_owner_guid = starknet_signer_from_pubkey(OWNER().pubkey).into_guid();
+    assert_eq!(account.get_owner_guid(), old_owner_guid);
+
+    account
+        .change_owners(
+            owner_guids_to_remove: array![old_owner_guid], owners_to_add: array![], owner_alive_signature: Option::None,
+        );
 }
 
 #[test]
@@ -239,23 +275,68 @@ fn change_owners_duplicates() {
         );
 }
 
+#[test]
+#[should_panic(expected: ('linked-set/item-not-found',))]
+fn change_owners_remove_twice() {
+    let account = initialize_account();
+    let current_owner = starknet_signer_from_pubkey(OWNER().pubkey);
+
+    account
+        .change_owners(
+            owner_guids_to_remove: array![current_owner.into_guid(), current_owner.into_guid()],
+            owners_to_add: array![current_owner],
+            owner_alive_signature: Option::None,
+        );
+}
+
+#[test]
+#[should_panic(expected: ('linked-set/already-in-set',))]
+fn change_owners_add_twice() {
+    let account = initialize_account();
+    let (signer, _) = NEW_OWNER();
+
+    account
+        .change_owners(
+            owner_guids_to_remove: array![], owners_to_add: array![signer, signer], owner_alive_signature: Option::None,
+        );
+}
+
+#[test]
+#[should_panic(expected: ('argent/invalid-signers-len',))]
+fn change_owners_reach_limits() {
+    let account = initialize_account();
+
+    let mut to_add = array![];
+    for i in 100..132_u8 {
+        let (signer, _) = NEW_OWNER_FROM_KEY(i.into());
+        to_add.append(signer)
+    };
+    account.change_owners(owner_guids_to_remove: array![], owners_to_add: to_add, owner_alive_signature: Option::None);
+}
 
 #[test]
 fn change_guardians() {
     let account = initialize_account();
     let guardian = starknet_signer_from_pubkey(22);
+    let other_guardian = starknet_signer_from_pubkey(23);
     let mut spy = spy_events();
 
     account
         .change_guardians(
             guardian_guids_to_remove: array![starknet_signer_from_pubkey(GUARDIAN().pubkey).into_guid()],
-            guardians_to_add: array![guardian],
+            guardians_to_add: array![guardian, other_guardian],
         );
-    assert_eq!(account.get_guardian(), 22);
+    let guardians_info = account.get_guardians_info();
+    assert_eq!(guardians_info.len(), 2);
+    assert_eq!(*guardians_info[0], guardian.storage_value().into());
+    assert_eq!(*guardians_info[1], other_guardian.storage_value().into());
 
-    assert_eq!(spy.get_events().events.len(), 3);
+    assert_eq!(spy.get_events().events.len(), 5);
     let signer_link_event = ArgentAccount::Event::SignerLinked(
         SignerLinked { signer_guid: guardian.into_guid(), signer: guardian },
+    );
+    let other_signer_link_event = ArgentAccount::Event::SignerLinked(
+        SignerLinked { signer_guid: other_guardian.into_guid(), signer: other_guardian },
     );
     let guardian_removed_event = guardian_manager_component::Event::GuardianRemovedGuid(
         GuardianRemovedGuid { removed_guardian_guid: starknet_signer_from_pubkey(GUARDIAN().pubkey).into_guid() },
@@ -263,13 +344,77 @@ fn change_guardians() {
     let guardian_added_event = guardian_manager_component::Event::GuardianAddedGuid(
         GuardianAddedGuid { new_guardian_guid: guardian.into_guid() },
     );
-    spy.assert_emitted(@array![(account.contract_address, signer_link_event)]);
+    let other_guardian_added_event = guardian_manager_component::Event::GuardianAddedGuid(
+        GuardianAddedGuid { new_guardian_guid: other_guardian.into_guid() },
+    );
+    spy
+        .assert_emitted(
+            @array![(account.contract_address, signer_link_event), (account.contract_address, other_signer_link_event)],
+        );
     spy
         .assert_emitted(
             @array![
-                (account.contract_address, guardian_removed_event), (account.contract_address, guardian_added_event),
+                (account.contract_address, guardian_removed_event),
+                (account.contract_address, guardian_added_event),
+                (account.contract_address, other_guardian_added_event),
             ],
         );
+}
+
+#[test]
+fn change_guardians_remove_all_guardians() {
+    let account = initialize_account();
+    let guardian = starknet_signer_from_pubkey(22);
+    let other_guardian = starknet_signer_from_pubkey(23);
+
+    account.change_guardians(guardian_guids_to_remove: array![], guardians_to_add: array![guardian, other_guardian]);
+
+    account
+        .change_guardians(
+            guardian_guids_to_remove: array![
+                starknet_signer_from_pubkey(GUARDIAN().pubkey).into_guid(),
+                guardian.into_guid(),
+                other_guardian.into_guid(),
+            ],
+            guardians_to_add: array![],
+        );
+
+    assert_eq!(account.get_guardians_info(), array![]);
+}
+
+#[test]
+#[should_panic(expected: ('argent/invalid-signers-len',))]
+fn change_guardians_reach_limits() {
+    let account = initialize_account();
+
+    let mut to_add = array![];
+    for i in 100..132_u8 {
+        let signer = starknet_signer_from_pubkey(i.into());
+        to_add.append(signer)
+    };
+
+    account.change_guardians(guardian_guids_to_remove: array![], guardians_to_add: to_add);
+}
+
+#[test]
+#[should_panic(expected: ('linked-set/item-not-found',))]
+fn change_guardians_remove_twice() {
+    let account = initialize_account();
+    let guardian = starknet_signer_from_pubkey(GUARDIAN().pubkey);
+
+    account
+        .change_guardians(
+            guardian_guids_to_remove: array![guardian.into_guid(), guardian.into_guid()], guardians_to_add: array![],
+        );
+}
+
+#[test]
+#[should_panic(expected: ('linked-set/already-in-set',))]
+fn change_guardians_add_twice() {
+    let account = initialize_account();
+    let new_guardian = starknet_signer_from_pubkey(23);
+
+    account.change_guardians(guardian_guids_to_remove: array![], guardians_to_add: array![new_guardian, new_guardian]);
 }
 
 #[test]
@@ -288,6 +433,87 @@ fn change_guardians_only_self() {
     let guardian = starknet_signer_from_pubkey(22);
     start_cheat_caller_address_global(contract_address_const::<42>());
     account.change_guardians(guardian_guids_to_remove: array![], guardians_to_add: array![guardian]);
+}
+
+#[test]
+#[should_panic(expected: ('argent/no-single-owner',))]
+fn get_owner_multiple_owners() {
+    let account = initialize_account();
+    let signer = starknet_signer_from_pubkey(22);
+
+    account
+        .change_owners(
+            owner_guids_to_remove: array![], owners_to_add: array![signer], owner_alive_signature: Option::None,
+        );
+
+    assert_eq!(account.get_owners_info().len(), 2);
+    let _ = account.get_owner();
+}
+
+#[test]
+#[should_panic(expected: ('argent/no-single-owner',))]
+fn get_owner_type_multiple_owners() {
+    let account = initialize_account();
+    let signer = starknet_signer_from_pubkey(22);
+
+    account
+        .change_owners(
+            owner_guids_to_remove: array![], owners_to_add: array![signer], owner_alive_signature: Option::None,
+        );
+
+    assert_eq!(account.get_owners_info().len(), 2);
+    let _ = account.get_owner_type();
+}
+
+#[test]
+#[should_panic(expected: ('argent/no-single-owner',))]
+fn get_owner_guid_multiple_owners() {
+    let account = initialize_account();
+    let signer = starknet_signer_from_pubkey(22);
+
+    account
+        .change_owners(
+            owner_guids_to_remove: array![], owners_to_add: array![signer], owner_alive_signature: Option::None,
+        );
+
+    assert_eq!(account.get_owners_info().len(), 2);
+    let _ = account.get_owner_guid();
+}
+
+#[test]
+#[should_panic(expected: ('argent/no-single-guardian',))]
+fn get_guardian_multiple_guardians() {
+    let account = initialize_account();
+    let signer = starknet_signer_from_pubkey(22);
+
+    account.change_guardians(guardian_guids_to_remove: array![], guardians_to_add: array![signer]);
+
+    assert_eq!(account.get_guardians_info().len(), 2);
+    let _ = account.get_guardian();
+}
+
+#[test]
+#[should_panic(expected: ('argent/no-single-guardian',))]
+fn get_guardian_type_multiple_guardians() {
+    let account = initialize_account();
+    let signer = starknet_signer_from_pubkey(22);
+
+    account.change_guardians(guardian_guids_to_remove: array![], guardians_to_add: array![signer]);
+
+    assert_eq!(account.get_guardians_info().len(), 2);
+    let _ = account.get_guardian_type();
+}
+
+#[test]
+#[should_panic(expected: ('argent/no-single-guardian',))]
+fn get_guardian_guid_multiple_guardians() {
+    let account = initialize_account();
+    let signer = starknet_signer_from_pubkey(22);
+
+    account.change_guardians(guardian_guids_to_remove: array![], guardians_to_add: array![signer]);
+
+    assert_eq!(account.get_guardians_info().len(), 2);
+    let _ = account.get_guardian_guid();
 }
 
 #[test]

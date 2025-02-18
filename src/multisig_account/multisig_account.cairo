@@ -190,7 +190,6 @@ mod ArgentMultisigAccount {
     }
 
     impl OutsideExecutionCallbackImpl of IOutsideExecutionCallback<ContractState> {
-        #[inline(always)]
         fn execute_from_outside_callback(
             ref self: ContractState, calls: Span<Call>, outside_execution_hash: felt252, raw_signature: Span<felt252>,
         ) -> Array<Span<felt252>> {
@@ -206,7 +205,6 @@ mod ArgentMultisigAccount {
     }
 
     impl IExternalRecoveryCallbackImpl of IExternalRecoveryCallback<ContractState> {
-        #[inline(always)]
         fn execute_recovery_call(ref self: ContractState, selector: felt252, calldata: Span<felt252>) {
             let calls = array![Call { to: get_contract_address(), selector, calldata }].span();
             self.assert_valid_calls(calls);
@@ -278,7 +276,6 @@ mod ArgentMultisigAccount {
     }
 
     #[must_use]
-    #[inline(always)]
     fn parse_signature_array(mut raw_signature: Span<felt252>) -> Array<SignerSignature> {
         full_deserialize(raw_signature).expect('argent/invalid-signature-format')
     }

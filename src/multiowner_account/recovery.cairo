@@ -1,6 +1,7 @@
 use argent::signer::signer_signature::SignerStorageValue;
 use core::starknet::storage_access::StorePacking;
-/// @notice The type of the escape telling who is about to be escaped
+
+/// @notice Represents the type of escape in progress
 #[derive(Drop, Copy, Serde, PartialEq, Default)]
 pub enum EscapeType {
     #[default]
@@ -9,9 +10,10 @@ pub enum EscapeType {
     Owner,
 }
 
-/// @param ready_at when the escape can be completed
-/// @param escape_type The type of the escape telling who is about to be escaped
-/// @param new_signer The new signer (new owner or new guardian address) or zero if guardian removed
+/// @notice Configuration for an escape process
+/// @param ready_at Timestamp when the escape can be completed (in seconds since the Unix epoch)
+/// @param escape_type Type of escape in progress
+/// @param new_signer Replacement signer for the escaped role, or None if there's no replacement
 #[derive(Drop, Copy, Serde, Default)]
 pub struct Escape {
     pub ready_at: u64,
@@ -19,15 +21,12 @@ pub struct Escape {
     pub new_signer: Option<SignerStorageValue>,
 }
 
-
 const SHIFT_64: felt252 = 0x10000000000000000;
 const SHIFT_128: felt252 = 0x100000000000000000000000000000000;
 
-// Packing ready_at, escape_type and new_signer.signer_type within same felt:
-// felt1 bits [0; 63] => ready_at
-// felt1 bits [64; 127] => escape_type
-// felt1 bits [128; 191] => new_signer.signer_type
-// felt2 bits [0; 251] => new_signer.stored_value
+/// @notice Packs Escape struct into two felt252 values for storage
+/// felt1: [0-63] ready_at | [64-127] escape_type | [128-191] new_signer.signer_type
+/// felt2: [0-251] new_signer.stored_value
 impl EscapeStorePacking of StorePacking<Escape, (felt252, felt252)> {
     fn pack(value: Escape) -> (felt252, felt252) {
         let (signer_type_ordinal, stored_value) = match value.new_signer {

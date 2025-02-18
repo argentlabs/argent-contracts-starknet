@@ -19,7 +19,6 @@ pub fn assert_correct_invoke_version(tx_version: felt252) {
     )
 }
 
-#[inline(always)]
 pub fn assert_correct_deploy_account_version(tx_version: felt252) {
     assert(
         tx_version == TX_V3 || tx_version == TX_V1 || tx_version == TX_V3_ESTIMATE || tx_version == TX_V1_ESTIMATE,
@@ -27,7 +26,6 @@ pub fn assert_correct_deploy_account_version(tx_version: felt252) {
     )
 }
 
-#[inline(always)]
 pub fn assert_correct_declare_version(tx_version: felt252) {
     assert(
         tx_version == TX_V3 || tx_version == TX_V2 || tx_version == TX_V3_ESTIMATE || tx_version == TX_V2_ESTIMATE,
@@ -35,12 +33,10 @@ pub fn assert_correct_declare_version(tx_version: felt252) {
     )
 }
 
-#[inline(always)]
 fn is_estimate_version(tx_version: felt252) -> bool {
     tx_version == TX_V3_ESTIMATE || tx_version == TX_V2_ESTIMATE || tx_version == TX_V1_ESTIMATE
 }
 
-#[inline(always)]
 pub fn is_estimate_transaction() -> bool {
     get_caller_address().is_zero() && is_estimate_version(get_tx_info().version)
 }

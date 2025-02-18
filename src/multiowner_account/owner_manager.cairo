@@ -100,7 +100,6 @@ pub mod owner_manager_component {
             self.owners_storage.contains(owner.storage_value())
         }
 
-        #[inline(always)]
         fn is_owner_guid(self: @ComponentState<TContractState>, owner_guid: felt252) -> bool {
             self.owners_storage.contains_by_hash(owner_guid)
         }

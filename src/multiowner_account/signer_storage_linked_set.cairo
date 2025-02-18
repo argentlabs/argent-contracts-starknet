@@ -11,12 +11,10 @@ pub impl SignerStorageValueLinkedSetConfig of LinkedSetConfig<SignerStorageValue
         stored_value: 'end', signer_type: SignerType::Starknet,
     };
 
-    #[inline(always)]
     fn is_valid_item(self: @SignerStorageValue) -> bool {
         *self.stored_value != 0 && *self.stored_value != Self::END_MARKER.stored_value
     }
 
-    #[inline(always)]
     fn hash(self: @SignerStorageValue) -> felt252 {
         (*self).into_guid()
     }
@@ -31,7 +29,6 @@ pub impl SignerStorageValueLinkedSetConfig of LinkedSetConfig<SignerStorageValue
         Option::Some(SignerStorageValue { stored_value, signer_type })
     }
 
-    #[inline(always)]
     fn path_is_in_set(path: StoragePath<SignerStorageValue>) -> bool {
         // Items in the set point to the next item or the end marker.
         // Items outside the set point to uninitialized storage

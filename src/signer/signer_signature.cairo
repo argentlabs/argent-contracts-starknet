@@ -146,7 +146,6 @@ impl Eip191SignerSerde of Serde<Eip191Signer> {
     }
 }
 
-#[inline(always)]
 pub fn starknet_signer_from_pubkey(pubkey: felt252) -> Signer {
     Signer::Starknet(StarknetSigner { pubkey: pubkey.try_into().expect('argent/zero-pubkey') })
 }
@@ -198,7 +197,6 @@ pub impl SignerTraitImpl of SignerTrait {
         }
     }
 
-    #[inline(always)]
     fn signer_type(self: Signer) -> SignerType {
         match self {
             Signer::Starknet => SignerType::Starknet,
@@ -208,7 +206,7 @@ pub impl SignerTraitImpl of SignerTrait {
             Signer::Webauthn => SignerType::Webauthn,
         }
     }
-    #[inline(always)]
+
     fn starknet_pubkey_or_none(self: Signer) -> Option<felt252> {
         match self {
             Signer::Starknet(signer) => Option::Some(signer.pubkey.into()),
@@ -239,7 +237,6 @@ pub impl SignerStorageValueImpl of SignerStorageTrait {
         }
     }
 
-    #[inline(always)]
     fn starknet_pubkey_or_none(self: SignerStorageValue) -> Option<felt252> {
         match self.signer_type {
             SignerType::Starknet => Option::Some(self.stored_value),
@@ -286,6 +283,7 @@ impl SignerSignatureImpl of SignerSignatureTrait {
             SignerSignature::Webauthn((signer, signature)) => is_valid_webauthn_signature(hash, signer, signature),
         }
     }
+
     #[inline(always)]
     fn signer(self: SignerSignature) -> Signer {
         match self {
@@ -299,7 +297,6 @@ impl SignerSignatureImpl of SignerSignatureTrait {
 }
 
 impl SignerTypeIntoFelt252 of Into<SignerType, felt252> {
-    #[inline(always)]
     fn into(self: SignerType) -> felt252 {
         match self {
             SignerType::Starknet => 0,
@@ -312,7 +309,6 @@ impl SignerTypeIntoFelt252 of Into<SignerType, felt252> {
 }
 
 impl U256TryIntoSignerType of TryInto<u256, SignerType> {
-    #[inline(always)]
     fn try_into(self: u256) -> Option<SignerType> {
         if self == 0 {
             Option::Some(SignerType::Starknet)

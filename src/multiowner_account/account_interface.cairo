@@ -31,6 +31,8 @@ pub trait IArgentMultiOwnerAccount<TContractState> {
     /// @dev Requires authorization from one owner and one guardian (if set)
     /// @dev Cancels any existing escape
     /// @dev Reverts if removing non-existent owners or adding duplicate owners
+    /// @dev Reverts if there's any overlap between the owners to add and the owners to remove
+    /// @dev Reverts if there are duplicates in the owners to add or remove
     fn change_owners(
         ref self: TContractState,
         owner_guids_to_remove: Array<felt252>,
@@ -44,6 +46,8 @@ pub trait IArgentMultiOwnerAccount<TContractState> {
     /// @dev Must be called by the account and authorized by one owner and one guardian (if set)
     /// @dev Cancels any existing escape
     /// @dev Reverts if removing non-existent guardians or adding duplicate guardians
+    /// @dev Reverts if there's any overlap between the guardians to add and the guardians to remove
+    /// @dev Reverts if there are duplicates in the guardians to add or remove
     fn change_guardians(
         ref self: TContractState, guardian_guids_to_remove: Array<felt252>, guardians_to_add: Array<Signer>,
     );
@@ -64,13 +68,13 @@ pub trait IArgentMultiOwnerAccount<TContractState> {
 
     /// @notice Completes the owner escape, replacing all owners with the new owner from trigger_escape_owner
     /// @dev Must be called by the account and authorized by one guardian
-    /// @dev Reverts if there is no owner escape in Ready state
+    /// @dev Reverts if there is no owner escape in 'EscapeStatus.Ready' state
     fn escape_owner(ref self: TContractState);
 
     /// @notice Completes the guardian escape, replacing all guardians with the new guardian from
     /// trigger_escape_guardian. Or leaving the account without guardians if the new guardian is None.
     /// @dev Must be called by the account and authorized by one owner
-    /// @dev Reverts if there is no guardian escape in Ready state
+    /// @dev Reverts if there is no guardian escape in 'EscapeStatus.Ready' state
     fn escape_guardian(ref self: TContractState);
 
     /// @notice Cancels any ongoing escape process

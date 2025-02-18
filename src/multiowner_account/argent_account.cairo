@@ -6,7 +6,7 @@ pub trait IEmitArgentAccountEvent<TContractState> {
 use argent::signer::signer_signature::SignerSignature;
 
 /// @dev Represents a regular signature for the account
-/// @dev Escape-related signatures use a single SignerSignature instead. This are signatures for methods that only
+/// @dev Escape-related signatures use a single SignerSignature instead. These are signatures for methods that only
 /// require one of the two roles to sign the transaction
 #[derive(Drop, Copy)]
 pub struct AccountSignature {
@@ -328,7 +328,6 @@ pub mod ArgentAccount {
     }
 
     impl OutsideExecutionCallbackImpl of IOutsideExecutionCallback<ContractState> {
-        #[inline(always)]
         fn execute_from_outside_callback(
             ref self: ContractState, calls: Span<Call>, outside_execution_hash: felt252, raw_signature: Span<felt252>,
         ) -> Array<Span<felt252>> {
@@ -678,7 +677,6 @@ pub mod ArgentAccount {
             self.assert_valid_account_signature_raw(execution_hash, raw_signature);
         }
 
-        #[inline(always)]
         fn parse_account_signature(self: @ContractState, mut raw_signature: Span<felt252>) -> AccountSignature {
             // Check if it's a legacy signature array, this only supports legacy signature if there is exactly 1 only
             // and a maximum of 1 guardian Legacy signatures are always 2 or 4 items long
@@ -735,7 +733,6 @@ pub mod ArgentAccount {
             );
             return AccountSignature { owner_signature, guardian_signature: Option::Some(guardian_signature) };
         }
-
         #[inline(always)]
         fn assert_valid_account_signature_raw(self: @ContractState, hash: felt252, raw_signature: Span<felt252>) {
             self.assert_valid_account_signature(hash, self.parse_account_signature(raw_signature));

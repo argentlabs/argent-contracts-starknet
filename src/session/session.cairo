@@ -150,7 +150,6 @@ pub mod session_component {
     pub impl Internal<
         TContractState, +HasComponent<TContractState>, +IAccount<TContractState>, +ISessionCallback<TContractState>,
     > of InternalTrait<TContractState> {
-        #[inline(always)]
         fn is_session(self: @ComponentState<TContractState>, raw_signature: Span<felt252>) -> bool {
             match raw_signature.get(0) {
                 Option::Some(session_magic) => *session_magic.unbox() == SESSION_MAGIC,

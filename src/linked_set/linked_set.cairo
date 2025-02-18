@@ -128,7 +128,6 @@ pub impl LinkedSetReadImpl<
         self.first().is_none()
     }
 
-    #[inline(always)]
     fn contains(self: StorageBase<LinkedSet<T>>, item_hash: felt252) -> bool {
         if item_hash == 0 {
             return false;
@@ -175,12 +174,10 @@ pub impl LinkedSetReadImpl<
 pub impl LinkedSetReadPrivateImpl<
     T, +Drop<T>, +PartialEq<T>, +Store<T>, +LinkedSetConfig<T>,
 > of LinkedSetReadPrivate<T> {
-    #[inline(always)]
     fn entry(self: StorageBase<LinkedSet<T>>, item_hash: felt252) -> StoragePath<T> {
         PendingStoragePathTrait::new(@self.as_path(), item_hash).as_path()
     }
 
-    #[inline(always)]
     fn next(self: StorageBase<LinkedSet<T>>, item_hash: felt252) -> Option<T> {
         LinkedSetConfig::path_read_value(path: self.entry(item_hash))
     }
@@ -252,12 +249,10 @@ pub impl LinkedSetWriteImpl<
 pub impl LinkedSetWritePrivateImpl<
     T, +Drop<T>, +PartialEq<T>, +Copy<T>, +Store<T>, +LinkedSetConfig<T>, +Default<T>,
 > of LinkedSetWritePrivate<T> {
-    #[inline(always)]
     fn entry(self: StorageBase<Mutable<LinkedSet<T>>>, item_hash: felt252) -> StoragePath<Mutable<T>> {
         PendingStoragePathTrait::new(@self.as_path(), item_hash).as_path()
     }
 
-    #[inline(always)]
     fn insert_opt(self: StorageBase<Mutable<LinkedSet<T>>>, item: T, last_item_hash: felt252) -> felt252 {
         assert(item.is_valid_item(), 'linked-set/invalid-item');
         let item_hash = item.hash();
@@ -273,12 +268,10 @@ pub impl LinkedSetWritePrivateImpl<
         self.as_read_only().item_hash_before(:item_hash_after)
     }
 
-    #[inline(always)]
     fn next(self: StorageBase<Mutable<LinkedSet<T>>>, item_hash: felt252) -> Option<T> {
         self.as_read_only().next(:item_hash)
     }
 
-    #[inline(always)]
     fn find_last_hash(self: StorageBase<Mutable<LinkedSet<T>>>) -> felt252 {
         self.as_read_only().find_last_hash()
     }
@@ -286,7 +279,6 @@ pub impl LinkedSetWritePrivateImpl<
 
 #[generate_trait]
 pub impl StorageBaseAsReadOnlyImpl<T> of StorageBaseAsReadOnly<T> {
-    #[inline(always)]
     fn as_read_only(self: StorageBase<Mutable<T>>) -> StorageBase<T> {
         StorageBase { __base_address__: self.__base_address__ }
     }
@@ -302,7 +294,6 @@ pub impl MutableLinkedSetReadImpl<
         self.as_read_only().is_empty()
     }
 
-    #[inline(always)]
     fn contains(self: StorageBase<Mutable<LinkedSet<T>>>, item_hash: felt252) -> bool {
         self.as_read_only().contains(:item_hash)
     }

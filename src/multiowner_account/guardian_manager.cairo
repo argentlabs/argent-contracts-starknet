@@ -81,7 +81,6 @@ pub mod guardian_manager_component {
             self.guardians_storage.get_all().span().to_signer_info()
         }
 
-        #[inline(always)]
         fn is_guardian(self: @ComponentState<TContractState>, guardian: Signer) -> bool {
             self.guardians_storage.contains(guardian.storage_value())
         }
@@ -238,7 +237,7 @@ pub mod guardian_manager_component {
         }
 
         /// @dev it will revert if there's any overlap between the guardians to add and the guardians to remove
-        /// @dev it will revert if there are duplicate in the guardians to add or remove
+        /// @dev it will revert if there are duplicates in the guardians to add or remove
         fn change_guardians_using_storage(
             ref self: ComponentState<TContractState>,
             guardian_guids_to_remove: Array<felt252>,

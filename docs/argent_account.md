@@ -46,9 +46,44 @@ There's more information about it in [Signers](./signers_and_signatures.md#Multi
 
 ## Signature format
 
+- Regular transactions:
+    * Account has no guardians: the account expects a signature from one of the owners
+    * Account with guardians: The account require a signature from one of the owners and one from one of the guardians. Owner signature goes first.
+- Escape transactions: In accounts with guardians. Accounts that are triggered by just one owner or one signer.
+    * Calling `trigger_escape_guardian` or `escape_guardian` Requires a signature from just one of the owners
+    * Calling `trigger_escape_owner` or `escape_owner` Requires a signature from just one of the guardians
+
+Depending on the above the account receives signatures from one or two signers. The account accepts two formats for the combined signature:
+
 ### Recommended Format
 The information available in [Signatures](./signers_and_signatures.md#Signatures) is also applicable for the argent account. The first signature is the owner and the second one is the guardian (if the account has any guardian)
 
+Here's an example of a regular transaction for an account without guardians:
+
+```
+0x000001 // number of signatures in the array (1, owner only)
+         // First Signer Signature from the owner
+0x000000 // Owner signature type (0x0 means Starknet)
+0xAAAAAA // owner pubkey
+0xAAA001 // owner signature r
+0xAAA002 // owner signature s
+```
+
+Here is an example of a regular transaction with one owner and one guardian:
+
+```
+0x000002 // number of signatures in the array (2, one from the owner and one from the guardian)
+         // First Signer Signature from the owner
+0x000000 // Owner signature type (0x0 means Starknet)
+0xAAAAAA // owner pubkey
+0xAAA001 // owner signature r
+0xAAA002 // owner signature s
+         // Second signature is the guardian 
+0x000000 // Guardian signature type (0x0 means Starknet)
+0xBBBBBB // guardian pubkey
+0xBBB001 // guardian signature r
+0xBBB002 // guardian signature s
+```
 
 ### Concise Format
 
@@ -60,20 +95,18 @@ Besides the format specified here, the argent account also supports concise sign
 **⚠️** The use of concise signatures is **discouraged** as they will stop working more than one owner or guardian is added to the account
 
 The format of the concise signatures is the following:
-`[first_signer_r, first_signer_s]`
+`[signer_r, signer_s]`
 
 And also
-`[first_signer_r, first_signer_s, second_signer_r, second_signer_s]`
+`[single_owner_r, single_owner_s, single_guardian_r, single_guardian_s]`
 
 ## Accurate Estimates
 
 The argent multisig can accurate estimates for transactions with Signers that use significant resources during validations. This also supports accurate estimates for sessions. See [Accurate Estimates](./accurate_estimates.md) for more information.
 
-## Change owner signature TODO
+## Owner Alive Signature
 
-To prevent mistakes where someone changes the owner to some key they don't control, the account will require a signature from the new owner as an argument to the `change_owner` function.
-
-New owner should sign the pedersen hash of the array: `[change_owner_selector, chain_id, account_address, old_owner_guid]`
+To prevent from accidentally bricking the account by changing the owner to some key they don't control, the account will require a signature in the `change_owner` function. See [Owner Alive Signature](./owner_alive.md) for more information.
 
 ## Outside Execution
 

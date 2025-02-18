@@ -130,6 +130,10 @@ struct Session {
 }
 ```
 
+### Sessions and Outside Execution
+
+Session can also be used in conjunction with [Outside Execution](./outside_execution.md). This can for instance allow subsidized sessions transactions or fee payment in other tokens.
+
 ### Examples
 
 There are some examples in typescript about how to use this feature [here](../lib/session/) and [here](../tests-integration/sessionAccount.test.ts)

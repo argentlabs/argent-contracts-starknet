@@ -31,6 +31,8 @@ pub trait IArgentMultiOwnerAccount<TContractState> {
     /// @dev Requires authorization from one owner and one guardian (if set)
     /// @dev Cancels any existing escape
     /// @dev Reverts if removing non-existent owners or adding duplicate owners
+    /// @dev Reverts if there's any overlap between the owners to add and the owners to remove
+    /// @dev Reverts if there are duplicates in the owners to add or remove
     fn change_owners(
         ref self: TContractState,
         owner_guids_to_remove: Array<felt252>,
@@ -44,6 +46,8 @@ pub trait IArgentMultiOwnerAccount<TContractState> {
     /// @dev Must be called by the account and authorized by one owner and one guardian (if set)
     /// @dev Cancels any existing escape
     /// @dev Reverts if removing non-existent guardians or adding duplicate guardians
+    /// @dev Reverts if there's any overlap between the guardians to add and the guardians to remove
+    /// @dev Reverts if there are duplicates in the guardians to add or remove
     fn change_guardians(
         ref self: TContractState, guardian_guids_to_remove: Array<felt252>, guardians_to_add: Array<Signer>,
     );

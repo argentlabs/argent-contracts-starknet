@@ -209,7 +209,7 @@ pub mod owner_manager_component {
         }
 
         /// @dev it will revert if there's any overlap between the owners to add and the owners to remove
-        /// @dev it will revert if there are duplicate in the owners to add or remove
+        /// @dev it will revert if there are duplicates in the owners to add or remove
         fn change_owners_using_storage(
             ref self: ComponentState<TContractState>,
             owner_guids_to_remove: Array<felt252>,

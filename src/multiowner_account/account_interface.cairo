@@ -68,13 +68,13 @@ pub trait IArgentMultiOwnerAccount<TContractState> {
 
     /// @notice Completes the owner escape, replacing all owners with the new owner from trigger_escape_owner
     /// @dev Must be called by the account and authorized by one guardian
-    /// @dev Reverts if there is no owner escape in Ready state
+    /// @dev Reverts if there is no owner escape in 'EscapeStatus.Ready' state
     fn escape_owner(ref self: TContractState);
 
     /// @notice Completes the guardian escape, replacing all guardians with the new guardian from
     /// trigger_escape_guardian. Or leaving the account without guardians if the new guardian is None.
     /// @dev Must be called by the account and authorized by one owner
-    /// @dev Reverts if there is no guardian escape in Ready state
+    /// @dev Reverts if there is no guardian escape in 'EscapeStatus.Ready' state
     fn escape_guardian(ref self: TContractState);
 
     /// @notice Cancels any ongoing escape process

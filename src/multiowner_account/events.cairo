@@ -32,7 +32,8 @@ pub struct TransactionExecuted {
     pub hash: felt252,
 }
 
-/// @notice Links a signer to its GUID for future reference as the account is not storing all the Signer data
+/// @notice Links a signer (owner or guardian) to its GUID for future reference as the account is not storing all the
+/// Signer data
 /// @dev This is the only way to get the Signer data from a GUID
 /// @param signer_guid Identifier derived from the signer
 /// @param signer The Signer details

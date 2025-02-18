@@ -1,6 +1,5 @@
 #[generate_trait]
 pub impl ArrayExt<T, +Drop<T>, +Copy<T>> of ArrayExtTrait<T> {
-    #[inline(always)]
     fn append_all(ref self: Array<T>, mut value: Span<T>) {
         for item in value {
             self.append(*item);

@@ -9,6 +9,7 @@ use argent::signer::signer_signature::{
     Eip191Signer, Secp256k1Signer, Signer, SignerSignature, SignerTrait, StarknetSignature, StarknetSigner,
     starknet_signer_from_pubkey,
 };
+use core::num::traits::Zero;
 use crate::{
     Felt252TryIntoStarknetSigner, GUARDIAN, ITestArgentAccountDispatcherTrait, OWNER, initialize_account,
     initialize_account_with, initialize_account_without_guardian,
@@ -16,9 +17,10 @@ use crate::{
 use snforge_std::{
     EventSpyAssertionsTrait, EventSpyTrait,
     signature::{KeyPairTrait, stark_curve::{StarkCurveKeyPairImpl, StarkCurveSignerImpl}}, spy_events,
-    start_cheat_block_timestamp_global, start_cheat_caller_address_global, start_cheat_transaction_version_global,
+    start_cheat_block_timestamp_global, start_cheat_caller_address_global, start_cheat_resource_bounds_global,
+    start_cheat_signature_global, start_cheat_tip_global, start_cheat_transaction_version_global,
 };
-use starknet::contract_address_const;
+use starknet::{ResourcesBounds, account::Call, contract_address_const};
 
 const VALID_UNTIL: u64 = 1100;
 
@@ -374,4 +376,53 @@ fn test_signer_eip191Signer_wrong_pubkey_hash() {
 
     let x = Signer::Eip191(Eip191Signer { eth_address: 0.try_into().unwrap() });
     account.trigger_escape_owner(x);
+}
+
+#[test]
+#[should_panic(expected: ('argent/tip-too-high',))]
+fn test_max_tip() {
+    let account = initialize_account();
+
+    start_cheat_caller_address_global(Zero::zero());
+    start_cheat_transaction_version_global(3);
+
+    // max_fee is 4_000000000000000000
+    // We need tip * max_amount > max_fee
+    start_cheat_tip_global(1);
+    let resource_bounds: Array<ResourcesBounds> = array![
+        ResourcesBounds { resource: 'L2_GAS', max_amount: 4_000000000000000001, max_price_per_unit: 0 },
+    ];
+    start_cheat_resource_bounds_global(resource_bounds.span());
+
+    // This is fine as long as we support [r, s]
+    let signature = array![1, 2];
+    start_cheat_signature_global(signature.span());
+
+    let call = Call { selector: selector!("escape_owner"), to: account.contract_address, calldata: array![].span() };
+    account.__validate__(array![call]);
+}
+
+#[test]
+#[should_panic(expected: ('argent/last-escape-too-recent',))]
+fn test_max_tip_on_limit() {
+    let account = initialize_account();
+
+    start_cheat_caller_address_global(Zero::zero());
+    start_cheat_transaction_version_global(3);
+
+    // max_fee is 4_000000000000000000
+    // We need tip * max_amount <= max_fee
+    start_cheat_tip_global(1);
+    let resource_bounds: Array<ResourcesBounds> = array![
+        ResourcesBounds { resource: 'L2_GAS', max_amount: 4_000000000000000000, max_price_per_unit: 0 },
+    ];
+    start_cheat_resource_bounds_global(resource_bounds.span());
+
+    // This is fine as long as we support [r, s]
+    let signature = array![1, 2];
+    start_cheat_signature_global(signature.span());
+
+    // Just making sure we fail later than the max_tip check
+    let call = Call { selector: selector!("escape_owner"), to: account.contract_address, calldata: array![].span() };
+    account.__validate__(array![call]);
 }

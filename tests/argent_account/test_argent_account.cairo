@@ -9,6 +9,7 @@ use argent::signer::signer_signature::{
     Eip191Signer, Secp256k1Signer, Signer, SignerSignature, SignerTrait, SignerType, StarknetSignature, StarknetSigner,
     starknet_signer_from_pubkey,
 };
+use argent::utils::serialization::serialize;
 use core::num::traits::Zero;
 use crate::{
     Felt252TryIntoStarknetSigner, GUARDIAN, ITestArgentAccountDispatcherTrait, OWNER, TX_HASH, initialize_account,
@@ -674,10 +675,10 @@ fn test_max_tip() {
 
     start_cheat_block_timestamp_global(TIME_BETWEEN_TWO_ESCAPES + 1);
 
-    // 0x1 for Option::None
-    let calldata = array![0x1];
     let call = Call {
-        selector: selector!("trigger_escape_guardian"), to: account.contract_address, calldata: calldata.span(),
+        selector: selector!("trigger_escape_guardian"),
+        to: account.contract_address,
+        calldata: serialize(@Option::<Signer>::None).span(),
     };
 
     account.__validate__(array![call]);
@@ -703,10 +704,10 @@ fn test_max_tip_on_limit() {
 
     start_cheat_block_timestamp_global(TIME_BETWEEN_TWO_ESCAPES + 1);
 
-    // 0x1 for Option::None
-    let calldata = array![0x1];
     let call = Call {
-        selector: selector!("trigger_escape_guardian"), to: account.contract_address, calldata: calldata.span(),
+        selector: selector!("trigger_escape_guardian"),
+        to: account.contract_address,
+        calldata: serialize(@Option::<Signer>::None).span(),
     };
 
     account.__validate__(array![call]);

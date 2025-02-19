@@ -386,7 +386,7 @@ fn test_max_tip() {
     start_cheat_caller_address_global(Zero::zero());
     start_cheat_transaction_version_global(3);
 
-    // max_fee is 4_000000000000000000
+    // MAX_ESCAPE_TIP_STRK is 4_000000000000000000
     // We need tip * max_amount > max_fee
     start_cheat_tip_global(1);
     let resource_bounds: Array<ResourcesBounds> = array![
@@ -410,7 +410,7 @@ fn test_max_tip_on_limit() {
     start_cheat_caller_address_global(Zero::zero());
     start_cheat_transaction_version_global(3);
 
-    // max_fee is 4_000000000000000000
+    // MAX_ESCAPE_TIP_STRK is 4_000000000000000000
     // We need tip * max_amount <= max_fee
     start_cheat_tip_global(1);
     let resource_bounds: Array<ResourcesBounds> = array![

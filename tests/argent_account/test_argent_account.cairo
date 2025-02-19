@@ -11,14 +11,15 @@ use argent::signer::signer_signature::{
 };
 use core::num::traits::Zero;
 use crate::{
-    Felt252TryIntoStarknetSigner, GUARDIAN, ITestArgentAccountDispatcherTrait, OWNER, initialize_account,
-    initialize_account_with, initialize_account_without_guardian,
+    Felt252TryIntoStarknetSigner, GUARDIAN, ITestArgentAccountDispatcherTrait, OWNER, TX_HASH, initialize_account,
+    initialize_account_with, initialize_account_without_guardian, to_starknet_signatures,
 };
 use snforge_std::{
     EventSpyAssertionsTrait, EventSpyTrait,
     signature::{KeyPairTrait, stark_curve::{StarkCurveKeyPairImpl, StarkCurveSignerImpl}}, spy_events,
     start_cheat_block_timestamp_global, start_cheat_caller_address_global, start_cheat_resource_bounds_global,
-    start_cheat_signature_global, start_cheat_tip_global, start_cheat_transaction_version_global,
+    start_cheat_signature_global, start_cheat_tip_global, start_cheat_transaction_hash_global,
+    start_cheat_transaction_version_global,
 };
 use starknet::{ResourcesBounds, account::Call, contract_address_const};
 
@@ -387,23 +388,29 @@ fn test_max_tip() {
     start_cheat_transaction_version_global(3);
 
     // MAX_ESCAPE_TIP_STRK is 4_000000000000000000
-    // We need tip * max_amount > max_fee
+    // We need tip * max_amount <= max_fee
     start_cheat_tip_global(1);
     let resource_bounds: Array<ResourcesBounds> = array![
         ResourcesBounds { resource: 'L2_GAS', max_amount: 4_000000000000000001, max_price_per_unit: 0 },
     ];
     start_cheat_resource_bounds_global(resource_bounds.span());
 
-    // This is fine as long as we support [r, s]
-    let signature = array![1, 2];
-    start_cheat_signature_global(signature.span());
+    start_cheat_transaction_hash_global(TX_HASH);
+    start_cheat_signature_global(to_starknet_signatures(array![OWNER()]).span());
 
-    let call = Call { selector: selector!("escape_owner"), to: account.contract_address, calldata: array![].span() };
+    // TIME_BETWEEN_TWO_ESCAPES is 12 * 60 * 60
+    start_cheat_block_timestamp_global((12 * 60 * 60) + 1);
+
+    // 0x1 for Option::None
+    let calldata = array![0x1];
+    let call = Call {
+        selector: selector!("trigger_escape_guardian"), to: account.contract_address, calldata: calldata.span(),
+    };
+
     account.__validate__(array![call]);
 }
 
 #[test]
-#[should_panic(expected: ('argent/last-escape-too-recent',))]
 fn test_max_tip_on_limit() {
     let account = initialize_account();
 
@@ -418,11 +425,17 @@ fn test_max_tip_on_limit() {
     ];
     start_cheat_resource_bounds_global(resource_bounds.span());
 
-    // This is fine as long as we support [r, s]
-    let signature = array![1, 2];
-    start_cheat_signature_global(signature.span());
+    start_cheat_transaction_hash_global(TX_HASH);
+    start_cheat_signature_global(to_starknet_signatures(array![OWNER()]).span());
 
-    // Just making sure we fail later than the max_tip check
-    let call = Call { selector: selector!("escape_owner"), to: account.contract_address, calldata: array![].span() };
+    // TIME_BETWEEN_TWO_ESCAPES is 12 * 60 * 60
+    start_cheat_block_timestamp_global((12 * 60 * 60) + 1);
+
+    // 0x1 for Option::None
+    let calldata = array![0x1];
+    let call = Call {
+        selector: selector!("trigger_escape_guardian"), to: account.contract_address, calldata: calldata.span(),
+    };
+
     account.__validate__(array![call]);
 }

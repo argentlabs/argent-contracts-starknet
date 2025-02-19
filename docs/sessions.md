@@ -13,11 +13,9 @@ In order to **create a session** a dapp must generate a key pair (dapp key), and
 ![Sessions creation](session_creation.png)
 
 To **use a session** the dapp will need to trigger a transaction using the session signed in the previous step - plus a guardian and a dapp key signature for every new transaction
-Note that the user is not involved in the process. 
+Note that the user is not involved in the process.
 
 ![Sessions usage](session_usage.png)
-
-
 
 ### Onchain checks by the account:
 
@@ -149,7 +147,6 @@ Session can also be used in conjunction with [Outside Execution](./outside_execu
 ### Examples
 
 There are some examples in typescript about how to use this feature [here](../lib/session/) and [here](../tests-integration/sessionAccount.test.ts)
-
 
 ### Backwards compatibility
 

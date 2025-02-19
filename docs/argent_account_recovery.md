@@ -29,7 +29,6 @@ The default security period is **7 days** but it can be changed by the user.
 The following diagram shows the recovery process in a simplified way. The blue checkmark represents an owner signature, the orange one a guardian signature.
 ![Recovery diagram](recovery.png)
 
-
 ## Recovery Methods
 
 When the account has guardians most transactions require the approval of both roles, one owner and one guardian.
@@ -38,10 +37,10 @@ The only exception are the 4 methods that can be used on escapes:
 - Calling `trigger_escape_guardian` or `escape_guardian` Requires a signature from just one of the owners
 - Calling `trigger_escape_owner` or `escape_owner` Requires a signature from just one of the guardians
 
-| Action                  | Owner Signature Required | Guardian Signature Required |
-| ----------------------- | ------------------------ | --------------------------- |
+| Action                    | Owner Signature Required | Guardian Signature Required |
+| ------------------------- | ------------------------ | --------------------------- |
 | `trigger_escape_guardian` | Yes                      | No                          |
 | `escape_guardian`         | Yes                      | No                          |
 | `trigger_escape_owner`    | No                       | Yes                         |
 | `escape_owner`            | No                       | Yes                         |
-| ANY OTHER METHOD        | Yes                      | Yes                         |
+| ANY OTHER METHOD          | Yes                      | Yes                         |

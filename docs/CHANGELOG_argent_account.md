@@ -94,7 +94,7 @@ It also improves **WebAuthn** support compatibility with more browsers.
 
 - **Concise signatures**
 
-  Concise signature are discouraged as they don't support multiple owner or multiple guardians. See [Concise Signatures](./argent_account.md#concise-format)
+  Concise signatures are discouraged as they don't support multiple owners or multiple guardians. See [Concise Signatures](./argent_account.md#concise-format)
 
   Concise signatures used to work only with the main guardian ignoring the backup guardian. Now they only work if there is 0 or 1 guardian
 
@@ -127,7 +127,7 @@ It also improves **WebAuthn** support compatibility with more browsers.
 
 - **New escape semantics**
 
-  The escape mechanism remains largely the same and methods used to trigger and complete an escape are the didn't suffer any breaking change.
+  The escape mechanism remains largely the same, and the methods used to trigger and complete an escape didn't suffer any breaking changes.
 
   The escape will behave the same if there is only one owner and one guardian. But it's worth explaining how it works with multiple owners and guardians.
 
@@ -148,9 +148,9 @@ It also improves **WebAuthn** support compatibility with more browsers.
 
   Added support for [Accurate Estimates](accurate_estimates.md) in the context of sessions
 
-- **Web Authn Compatibility**
+- **WebAuthn Compatibility**
 
-  Increased support for more more browsers. Includes breaking changes. [More details TODO]
+  Increased support for more browsers. Includes breaking changes. [More details](./webauthn.md#history)
 
 - **TransactionExecuted** event was changed
 

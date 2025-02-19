@@ -1,6 +1,6 @@
 # Sessions
 
-Sessions allow dapps to submit transactions on behalf of the user without requiring any user interaction, as long as the transaction to execute follows some restrictions defined when the session is created. This will allow for a better UX in areas such a gaming
+Sessions allow dapps to submit transactions on behalf of the user without requiring any user interaction, as long as the transaction to execute follows some restrictions defined when the session is created. This will allow for a better UX in areas such as gaming
 
 This feature is only available to argent accounts where there's a guardian
 
@@ -8,11 +8,11 @@ Many of these restrictions are guaranteed onchain by the contract but others cou
 
 ## Flow
 
-In order to **create a session** a dapp must generate a key pair (dapp key), and request the wallet to sign an offchain message with the session parameters. The resulting signature is called the **"Session Authorization"**. And it include a signature from one owner and one guardian.
+In order to **create a session** a dapp must generate a key pair (dapp key), and request the wallet to sign an offchain message with the session parameters. The resulting signature is called the **"Session Authorization"**, and it includes a signature from one owner and one guardian.
 
 ![Sessions creation](session_creation.png)
 
-To **use a session** the dapp will need to trigger a transaction using the session signed in the previous step. Also a guardian and a dapp key signature will need to sign again for every transaction. The will sign over the following hash: `poseidon(transaction_hash, session_hash, cache_owner_guid)`
+To **use a session** the dapp will need to trigger a transaction using the session signed in the previous step. Also a guardian and a dapp key signature will need to sign again for every transaction. They will sign over the following hash: `poseidon(transaction_hash, session_hash, cache_owner_guid)`
 Note that the user is not involved in the process.
 
 ![Sessions usage](session_usage.png)

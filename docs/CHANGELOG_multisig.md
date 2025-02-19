@@ -2,9 +2,9 @@
 
 # Version 0.3.0
 
-- **Web Authn Compatibility**
+- **WebAuthn Compatibility**
 
-  Increased support for more more browsers. Includes breaking changes. [More details TODO]
+  Increased support for more browsers. Includes breaking changes. [More details](./webauthn.md#history)
 
 - **TransactionExecuted** event was changed
 

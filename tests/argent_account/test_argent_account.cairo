@@ -481,7 +481,7 @@ fn get_owner_guid_multiple_owners() {
 }
 
 #[test]
-#[should_panic(expected: ('argent/no-single-guardian',))]
+#[should_panic(expected: ('argent/multiple-guardians',))]
 fn get_guardian_multiple_guardians() {
     let account = initialize_account();
     let signer = starknet_signer_from_pubkey(22);
@@ -493,7 +493,7 @@ fn get_guardian_multiple_guardians() {
 }
 
 #[test]
-#[should_panic(expected: ('argent/no-single-guardian',))]
+#[should_panic(expected: ('argent/multiple-guardians',))]
 fn get_guardian_type_multiple_guardians() {
     let account = initialize_account();
     let signer = starknet_signer_from_pubkey(22);
@@ -505,7 +505,7 @@ fn get_guardian_type_multiple_guardians() {
 }
 
 #[test]
-#[should_panic(expected: ('argent/no-single-guardian',))]
+#[should_panic(expected: ('argent/multiple-guardians',))]
 fn get_guardian_guid_multiple_guardians() {
     let account = initialize_account();
     let signer = starknet_signer_from_pubkey(22);

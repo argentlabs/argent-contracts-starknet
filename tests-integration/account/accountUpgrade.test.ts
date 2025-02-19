@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { CairoOption, CairoOptionVariant, CallData, Contract, hash, RawArgs, RPC } from "starknet";
+import { Account, CairoOption, CairoOptionVariant, CallData, Contract, hash, RawArgs, RPC } from "starknet";
 import {
   ArgentAccount,
   ArgentSigner,
@@ -12,6 +12,7 @@ import {
   deployOldAccountWithProxyWithoutGuardian,
   expectEvent,
   expectRevertWithErrorMessage,
+  fundAccount,
   getUpgradeDataLegacy,
   LegacyWebauthnOwner,
   manager,
@@ -157,10 +158,9 @@ describe("ArgentAccount: upgrade", function () {
             0,
             `Unexpected events ${eventsEmittedByAccount.join(", ")} found`,
           );
-
-          mockDapp.connect(account);
+          const accountV3 = await getAccountV3(account);
+          mockDapp.connect(accountV3);
           // This should work as long as we support the "old" signature format [r1, s1, r2, s2]
-          account.cairoVersion = "1";
           await manager.ensureSuccess(mockDapp.set_number(42));
         });
 
@@ -168,7 +168,8 @@ describe("ArgentAccount: upgrade", function () {
           const { account } = await deployAccountWithoutGuardians();
           await upgradeAccount(account, argentAccountClassHash, upgradeExtraCalldata);
           expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
-          account.cairoVersion = "1";
+          const accountV3 = await getAccountV3(account);
+          mockDapp.connect(accountV3);
           await manager.ensureSuccess(mockDapp.set_number(42));
         });
 
@@ -182,6 +183,8 @@ describe("ArgentAccount: upgrade", function () {
           expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
           await mockDapp.get_number(account.address).should.eventually.equal(random);
           // We don't really care about the value here, just that it is successful
+          const accountV3 = await getAccountV3(account);
+          mockDapp.connect(accountV3);
           await manager.ensureSuccess(mockDapp.set_number(random));
         });
 
@@ -273,9 +276,8 @@ describe("ArgentAccount: upgrade", function () {
       await upgradeAccount(account, argentAccountClassHash, []);
 
       expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(legacyClassHash));
-      account.cairoVersion = "1";
-      mockDapp.connect(account);
-
+      const accountV3 = await getAccountV3(account);
+      mockDapp.connect(accountV3);
       // Check the account is in the wrong state
       const wrongGuids = await account.callContract({
         contractAddress: account.address,
@@ -299,7 +301,7 @@ describe("ArgentAccount: upgrade", function () {
       const newAccountContract = await manager.loadContract(account.address);
       const newGuid = new StarknetKeyPair(owner.privateKey).guid;
       expect(await newAccountContract.get_owners_guids()).to.deep.equal([newGuid]);
-      mockDapp.connect(account);
+      mockDapp.connect(accountV3);
       // We don't really care about the value here, just that it is successful
       await manager.ensureSuccess(mockDapp.set_number(56));
     });
@@ -361,10 +363,11 @@ describe("ArgentAccount: upgrade", function () {
         await upgradeAccount(account, argentAccountClassHash);
         expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
 
-        mockDapp.connect(account);
+        const accountV3 = await getAccountV3(account);
+        mockDapp.connect(accountV3);
         // We have to update the owner with the new webauthn format
         if (owner instanceof LegacyWebauthnOwner) {
-          account.signer = new ArgentSigner(new WebauthnOwner(owner.getPrivateKey()), guardian);
+          accountV3.signer = new ArgentSigner(new WebauthnOwner(owner.getPrivateKey()), guardian);
         }
         await manager.ensureSuccess(mockDapp.set_number(42));
       });
@@ -376,13 +379,21 @@ describe("ArgentAccount: upgrade", function () {
         await upgradeAccount(account, argentAccountClassHash);
         expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
 
-        mockDapp.connect(account);
+        const accountV3 = await getAccountV3(account);
+        mockDapp.connect(accountV3);
         // We have to update the owner with the new webauthn format
         if (owner instanceof LegacyWebauthnOwner) {
-          account.signer = new ArgentSigner(new WebauthnOwner(owner.getPrivateKey()));
+          accountV3.signer = new ArgentSigner(new WebauthnOwner(owner.getPrivateKey()));
         }
         await manager.ensureSuccess(mockDapp.set_number(42));
       });
     }
   });
 });
+
+async function getAccountV3(account: Account): Promise<Account> {
+  if (account.transactionVersion == RPC.ETransactionVersion.V2) {
+    await fundAccount(account.address, 1e18, "STRK");
+  }
+  return new ArgentAccount(account, account.address, account.signer, "1", RPC.ETransactionVersion.V3);
+}

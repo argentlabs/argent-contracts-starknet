@@ -718,10 +718,7 @@ pub mod ArgentAccount {
                 return AccountSignature { owner_signature, guardian_signature: Option::None };
             }
 
-            let single_stark_guardian = self
-                .guardian_manager
-                .get_single_stark_guardian_pubkey()
-                .expect('argent/no-single-guardian-owner');
+            let single_stark_guardian = self.guardian_manager.get_single_stark_guardian_pubkey();
 
             let guardian_signature = SignerSignature::Starknet(
                 (

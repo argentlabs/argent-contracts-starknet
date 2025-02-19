@@ -111,11 +111,13 @@ pub mod guardian_manager_component {
 
         // legacy
         fn get_guardian_type(self: @ComponentState<TContractState>) -> Option<SignerType> {
+            self.assert_single_guardian();
             Option::Some(self.get_single_guardian()?.signer_type)
         }
 
         // legacy
         fn get_guardian_guid(self: @ComponentState<TContractState>) -> Option<felt252> {
+            self.assert_single_guardian();
             Option::Some(self.get_single_guardian()?.into_guid())
         }
     }
@@ -142,6 +144,10 @@ pub mod guardian_manager_component {
                 let guardian_guid = self.guardians_storage.insert(guardian);
                 self.emit_guardian_added(guardian_guid);
             };
+        }
+
+        fn assert_single_guardian(self: @ComponentState<TContractState>) {
+            assert(self.guardians_storage.len() < 2, 'argent/no-single-guardian');
         }
 
         fn assert_guardian_set(self: @ComponentState<TContractState>) {

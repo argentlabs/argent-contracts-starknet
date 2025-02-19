@@ -1,6 +1,6 @@
 use argent::multiowner_account::owner_alive::OwnerAliveSignature;
 use argent::multiowner_account::{
-    argent_account::ArgentAccount,
+    argent_account::ArgentAccount, argent_account::ArgentAccount::{MAX_ESCAPE_TIP_STRK, TIME_BETWEEN_TWO_ESCAPES},
     events::{GuardianAddedGuid, GuardianRemovedGuid, OwnerAddedGuid, OwnerRemovedGuid, SignerLinked},
     guardian_manager::guardian_manager_component, owner_manager::owner_manager_component,
 };
@@ -9,16 +9,20 @@ use argent::signer::signer_signature::{
     Eip191Signer, Secp256k1Signer, Signer, SignerSignature, SignerTrait, SignerType, StarknetSignature, StarknetSigner,
     starknet_signer_from_pubkey,
 };
+use argent::utils::serialization::serialize;
+use core::num::traits::Zero;
 use crate::{
-    Felt252TryIntoStarknetSigner, GUARDIAN, ITestArgentAccountDispatcherTrait, OWNER, initialize_account,
-    initialize_account_with, initialize_account_without_guardian,
+    Felt252TryIntoStarknetSigner, GUARDIAN, ITestArgentAccountDispatcherTrait, OWNER, TX_HASH, initialize_account,
+    initialize_account_with, initialize_account_without_guardian, to_starknet_signatures,
 };
 use snforge_std::{
     EventSpyAssertionsTrait, EventSpyTrait,
     signature::{KeyPairTrait, stark_curve::{StarkCurveKeyPairImpl, StarkCurveSignerImpl}}, spy_events,
-    start_cheat_block_timestamp_global, start_cheat_caller_address_global, start_cheat_transaction_version_global,
+    start_cheat_block_timestamp_global, start_cheat_caller_address_global, start_cheat_resource_bounds_global,
+    start_cheat_signature_global, start_cheat_tip_global, start_cheat_transaction_hash_global,
+    start_cheat_transaction_version_global,
 };
-use starknet::contract_address_const;
+use starknet::{ResourcesBounds, account::Call, contract_address_const};
 
 const VALID_UNTIL: u64 = 1100;
 
@@ -648,4 +652,63 @@ fn test_signer_eip191Signer_wrong_pubkey_hash() {
 
     let x = Signer::Eip191(Eip191Signer { eth_address: 0.try_into().unwrap() });
     account.trigger_escape_owner(x);
+}
+
+#[test]
+#[should_panic(expected: ('argent/tip-too-high',))]
+fn test_max_tip() {
+    let account = initialize_account();
+
+    start_cheat_caller_address_global(Zero::zero());
+    start_cheat_transaction_version_global(3);
+
+    // We need tip * max_amount <= MAX_ESCAPE_TIP_STRK
+    start_cheat_tip_global(1);
+    let max_amount = MAX_ESCAPE_TIP_STRK.try_into().unwrap() + 1;
+    let resource_bounds: Array<ResourcesBounds> = array![
+        ResourcesBounds { resource: 'L2_GAS', max_amount, max_price_per_unit: 1 },
+    ];
+    start_cheat_resource_bounds_global(resource_bounds.span());
+
+    start_cheat_transaction_hash_global(TX_HASH);
+    start_cheat_signature_global(to_starknet_signatures(array![OWNER()]).span());
+
+    start_cheat_block_timestamp_global(TIME_BETWEEN_TWO_ESCAPES + 1);
+
+    let call = Call {
+        selector: selector!("trigger_escape_guardian"),
+        to: account.contract_address,
+        calldata: serialize(@Option::<Signer>::None).span(),
+    };
+
+    account.__validate__(array![call]);
+}
+
+#[test]
+fn test_max_tip_on_limit() {
+    let account = initialize_account();
+
+    start_cheat_caller_address_global(Zero::zero());
+    start_cheat_transaction_version_global(3);
+
+    // We need tip * max_amount <= MAX_ESCAPE_TIP_STRK
+    start_cheat_tip_global(1);
+    let max_amount = MAX_ESCAPE_TIP_STRK.try_into().unwrap();
+    let resource_bounds: Array<ResourcesBounds> = array![
+        ResourcesBounds { resource: 'L2_GAS', max_amount, max_price_per_unit: 1 },
+    ];
+    start_cheat_resource_bounds_global(resource_bounds.span());
+
+    start_cheat_transaction_hash_global(TX_HASH);
+    start_cheat_signature_global(to_starknet_signatures(array![OWNER()]).span());
+
+    start_cheat_block_timestamp_global(TIME_BETWEEN_TWO_ESCAPES + 1);
+
+    let call = Call {
+        selector: selector!("trigger_escape_guardian"),
+        to: account.contract_address,
+        calldata: serialize(@Option::<Signer>::None).span(),
+    };
+
+    account.__validate__(array![call]);
 }

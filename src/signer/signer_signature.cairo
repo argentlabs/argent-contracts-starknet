@@ -22,7 +22,7 @@ pub const SECP_256_K1_HALF: u256 = 0xfffffffffffffffffffffffffffffffebaaedce6af4
 
 /// @notice Supported signer types for account authentication
 /// @dev Each type has its own signature validation scheme
-#[derive(Drop, Copy, PartialEq, Serde, Default, starknet::Store)]
+#[derive(Drop, Copy, PartialEq, Serde, Default, starknet::Store, Debug)]
 pub enum SignerType {
     #[default]
     Starknet,
@@ -114,7 +114,7 @@ pub struct WebauthnSigner {
 /// @param guid The guid of the signer
 /// @param stored_value Depending on the type it can be a pubkey, a guid or another value. The stored value is unique
 /// for each signer type
-#[derive(Drop, Copy, Serde)]
+#[derive(Drop, Copy, PartialEq, Serde, Debug)]
 pub struct SignerInfo {
     signerType: SignerType,
     guid: felt252,

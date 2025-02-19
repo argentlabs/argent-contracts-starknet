@@ -343,7 +343,6 @@ describe("Session Account: execute caching", function () {
       expiry: initialTime + 150n,
       dappKey: randomStarknetKeyPair(),
       cacheOwnerGuid: 42n,
-      allowedMethods: [],
       allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
     });
 

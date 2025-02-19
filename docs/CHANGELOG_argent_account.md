@@ -1,27 +1,183 @@
 # Argent Account Changelog
 
-# Version 0.4.0
+# Version 0.5.0
 
-This version introduces supports for multiple owners and multiple guardians.
-It also improves WebAuthn support compatibility with more browsers.
+This version introduces supports for **multiple owners** and **multiple guardians**.
+The account requires **one owner** signature **AND** **one guardian** signature if guardians are used (unless calling [escape methods](./argent_account_escape.md#Escape-Methods)).
 
-- **Allow multiple owners and multiple guardians**
-  new reset owners methods requires signature
-  events
-  removed methods
-  deprecated methods
-  new escape
+It also improves **WebAuthn** support compatibility with more browsers.
+
+- **Read methods** were updated to support **multiple owners and guardians**
+
+  Removed:
+
+  ```rust
+  fn get_guardian_backup() -> felt252
+  fn get_guardian_backup_guid() -> Option<felt252>
+  fn get_guardian_backup_type() -> Option<SignerType>
+  ```
+
+  Modified: Will panic if there are multiple owners
+
+  ```rust
+  fn get_owner() -> felt252;
+  fn get_owner_type() -> SignerType;
+  fn get_owner_guid() -> felt252;
+  ```
+
+  Modified: Will panic if there are multiple guardians
+
+  ```rust
+  fn get_guardian() -> felt252
+  fn get_guardian_guid() -> Option<felt252>
+  fn get_guardian_type() -> Option<SignerType>
+  ```
+
+  New read methods to support multiple owners and guardians:
+
+  ```rust
+  fn get_owners_guids() -> Array<felt252>
+  fn get_owners_info() -> Array<SignerInfo>
+  fn get_guardian_guids() -> Array<felt252>
+  fn get_guardian_info() -> Array<SignerInfo>
+
+  struct SignerInfo {
+      signerType: SignerType
+      guid: felt252
+      ///Depending on the type it can be a pubkey, a guid or another value. The stored value is unique for each signer type
+      stored_value: felt252,
+  }
+  ```
+
+- **Events** were updated to support **multiple owners and guardians**
+
+  Removed:
+
+  ```
+  OwnerChanged, OwnerChangedGuid, GuardianChanged, GuardianChangedGuid, GuardianBackupChanged, GuardianBackupChangedGuid
+  ```
+
+  Replaced with new events: (`SignerLinked` event is unchanged)
+
+  ```rust
+  struct OwnerAddedGuid {
+      #[key]
+      new_owner_guid: felt252,
+  }
+
+  struct OwnerRemovedGuid {
+      #[key]
+      removed_owner_guid: felt252,
+  }
+
+  struct GuardianAddedGuid {
+      #[key]
+      new_guardian_guid: felt252,
+  }
+
+  struct GuardianRemovedGuid {
+      #[key]
+      removed_guardian_guid: felt252,
+  }
+
+  ```
+
+  The new events will be emitted when **adding or removing** owners or guardians, but also on the account **deployment** and when **upgrading** from older versions. So an external party can just listen to these events to keep track of the owners and guardians.
+
+- **No guardian backup**
+
+  Because of the new multiguardian feature. The concept of guardian backup was removed. During the upgrade any guardian backup will be migrated to be a regular guardian.
+
+  It used to be impossible to remove the main guardian when having a backup guardian. Now the restriction is no longer relevant
+
+  Backup guardians played a different role and couldn't for instance co-sign sessions. Now all guardians are the same
+
+- **Concise signatures**
+
+  Concise signature are discouraged as they don't support multiple owner or multiple guardians. See [Concise Signatures](./argent_account.md#concise-format)
+
+  Concise signatures used to work only with the main guardian ignoring the backup guardian. Now they only work if there is 0 or 1 guardian
+
+- **Signer management methods** were updated to support multiple owners and guardians
+
+  Removed:
+
+  ```
+  change_owner, change_guardian, change_guardian_backup
+  ```
+
+  Replaced with:
+
+  ```rust
+  fn change_owners(
+    owner_guids_to_remove: Array<felt252>,
+    owners_to_add: Array<Signer>,
+    owner_alive_signature: Option<OwnerAliveSignature>,
+  );
+
+  fn change_guardians(
+    guardian_guids_to_remove: Array<felt252>,
+    guardians_to_add: Array<Signer>,
+  );
+  ```
+
+  The `change_owners` and `change_guardians` functions. Will cancel any pending escape (as the old methods did)
+
+  Similar to the old `change_owner`, the new `change_owners` will require a signature from one owner to avoid accidental bricking of the account. But this signature is now optional. More details on [Owner Alive Signature](./owner_alive.md)
+
+- **New escape semantics**
+
+  The escape mechanism remains largely the same and methods used to trigger and complete an escape are the didn't suffer any breaking change.
+
+  The escape will behave the same if there is only one owner and one guardian. But it's worth explaining how it works with multiple owners and guardians.
+
+  - When an owner escape is completed: ALL the owners are replaced by the single new owner specified in the escape
+  - When a guardian escape is completed: ALL the guardians are replaced by the a new guardian specified in the escape. If no new guardian is specified, all the guardians are removed
+
+  See [Escape Process](./argent_account_escape.md)
+
 - **Session changes**
-  - To support multiple owners, the session signature (session token) was changed. This **breaks backwards compatibility** if the session caching is used. [More details](sessions.md#Backwards-compatibility)
-  - Sessions can now be used with **ANY guardian**. In the previous versions sessions were restricted to the MAIN guardian. The account checks that the Session Token is signed by the same guardian used in the authorization, but a second guardian can also sign the authorization. So the wallet or the user can't enforce that a specific guardian is used for a session.
-- **Web authn fix** breaking changes and removed cairo0
-- **TransactionExecuted** was changed
 
-- **Session better estimates** Added support for [Accurate Estimates](accurate_estimates.md) in the context of sessions
-- Compiled with Cairo v2.10.0
-- **Main guardian type** was restricted to StarknetSigner. Now it's possible to use any signer type.
+  **Backwards incompatible** if using caching.
 
-TODO https://www.notion.so/argenthq/New-Account-0-5-0-112605a214fb800180c6f323036152f1
+  Sessions can now be used with **ANY guardian** were before it was restricted to the main guardian.
+
+  [See More details](sessions.md#History)
+
+- **Session better estimates**
+
+  Added support for [Accurate Estimates](accurate_estimates.md) in the context of sessions
+
+- **Web Authn Compatibility**
+
+  Increased support for more more browsers. Includes breaking changes. [More details TODO]
+
+- **TransactionExecuted** event was changed
+
+  From:
+
+  ```rust
+  struct TransactionExecuted {
+      #[key]
+      hash: felt252,
+      response: Span<Span<felt252>>
+  }
+  ```
+
+  The response data was removed to make the account more efficient
+
+  ```rust
+  struct TransactionExecuted {
+    #[key]
+    hash: felt252,
+  }
+  ```
+
+- **Multiple Guardian Types**
+
+  The main guardian was restricted to StarknetSigner before this versions. Now it's possible to use any signer type for the guardians
+
+- **Latest compiler:** Compiled with Cairo v2.10.0
 
 # Version 0.4.0
 
@@ -126,7 +282,7 @@ First release using Cairo 2
 - Renamed functions and events to follow Cairo conventions. Renamed signer to owner to make the role clearer
 - Events include more keys for indexing
 - Implements the new [SNIP-5](https://github.com/starknet-io/SNIPs/blob/main/SNIPS/snip-5.md)
-- Recovery changes: For extra safety now you need to specify the new signer when triggering the escape. Escapes will automatically expire after a week if not completed
+- Escape changes: For extra safety now you need to specify the new signer when triggering the escape. Escapes will automatically expire after a week if not completed
 - Outside execution: A new feature to allows metatransactions by leveraging offchain signatures
 - This account can only declare Cairo 1 contracts, not allowed to declare Cairo 0 code
 

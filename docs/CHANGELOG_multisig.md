@@ -2,9 +2,32 @@
 
 # Version 0.3.0
 
-webauthn
-txexecuted??
-compiler version
+- **Web Authn Compatibility**
+
+  Increased support for more more browsers. Includes breaking changes. [More details TODO]
+
+- **TransactionExecuted** event was changed
+
+  From:
+
+  ```rust
+  struct TransactionExecuted {
+      #[key]
+      hash: felt252,
+      response: Span<Span<felt252>>
+  }
+  ```
+
+  The response data was removed to make the account more efficient
+
+  ```rust
+  struct TransactionExecuted {
+    #[key]
+    hash: felt252,
+  }
+  ```
+
+- **Latest compiler:** Compiled with Cairo v2.10.0
 
 # Version 0.2.0
 

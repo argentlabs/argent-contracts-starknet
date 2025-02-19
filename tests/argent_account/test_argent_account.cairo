@@ -284,7 +284,7 @@ fn change_owners_remove_twice() {
     account
         .change_owners(
             owner_guids_to_remove: array![current_owner.into_guid(), current_owner.into_guid()],
-            owners_to_add: array![current_owner],
+            owners_to_add: array![],
             owner_alive_signature: Option::None,
         );
 }
@@ -306,12 +306,12 @@ fn change_owners_add_twice() {
 fn change_owners_reach_limits() {
     let account = initialize_account();
 
-    let mut to_add = array![];
+    let mut owners_to_add = array![];
     for i in 100..132_u8 {
         let (signer, _) = NEW_OWNER_FROM_KEY(i.into());
-        to_add.append(signer)
+        owners_to_add.append(signer)
     };
-    account.change_owners(owner_guids_to_remove: array![], owners_to_add: to_add, owner_alive_signature: Option::None);
+    account.change_owners(owner_guids_to_remove: array![], :owners_to_add, owner_alive_signature: Option::None);
 }
 
 #[test]
@@ -387,13 +387,13 @@ fn change_guardians_remove_all_guardians() {
 fn change_guardians_reach_limits() {
     let account = initialize_account();
 
-    let mut to_add = array![];
+    let mut guardians_to_add = array![];
     for i in 100..132_u8 {
         let signer = starknet_signer_from_pubkey(i.into());
-        to_add.append(signer)
+        guardians_to_add.append(signer)
     };
 
-    account.change_guardians(guardian_guids_to_remove: array![], guardians_to_add: to_add);
+    account.change_guardians(guardian_guids_to_remove: array![], :guardians_to_add);
 }
 
 #[test]
@@ -447,7 +447,7 @@ fn get_owner_multiple_owners() {
         );
 
     assert_eq!(account.get_owners_info().len(), 2);
-    let _ = account.get_owner();
+    account.get_owner();
 }
 
 #[test]
@@ -462,7 +462,7 @@ fn get_owner_type_multiple_owners() {
         );
 
     assert_eq!(account.get_owners_info().len(), 2);
-    let _ = account.get_owner_type();
+    account.get_owner_type();
 }
 
 #[test]
@@ -477,7 +477,7 @@ fn get_owner_guid_multiple_owners() {
         );
 
     assert_eq!(account.get_owners_info().len(), 2);
-    let _ = account.get_owner_guid();
+    account.get_owner_guid();
 }
 
 #[test]
@@ -497,7 +497,7 @@ fn get_guardian_multiple_guardians() {
     account.change_guardians(guardian_guids_to_remove: array![], guardians_to_add: array![signer]);
 
     assert_eq!(account.get_guardians_info().len(), 2);
-    let _ = account.get_guardian();
+    account.get_guardian();
 }
 
 #[test]
@@ -540,8 +540,8 @@ fn get_guardian_type_multiple_guardians() {
 fn get_guardian_guid() {
     let account = initialize_account();
 
-    let guardian_guid = account.get_guardian_guid();
-    assert_eq!(guardian_guid, Option::Some(starknet_signer_from_pubkey(GUARDIAN().pubkey).into_guid()));
+    let guardian_guid = account.get_guardian_guid().expect('missing guardian');
+    assert_eq!(guardian_guid, starknet_signer_from_pubkey(GUARDIAN().pubkey).into_guid());
 }
 
 #[test]

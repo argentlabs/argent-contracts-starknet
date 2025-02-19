@@ -74,17 +74,17 @@ pub mod owner_manager_component {
         TContractState, +HasComponent<TContractState>, +Drop<TContractState>, +IEmitArgentAccountEvent<TContractState>,
     > of IOwnerManager<ComponentState<TContractState>> {
         fn get_owner(self: @ComponentState<TContractState>) -> felt252 {
-            let owner = self.get_single_owner().expect('argent/no-single-owner');
+            let owner = self.get_single_owner().expect('argent/multiple-owners');
             assert(!owner.is_stored_as_guid(), 'argent/only_guid');
             owner.stored_value
         }
 
         fn get_owner_type(self: @ComponentState<TContractState>) -> SignerType {
-            self.get_single_owner().expect('argent/no-single-owner').signer_type
+            self.get_single_owner().expect('argent/multiple-owners').signer_type
         }
 
         fn get_owner_guid(self: @ComponentState<TContractState>) -> felt252 {
-            self.get_single_owner().expect('argent/no-single-owner').into_guid()
+            self.get_single_owner().expect('argent/multiple-owners').into_guid()
         }
 
         fn get_owners_guids(self: @ComponentState<TContractState>) -> Array<felt252> {

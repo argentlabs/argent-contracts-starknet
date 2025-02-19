@@ -166,7 +166,7 @@ pub mod guardian_manager_component {
             self
                 .guardians_storage
                 .single()
-                .expect('argent/no-single-guardian')
+                .expect('argent/multiple-guardians')
                 .starknet_pubkey_or_none()
                 .expect('argent/no-single-strk-guard')
         }

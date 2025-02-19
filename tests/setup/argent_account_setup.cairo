@@ -38,7 +38,7 @@ pub trait ITestArgentAccount<TContractState> {
     fn get_owner_type(self: @TContractState) -> SignerType;
     fn get_owner_guid(self: @TContractState) -> felt252;
     fn get_guardian(self: @TContractState) -> felt252;
-    fn get_guardian_type(self: @TContractState) -> SignerType;
+    fn get_guardian_type(self: @TContractState) -> Option<SignerType>;
     fn get_owners_info(self: @TContractState) -> Array<SignerInfo>;
     fn get_guardian_guid(self: @TContractState) -> Option<felt252>;
     fn get_guardians_info(self: @TContractState) -> Array<SignerInfo>;

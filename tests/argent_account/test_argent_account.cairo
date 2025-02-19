@@ -6,7 +6,7 @@ use argent::multiowner_account::{
 };
 use argent::recovery::EscapeStatus;
 use argent::signer::signer_signature::{
-    Eip191Signer, Secp256k1Signer, Signer, SignerSignature, SignerTrait, StarknetSignature, StarknetSigner,
+    Eip191Signer, Secp256k1Signer, Signer, SignerSignature, SignerTrait, SignerType, StarknetSignature, StarknetSigner,
     starknet_signer_from_pubkey,
 };
 use crate::{
@@ -436,7 +436,7 @@ fn change_guardians_only_self() {
 }
 
 #[test]
-#[should_panic(expected: ('argent/no-single-owner',))]
+#[should_panic(expected: ('argent/multiple-owners',))]
 fn get_owner_multiple_owners() {
     let account = initialize_account();
     let signer = starknet_signer_from_pubkey(22);
@@ -451,7 +451,7 @@ fn get_owner_multiple_owners() {
 }
 
 #[test]
-#[should_panic(expected: ('argent/no-single-owner',))]
+#[should_panic(expected: ('argent/multiple-owners',))]
 fn get_owner_type_multiple_owners() {
     let account = initialize_account();
     let signer = starknet_signer_from_pubkey(22);
@@ -466,7 +466,7 @@ fn get_owner_type_multiple_owners() {
 }
 
 #[test]
-#[should_panic(expected: ('argent/no-single-owner',))]
+#[should_panic(expected: ('argent/multiple-owners',))]
 fn get_owner_guid_multiple_owners() {
     let account = initialize_account();
     let signer = starknet_signer_from_pubkey(22);
@@ -478,6 +478,14 @@ fn get_owner_guid_multiple_owners() {
 
     assert_eq!(account.get_owners_info().len(), 2);
     let _ = account.get_owner_guid();
+}
+
+#[test]
+fn get_guardian() {
+    let account = initialize_account();
+
+    let guardian = account.get_guardian();
+    assert_eq!(guardian, GUARDIAN().pubkey);
 }
 
 #[test]
@@ -493,6 +501,30 @@ fn get_guardian_multiple_guardians() {
 }
 
 #[test]
+fn get_guardian_no_guardian() {
+    let account = initialize_account_without_guardian();
+
+    let guardian = account.get_guardian();
+    assert_eq!(guardian, 0);
+}
+
+#[test]
+fn get_guardian_type() {
+    let account = initialize_account();
+
+    let guardian_type = account.get_guardian_type();
+    assert_eq!(guardian_type, Option::Some(SignerType::Starknet));
+}
+
+#[test]
+fn get_guardian_type_no_guardian() {
+    let account = initialize_account_without_guardian();
+
+    let guardian_type = account.get_guardian_type();
+    assert_eq!(guardian_type, Option::None);
+}
+
+#[test]
 #[should_panic(expected: ('argent/multiple-guardians',))]
 fn get_guardian_type_multiple_guardians() {
     let account = initialize_account();
@@ -502,6 +534,22 @@ fn get_guardian_type_multiple_guardians() {
 
     assert_eq!(account.get_guardians_info().len(), 2);
     let _ = account.get_guardian_type();
+}
+
+#[test]
+fn get_guardian_guid() {
+    let account = initialize_account();
+
+    let guardian_guid = account.get_guardian_guid();
+    assert_eq!(guardian_guid, Option::Some(starknet_signer_from_pubkey(GUARDIAN().pubkey).into_guid()));
+}
+
+#[test]
+fn get_guardian_guid_no_guardian() {
+    let account = initialize_account_without_guardian();
+
+    let guardian_guid = account.get_guardian_guid();
+    assert_eq!(guardian_guid, Option::None);
 }
 
 #[test]

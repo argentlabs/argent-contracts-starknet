@@ -334,6 +334,21 @@ describe("Session Account: execute caching", function () {
     );
   });
 
+  it("Fail if a cache_owner_guid is incorrect", async function () {
+    const { account, guardian } = await deployAccount();
+
+    const { accountWithDappSigner } = await setupSession({
+      guardian: guardian as StarknetKeyPair,
+      account,
+      expiry: initialTime + 150n,
+      dappKey: randomStarknetKeyPair(),
+      cacheOwnerGuid: 42n,
+      allowedMethods: [],
+    });
+
+    await expectRevertWithErrorMessage("session/invalid-cache-owner", accountWithDappSigner.execute([]));
+  });
+
   describe("Session caching with legacy account", function () {
     it("Caching is unaffected between contract upgrades", async function () {
       const { account, accountContract, guardian, owner } = await deployAccount({

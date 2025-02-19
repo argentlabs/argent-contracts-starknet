@@ -344,6 +344,7 @@ describe("Session Account: execute caching", function () {
       dappKey: randomStarknetKeyPair(),
       cacheOwnerGuid: 42n,
       allowedMethods: [],
+      allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
     });
 
     await expectRevertWithErrorMessage("session/invalid-cache-owner", accountWithDappSigner.execute([]));

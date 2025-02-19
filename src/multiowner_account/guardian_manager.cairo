@@ -101,22 +101,23 @@ pub mod guardian_manager_component {
 
         // legacy
         fn get_guardian(self: @ComponentState<TContractState>) -> felt252 {
-            if !self.has_guardian() {
-                return 0;
+            if let Option::Some(guardian) = self.get_single_or_no_guardian() {
+                assert(!guardian.is_stored_as_guid(), 'argent/only_guid');
+                guardian.stored_value
+            } else {
+                // No guardians
+                0
             }
-            let guardian = self.get_single_guardian().expect('argent/no-single-guardian');
-            assert(!guardian.is_stored_as_guid(), 'argent/only_guid');
-            guardian.stored_value
         }
 
         // legacy
         fn get_guardian_type(self: @ComponentState<TContractState>) -> Option<SignerType> {
-            Option::Some(self.get_single_guardian()?.signer_type)
+            Option::Some(self.get_single_or_no_guardian()?.signer_type)
         }
 
         // legacy
         fn get_guardian_guid(self: @ComponentState<TContractState>) -> Option<felt252> {
-            Option::Some(self.get_single_guardian()?.into_guid())
+            Option::Some(self.get_single_or_no_guardian()?.into_guid())
         }
     }
 
@@ -152,12 +153,22 @@ pub mod guardian_manager_component {
             !self.guardians_storage.is_empty()
         }
 
-        fn get_single_guardian(self: @ComponentState<TContractState>) -> Option<SignerStorageValue> {
-            self.guardians_storage.single()
+        /// Panics if there are multiple guardians
+        fn get_single_or_no_guardian(self: @ComponentState<TContractState>) -> Option<SignerStorageValue> {
+            if !self.has_guardian() {
+                return Option::None;
+            } else {
+                return Option::Some(self.guardians_storage.single().expect('argent/multiple-guardians'));
+            }
         }
 
-        fn get_single_stark_guardian_pubkey(self: @ComponentState<TContractState>) -> Option<felt252> {
-            self.get_single_guardian()?.starknet_pubkey_or_none()
+        fn get_single_stark_guardian_pubkey(self: @ComponentState<TContractState>) -> felt252 {
+            self
+                .guardians_storage
+                .single()
+                .expect('argent/no-single-guardian')
+                .starknet_pubkey_or_none()
+                .expect('argent/not-strk-guardian')
         }
 
         fn change_guardians(
@@ -223,9 +234,7 @@ pub mod guardian_manager_component {
                 assert(signature_array.len() == 1, 'argent/invalid-signature-length');
                 return *signature_array.at(0);
             }
-            let single_stark_guardian = self
-                .get_single_stark_guardian_pubkey()
-                .expect('argent/no-single-guardian-owner');
+            let single_stark_guardian = self.get_single_stark_guardian_pubkey();
             return SignerSignature::Starknet(
                 (
                     StarknetSigner { pubkey: single_stark_guardian.try_into().expect('argent/zero-pubkey') },

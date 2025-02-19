@@ -3,7 +3,7 @@ use argent::account::Version;
 use argent::multiowner_account::owner_alive::OwnerAliveSignature;
 use argent::multiowner_account::recovery::Escape;
 use argent::recovery::{EscapeStatus};
-use argent::signer::signer_signature::{Signer, starknet_signer_from_pubkey};
+use argent::signer::signer_signature::{Signer, SignerInfo, SignerType, starknet_signer_from_pubkey};
 use argent::utils::serialization::serialize;
 use crate::{ARGENT_ACCOUNT_ADDRESS, GUARDIAN, OWNER};
 use snforge_std::{ContractClassTrait, DeclareResultTrait, declare, start_cheat_caller_address_global};
@@ -35,9 +35,13 @@ pub trait ITestArgentAccount<TContractState> {
     fn set_escape_security_period(ref self: TContractState, new_security_period: u64);
     // Views
     fn get_owner(self: @TContractState) -> felt252;
-    fn get_guardian(self: @TContractState) -> felt252;
+    fn get_owner_type(self: @TContractState) -> SignerType;
     fn get_owner_guid(self: @TContractState) -> felt252;
+    fn get_guardian(self: @TContractState) -> felt252;
+    fn get_guardian_type(self: @TContractState) -> Option<SignerType>;
+    fn get_owners_info(self: @TContractState) -> Array<SignerInfo>;
     fn get_guardian_guid(self: @TContractState) -> Option<felt252>;
+    fn get_guardians_info(self: @TContractState) -> Array<SignerInfo>;
     fn get_escape(self: @TContractState) -> Escape;
     fn get_version(self: @TContractState) -> Version;
     fn get_name(self: @TContractState) -> felt252;

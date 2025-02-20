@@ -30,7 +30,7 @@ See more about the escape process in [Escape Process](./argent_account_escape.md
 ### Admin calls
 
 The account can **call itself** to perform admin operations like changing the owners, upgrading to a new implementation, setting up guardians, escape...
-When the account is calling itself, it should be the **only call** performed in this multicall or the transaction will be rejected.
+When the account is calling itself, it must be the **only call** performed in this multicall or the transaction will be rejected.
 
 ## Signer types
 

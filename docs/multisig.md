@@ -25,7 +25,7 @@ The array provided as a signature must contain **exactly** `threshold` signature
 
 ## Accurate Estimates
 
-The argent multisig can accurate estimates for transactions before `threshold` signatures are collected. See [Accurate Estimates](./accurate_estimates.md) for more information.
+The argent multisig can do accurate estimates for transactions before `threshold` signatures are collected. See [Accurate Estimates](./accurate_estimates.md) for more information.
 
 ## Self-deployment
 

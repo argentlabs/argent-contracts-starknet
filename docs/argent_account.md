@@ -122,7 +122,9 @@ See [Sessions](./sessions.md)
 
 ## Upgrades
 
-See [Upgrades](./argen_account_upgrades.md)
+See [Upgrades](./argent_account_upgrades.md)
+
+**⚠️** Make sure you read this document before upgrading you account, as incorrect upgrades can brick the account
 
 ## Owner Alive Signature
 

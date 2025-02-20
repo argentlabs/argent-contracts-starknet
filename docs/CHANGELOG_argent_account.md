@@ -7,6 +7,8 @@ The account requires **one owner** signature **AND** **one guardian** signature 
 
 It also improves **WebAuthn** support compatibility with more browsers.
 
+Make sure you read the **[Upgrades](./argent_account_upgrades.md)** document, as incorrect upgrades can **brick the account**
+
 - **Read methods** were updated to support **multiple owners and guardians**
 
   Removed:

@@ -151,7 +151,7 @@ impl LinkedSetWithHeadReadPrivateImpl<
     }
 
     fn get_tail_list(self: StorageBase<LinkedSetWithHead<T>>) -> StorageBase<LinkedSet<T>> {
-        StorageBase { __base_address__: self.__base_address__ }
+        StorageBase { __base_address__: self.__base_address__ + 1 }
     }
 }
 
@@ -201,7 +201,7 @@ impl LinkedSetWithHeadWritePrivateImpl<
     }
 
     fn get_tail_list(self: StorageBase<Mutable<LinkedSetWithHead<T>>>) -> StorageBase<Mutable<LinkedSet<T>>> {
-        StorageBase { __base_address__: self.__base_address__ }
+        StorageBase { __base_address__: self.__base_address__ + 1 }
     }
 }
 

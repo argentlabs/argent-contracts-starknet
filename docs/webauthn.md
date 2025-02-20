@@ -104,6 +104,6 @@ Although, signers added before those versions are still usable, they just need t
 
 ## Examples
 
-There are some examples in typescript about how to use this feature [here](../lib/signers/webauthn.ts/)
+There are some examples in typescript about how to use this feature [here](../lib/signers/webauthn.ts)
 
 There is a proof of concept dapp [here](../examples/webauthn/)

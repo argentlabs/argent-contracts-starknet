@@ -45,7 +45,7 @@ There's more information about it in [**Signer Types**](./signers_and_signatures
   - Account with guardians: The account require a signature from one of the owners and one from one of the guardians. Owner signature goes first.
 - **Escape transactions**:
 
-  Transactions that calling `trigger_escape_guardian`, `trigger_escape_owner`, `escape_guardian`, `escape_owner` (See [Escape Methods](./argent_account_escape.md#Escape-Methods)). The account expects a signature from one party only
+  For transactions calling `trigger_escape_guardian`, `trigger_escape_owner`, `escape_guardian`, `escape_owner` (See [Escape Methods](./argent_account_escape.md#Escape-Methods)), the account expects a signature from one party only.
 
 Depending on the above the account receives signatures from one or two signers. The account accepts two formats for the combined signature:
 

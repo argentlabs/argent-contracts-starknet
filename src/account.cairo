@@ -5,7 +5,7 @@ pub const SRC5_ACCOUNT_INTERFACE_ID: felt252 = 0x2ceccef7f994940b3962a6c67e0ba4f
 pub const SRC5_ACCOUNT_INTERFACE_ID_OLD_1: felt252 = 0xa66bd575;
 pub const SRC5_ACCOUNT_INTERFACE_ID_OLD_2: felt252 = 0x3943f10f;
 
-#[derive(Serde, Drop)]
+#[derive(Serde, Copy, Drop)]
 pub struct Version {
     pub major: u8,
     pub minor: u8,

@@ -41,9 +41,9 @@ mod MockFutureArgentAccount {
 
     const NAME: felt252 = 'ArgentAccount';
     const VERSION_MAJOR: u8 = 0;
-    const VERSION_MINOR: u8 = 5;
+    const VERSION_MINOR: u8 = 6;
     const VERSION_PATCH: u8 = 0;
-    const VERSION_COMPAT: felt252 = '0.5.0';
+    const VERSION_COMPAT: felt252 = '0.6.0';
 
     // Introspection
     component!(path: src5_component, storage: src5, event: SRC5Events);
@@ -115,9 +115,10 @@ mod MockFutureArgentAccount {
         // Called when coming from account 0.4.0+
         fn perform_upgrade(ref self: ContractState, new_implementation: ClassHash, data: Span<felt252>) {
             assert_only_self();
-            let current_version = IFutureArgentUserAccountDispatcher { contract_address: get_contract_address() }
+            let previous_version = IFutureArgentUserAccountDispatcher { contract_address: get_contract_address() }
                 .get_version();
-            assert(current_version.major == 0 && current_version.minor >= 4, 'argent/invalid-from-version');
+            assert(previous_version >= Version { major: 0, minor: 4, patch: 0 }, 'argent/invalid-from-version');
+            assert(previous_version < self.get_version(), 'argent/downgrade-not-allowed');
             self.upgrade.complete_upgrade(new_implementation);
             if data.is_empty() {
                 return;

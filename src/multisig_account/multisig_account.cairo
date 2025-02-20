@@ -26,7 +26,7 @@ mod ArgentMultisigAccount {
     use starknet::{ClassHash, VALIDATED, account::Call, get_contract_address, get_execution_info, get_tx_info};
 
     const NAME: felt252 = 'ArgentMultisig';
-    const VERSION: Version = Version { major: 0, minor: 3, patch: 0 };
+    const VERSION: Version = Version { major: 0, minor: 5, patch: 0 };
 
     // Signer Management
     component!(path: signer_manager_component, storage: signer_manager, event: SignerManagerEvents);
@@ -234,8 +234,8 @@ mod ArgentMultisigAccount {
             let argent_dispatcher = IArgentAccountDispatcher { contract_address: get_contract_address() };
             assert(argent_dispatcher.get_name() == self.get_name(), 'argent/invalid-name');
             let previous_version = argent_dispatcher.get_version();
-            let current_version = self.get_version();
-            assert(previous_version < current_version, 'argent/downgrade-not-allowed');
+            assert(previous_version >= Version { major: 0, minor: 2, patch: 0 }, 'argent/invalid-from-version');
+            assert(previous_version < self.get_version(), 'argent/downgrade-not-allowed');
 
             self.upgrade.complete_upgrade(new_implementation);
 

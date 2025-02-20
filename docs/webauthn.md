@@ -17,7 +17,7 @@ struct WebauthnSigner {
 ```
 
 - `origin`: Typically the website domain or app origin. [More info](https://www.w3.org/TR/webauthn/). Represented as an array of bytes
-- `rp_id_hash`: SHA-256 hash of the RP ID. The Relying Party ID is based on a host's domain name. It does not itself include a scheme or port, as an origin does (RP ID). [More info](https://www.w3.org/TR/webauthn/)
+- `rp_id_hash`: SHA-256 hash of the RP ID. The Relying Party ID is based on a host's domain name. It does not itself include a scheme or port, as an origin does (RP ID). [More info](https://www.w3.org/TR/webauthn/#relying-party-identifier)
 - `pubkey`: The **Secp256r1** public key used for signatures.
 
 ## The Signature

@@ -26,7 +26,7 @@ mod ArgentMultisigAccount {
     use starknet::{ClassHash, VALIDATED, account::Call, get_contract_address, get_execution_info, get_tx_info};
 
     const NAME: felt252 = 'ArgentMultisig';
-    const VERSION: Version = Version { major: 0, minor: 3, patch: 0 };
+    const VERSION: Version = Version { major: 0, minor: 5, patch: 0 };
 
     // Signer Management
     component!(path: signer_manager_component, storage: signer_manager, event: SignerManagerEvents);

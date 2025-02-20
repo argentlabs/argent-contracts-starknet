@@ -84,7 +84,7 @@ More details in [**Signatures**](./signers_and_signatures.md#Signatures)
 
 ### Concise Format
 
-Besides the format specified here, the argent account also supports concise signatures if these two conditions are met:
+Besides the format specified above, the argent account also supports concise signatures if these two conditions are met:
 
 - There is only one owner and it's a StarknetSigner
 - There is no guardian or there's only one guardian and it's a StarknetSigner

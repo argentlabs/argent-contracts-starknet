@@ -22,11 +22,11 @@ Note that the user is not involved in the process.
 - Methods allowed to be called (contract address and selector)
 - Guardian and dapp signatures for every transaction (Guardian must be the same as the one used in the session authorization)
 - Check if session is revoked (see [Session Revocation ](#session-revocation))
-- Session expiration: it can only be done with some level precision during validation because of starknet restrictions to timestamps during validation, but the check will be also performed on execution with a more accurate timestamp. This could allow the dapp to perform some gas griefing but it is mitigated by the fact a guardian is also performing the check offchain
+- Session expiration. It can only be done with some level precision during validation because of starknet restrictions to timestamps during validation, but the check will be also performed on execution with a more accurate timestamp. This could allow the dapp to perform some gas griefing but it is mitigated by the fact that a guardian is also performing the check offchain
 
 ### Offchain checks by guardian:
 
-- Session expiration (with higher accuracy than the onchain check)
+- Session expiration (with higher accuracy than the onchain check performed on validation)
 - Anything included in the `Metadata` field (it could include checks to make sure the dapp is not spending too much on gas fees)
 
 ### Sessions and multiple guardians
@@ -54,7 +54,7 @@ fn is_session_revoked(session_hash: felt252) -> bool
 
 The dapp may choose to enable caching to **reduce the transaction costs** of a session. It's especially interesting in cases where the owner who signed the authorization is a signer more expensive than the starknet key, like a WebAuthn Signer.
 
-The SessionToken struct accepts a `cache_owner_guid: felt252`. Caching is not enabled if `cached_owner_guid` is set to 0. Otherwise, the field should contain the guid of the owner who signed the authorization. and in the **first session call**, the **authorization will be verified** as normal except the `session_authorization` signature verification will be cached in storage, **subsequent transactions** can then **bypass the authorization** check thus benefiting from a **reduced cost**. Moreover, after the first transaction, the dapp can send an empty `session_authorization` array which reduces costs further by shrinking the signature size.  
+The SessionToken struct accepts a `cache_owner_guid: felt252`. Caching is not enabled if `cached_owner_guid` is set to 0. Otherwise, the field should contain the guid of the owner who signed the authorization. and in the **first session call**, the **authorization will be verified** as normal except the `session_authorization` signature verification will be cached in storage, **subsequent transactions** can then **bypass the authorization** check thus benefiting from a **reduced cost**. Moreover, after the first transaction, the dapp can send an empty `session_authorization` array which reduces costs further by shrinking the signature size.
 
 When doing a fee estimation, its advised to estimate as if the `session_authorization` is present to ensure the transaction wont fail even if some malicious party modifies the signature fill in the session authorization
 

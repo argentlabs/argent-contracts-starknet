@@ -64,7 +64,7 @@ pub enum Signer {
 /// @param stored_value Raw signer data (pubkey, address, or GUID depending on type). Note that only one felt252 is
 /// available for storage even if some Signers don't fit in it.
 /// @param signer_type Type of the signer determining how stored_value must be interpreted
-#[derive(Drop, Copy, Serde, PartialEq, starknet::Store, Default)]
+#[derive(Drop, Copy, Serde, PartialEq, starknet::Store, Default, Debug)]
 pub struct SignerStorageValue {
     pub stored_value: felt252,
     pub signer_type: SignerType,

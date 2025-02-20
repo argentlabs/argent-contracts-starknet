@@ -49,7 +49,7 @@ There's more information about it in [**Signer Types**](./signers_and_signatures
 
 Depending on the above the account receives signatures from one or two signers. The account accepts two formats for the combined signature:
 
-### Recommended Format
+### Standard Format (Recommended)
 
 The final signature is serialized as an `Array<SignerSignature>` (even if there's only one signer)
 
@@ -98,6 +98,9 @@ The format of the concise signatures is the following:
 `[single_guardian_r, single_guardian_s]` or
 
 `[single_owner_r, single_owner_s, single_guardian_r, single_guardian_s]`
+
+The first format is intended to help the account be compatible with dev tools and will be supported
+But the last two formats are deprecated and likely to be removed in future versions
 
 ## Accurate Estimates
 

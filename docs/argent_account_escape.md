@@ -51,3 +51,9 @@ When the account has multiple owners and/or multiple guardians, the escape proce
 
 - When an owner escape is completed: ALL the owners are replaced by the single new owner specified in the escape
 - When a guardian escape is completed: ALL the guardians are replaced by the a new guardian specified in the escape. If no new guardian is specified, all the guardians are removed
+
+## Gas griefing
+
+Even if one leaked key can't compromise the account (because the real owners/guardians can replace the leaked key), the key can be used to trigger multiple transactions using the escape methods in order to spend on fees, draining the account.
+
+In order to prevent it, the account doesn't allow owners and guardians to submit multiple transactions quickly (only one every 12h), and also it imposes limits on how much a single transaction can spend.

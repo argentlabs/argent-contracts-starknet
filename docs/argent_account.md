@@ -101,7 +101,7 @@ The format of the concise signatures is the following:
 
 ## Accurate Estimates
 
-The argent multisig can accurate estimates for transactions with Signers that use significant resources during validations. This also supports accurate estimates for sessions.
+The argent multisig can do accurate estimates for transactions with Signers that use significant resources during validations. This also supports accurate estimates for sessions.
 
 See [Accurate Estimates](./accurate_estimates.md) for more information.
 

@@ -83,12 +83,13 @@ fn test_contains() {
     let signer_storage1 = owner1.storage_value();
     linked_set.insert(signer_storage1);
 
+    assert(linked_set.contains(signer_storage1), 'Item1 should be in the set');
+    assert(linked_set.contains_by_hash(signer_storage1.hash()), 'Item1 should be in the set');
+
     let owner2 = starknet_signer_from_pubkey(2);
     let signer_storage2 = owner2.storage_value();
 
-    assert(linked_set.contains(signer_storage1), 'Item1 should be in the set');
     assert(!linked_set.contains(signer_storage2), 'Item2 should not be in the set');
-    assert(linked_set.contains_by_hash(signer_storage1.hash()), 'Item1 should be in the set');
     assert(!linked_set.contains_by_hash(signer_storage2.hash()), 'Item2 should not be in the set');
 }
 
@@ -102,19 +103,16 @@ fn test_first() {
     let signer_storage1 = owner1.storage_value();
     linked_set.insert(signer_storage1);
 
-    let first = linked_set.first().unwrap();
+    let first = linked_set.first().expect('Set should have an element');
     assert_eq!(first.hash(), signer_storage1.hash());
 }
 
 #[test]
 fn test_get_all_hashes() {
-    let (mut linked_set, owners) = setup_three_owners();
+    let (linked_set, owners) = setup_three_owners();
 
     let ids = linked_set.get_all_hashes();
-    assert_eq!(ids.len(), 3);
-    assert_eq!(*ids[0], owners[0].hash());
-    assert_eq!(*ids[1], owners[1].hash());
-    assert_eq!(*ids[2], owners[2].hash());
+    assert_eq!(ids, array![owners[0].hash(), owners[1].hash(), owners[2].hash()]);
 }
 
 #[test]
@@ -154,41 +152,17 @@ fn test_remove_last_element() {
 }
 
 #[test]
-fn test_remove_0_1() {
-    let (storage, owners) = setup_three_owners();
+fn test_remove_only_element() {
+    let mut linked_set = setup_linked_set();
 
-    storage.remove(owners[0].hash());
-    storage.remove(owners[1].hash());
+    let owner1 = starknet_signer_from_pubkey(1);
+    let signer_storage1 = owner1.storage_value();
+    linked_set.insert(signer_storage1);
 
-    let remaining_owners = storage.get_all_hashes();
-    assert_eq!(remaining_owners.len(), 1);
-    assert_eq!(*remaining_owners[0], owners[2].hash());
+    linked_set.remove(signer_storage1.hash());
+
+    assert(linked_set.is_empty(), 'Set should be empty');
 }
-
-#[test]
-fn test_remove_0_2() {
-    let (storage, owners) = setup_three_owners();
-
-    storage.remove(owners[0].hash());
-    storage.remove(owners[2].hash());
-
-    let remaining_owners = storage.get_all_hashes();
-    assert_eq!(remaining_owners.len(), 1);
-    assert_eq!(*remaining_owners[0], owners[1].hash());
-}
-
-#[test]
-fn test_remove_1_2() {
-    let (storage, owners) = setup_three_owners();
-
-    storage.remove(owners[1].hash());
-    storage.remove(owners[2].hash());
-
-    let remaining_owners = storage.get_all_hashes();
-    assert_eq!(remaining_owners.len(), 1);
-    assert_eq!(*remaining_owners[0], owners[0].hash());
-}
-
 
 #[test]
 #[should_panic(expected: ('linked-set/invalid-item',))]
@@ -219,4 +193,30 @@ fn test_remove_non_existent_item() {
     let (mut linked_set, _) = setup_three_owners();
 
     linked_set.remove(123);
+}
+
+#[test]
+fn test_single() {
+    let mut linked_set = setup_linked_set();
+
+    let owner1 = starknet_signer_from_pubkey(1);
+    let signer_storage1 = owner1.storage_value();
+    linked_set.insert(signer_storage1);
+
+    let single = linked_set.single().expect('Set should have a single item');
+    assert_eq!(single.hash(), signer_storage1.hash());
+}
+
+#[test]
+fn test_single_empty() {
+    let linked_set = setup_linked_set();
+
+    assert!(linked_set.single().is_none(), "Set should not have a single item");
+}
+
+#[test]
+fn test_single_multiple_items() {
+    let (linked_set, _) = setup_three_owners();
+
+    assert!(linked_set.single().is_none(), "Set should not have a single item");
 }

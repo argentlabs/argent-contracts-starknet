@@ -1,20 +1,20 @@
 # Multiple Signer Types
 
-Starting from argent [account](./argent-account.md) v0.4.0 and [multisig](./multisig.md) v0.2.0, the accounts will allow the use of other signatures types, besides the Starknet native one. We support the following:
+Starting from argent [account](./argent_account.md) v0.4.0 and [multisig](./multisig.md) v0.2.0, the accounts will allow the use of other signature types besides the Starknet native one. We support the following:
 
 - **Starknet**: native starknet key signature, it will be the most efficient in terms of gas usage
 - **Secp256k1**: Uses the curve used by Ethereum and other cryptocurrencies
 - **Secp256r1**: Curve with broad support, especially on secure hardware
 - **Eip191**: Leverages Eip191 signatures to sign on Starknet
-- **Webauthn**: Allow to use passkeys as they are widely supported by browsers, and Operating systems
+- **Webauthn**: Allows using passkeys as they are widely supported by browsers and operating systems. See [more info about WebAuthn Signers](./webauthn.md)
 
-Every time a new signer is added to the account there will be a `SignerLinked` event emitted, with all the data about the Signer and a GUID, that GUID will uniquely identify that signer in the account. The GUID is a hash of the Signer that will uniquely identify it. The contract won’t always store all the signer data and only the GUID will provided by the contract (there are some exceptions for backwards compatibility)
+Every time a new signer is added to the account there will be a `SignerLinked` event emitted, with all the data about the Signer and a GUID, that GUID will uniquely identify that signer in the account. The GUID is a hash of the Signer that will uniquely identify it. The contract won't always store all the signer data and only the GUID will be provided by the contract (there are some exceptions for backwards compatibility)
 
-At any time it will be possible to get the Signer data linked to a GUID, but querying the account SignerLinked events
+At any time it will be possible to get the Signer data linked to a GUID, by querying the account SignerLinked events
 [Example](../scripts/query-guid-info.ts)
 
 ```
-/// For every signer in the account there will be SignerLinked event with its guid
+/// For every signer in the account there will be a SignerLinked event with its guid
 struct SignerLinked {
   #[key]
   signer_guid: felt252,
@@ -49,11 +49,9 @@ struct SignerLinked {
 
 # Signatures
 
-**NOTE** Besides the format specified here, the argent account also supports concise signatures. See [Signatures](./argent_account.md#Signatures)
-
 Signatures are provided as an `Array<SignerSignature>`
 
-```
+```rust
 enum SignerSignature {
   Starknet: (StarknetSigner, StarknetSignature),
   Secp256k1: (Secp256k1Signer, Secp256k1Signature),
@@ -82,3 +80,11 @@ Here is an example of a signature with two starknet signers
 ```
 
 [More info about Cairo serialization](https://docs.starknet.io/documentation/architecture_and_concepts/Smart_Contracts/serialization_of_Cairo_types/#data_types_of_252_bits_or_less)
+
+### Concise Signatures
+
+Besides the format specified here, the argent account also supports concise signatures.
+
+**⚠️** The use of concise signatures is **discouraged** as they will stop working when more than one owner or guardian are added to the account
+
+See more details [here](./argent_account.md#Concise-Format)

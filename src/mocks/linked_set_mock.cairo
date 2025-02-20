@@ -11,7 +11,7 @@ pub mod linked_set_mock {
 
     #[storage]
     pub struct Storage {
-        linked_set_with_head: LinkedSetWithHead<SignerStorageValue>,
+        pub linked_set_with_head: LinkedSetWithHead<SignerStorageValue>,
         pub linked_set: LinkedSet<SignerStorageValue>,
     }
 

@@ -78,12 +78,12 @@ pub mod ArgentAccount {
     const DEFAULT_ESCAPE_SECURITY_PERIOD: u64 = 7 * 24 * 60 * 60; // 7 days
 
     /// Minimum delay between escape attempts (12 hours)
-    const TIME_BETWEEN_TWO_ESCAPES: u64 = 12 * 60 * 60;
+    pub const TIME_BETWEEN_TWO_ESCAPES: u64 = 12 * 60 * 60;
 
     /// Limits fee in escapes
     const MAX_ESCAPE_MAX_FEE_ETH: u128 = 2000000000000000; // 0.002 ETH
     const MAX_ESCAPE_MAX_FEE_STRK: u128 = 12_000000000000000000; // 12 STRK
-    const MAX_ESCAPE_TIP_STRK: u128 = 4_000000000000000000; // 4 STRK
+    pub const MAX_ESCAPE_TIP_STRK: u128 = 4_000000000000000000; // 4 STRK
 
     /// Minimum time for the escape security period
     const MIN_ESCAPE_SECURITY_PERIOD: u64 = 60 * 10; // 10 minutes;
@@ -718,10 +718,7 @@ pub mod ArgentAccount {
                 return AccountSignature { owner_signature, guardian_signature: Option::None };
             }
 
-            let single_stark_guardian = self
-                .guardian_manager
-                .get_single_stark_guardian_pubkey()
-                .expect('argent/no-single-guardian-owner');
+            let single_stark_guardian = self.guardian_manager.get_single_stark_guardian_pubkey();
 
             let guardian_signature = SignerSignature::Starknet(
                 (

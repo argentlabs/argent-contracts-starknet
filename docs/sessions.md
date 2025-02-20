@@ -19,7 +19,7 @@ Note that the user is not involved in the process.
 
 ### Onchain checks by the account:
 
-- Methods to call (contract address and selector)
+- Methods allowed to be called (contract address and selector)
 - Guardian and dapp signatures for every transaction (Guardian must be the same as the one used in the session authorization)
 - Check if session is revoked (see [Session Revocation ](#session-revocation))
 - Session expiration: it can only be done with some level precision during validation because of starknet restrictions to timestamps during validation, but the check will be also performed on execution with a more accurate timestamp. This could allow the dapp to perform some gas griefing but it is mitigated by the fact a guardian is also performing the check offchain

@@ -2,7 +2,7 @@
 
 ## Overview
 
-The "Owner Alive Signature" prevents **accidental bricking** of an account by requesting a recent signature from one of the remaining owners. This prevents from replacing the owner to a key that you don't control making the account unusable.
+The "Owner Alive Signature" prevents **accidental bricking** of an account by requesting a recent signature from one of the remaining owners. This prevents from replacing the owner to a key that you don't control or an invalid key that could brick the account.
 
 This signature will be requested when calling the `change_owner` function if both conditions are met:
 

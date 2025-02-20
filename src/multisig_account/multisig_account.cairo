@@ -234,8 +234,8 @@ mod ArgentMultisigAccount {
             let argent_dispatcher = IArgentAccountDispatcher { contract_address: get_contract_address() };
             assert(argent_dispatcher.get_name() == self.get_name(), 'argent/invalid-name');
             let previous_version = argent_dispatcher.get_version();
-            let current_version = self.get_version();
-            assert(previous_version < current_version, 'argent/downgrade-not-allowed');
+            assert(previous_version >= Version { major: 0, minor: 2, patch: 0 }, 'argent/invalid-from-version');
+            assert(previous_version < self.get_version(), 'argent/downgrade-not-allowed');
 
             self.upgrade.complete_upgrade(new_implementation);
 

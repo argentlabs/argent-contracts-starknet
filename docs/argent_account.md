@@ -131,6 +131,6 @@ Find the Argent Account Release notes [here](./CHANGELOG_account.md)
 
 ## Deployments
 
-See deployed class hashes can be found here for the [Argent Account](../deployments/account.txt)
+Deployed class hashes can be found here for the [Argent Account](../deployments/account.txt)
 
 Other deployment artifacts are located in [/deployments/](../deployments/)

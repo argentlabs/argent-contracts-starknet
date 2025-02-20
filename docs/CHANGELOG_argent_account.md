@@ -121,7 +121,7 @@ It also improves **WebAuthn** support compatibility with more browsers.
   );
   ```
 
-  The `change_owners` and `change_guardians` functions. Will cancel any pending escape (as the old methods did)
+  The `change_owners` and `change_guardians` functions will cancel any pending escape (as the old methods did)
 
   Similar to the old `change_owner`, the new `change_owners` will require a signature from one owner to avoid accidental bricking of the account. But this signature is now optional. More details on [Owner Alive Signature](./owner_alive.md)
 

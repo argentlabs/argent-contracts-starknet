@@ -2,7 +2,7 @@ import { pick } from "lodash-es";
 import { Account, Call, RPC, uint256 } from "starknet";
 import { deployer, manager } from "../lib";
 
-const deployerV1 = new Account(deployer, deployer.address, deployer.signer, undefined, RPC.ETransactionVersion.V1);
+const deployerV1 = new Account(deployer, deployer.address, deployer.signer, undefined, RPC.ETransactionVersion.V2);
 
 //////////////////// Configure the tx to send here: ///////////
 const eth = await manager.tokens.ethContract();

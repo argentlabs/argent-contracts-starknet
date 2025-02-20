@@ -34,7 +34,7 @@ When the account is calling itself, it must be the **only call** performed in th
 
 ## Signer types
 
-Multiple signer types ara allowed for both owners and guardians.
+Multiple signer types are allowed for both owners and guardians.
 
 There's more information about it in [**Signer Types**](./signers_and_signatures.md#Multiple_Signer_Types).
 

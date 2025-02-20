@@ -163,7 +163,7 @@ There are some changes in version 0.5.0
   The `SessionToken`field `cache_authorization: bool` was replaced by `cache_owner_guid: felt252` in version 0.5.0.
   Cache is still disabled if `cache_owner_guid` is set to 0, but passing `0x1` (true) won't work starting from version 0.5.0. Instead, the SessionToken should include the GUID if the owner who signed the session authorization.
 
-  Note this also means that both dapp and guardian will now sign every transaction over: `poseidon(transaction_hash, session_hash, cache_owner_guid)` where they use to use the cached_authorization bool instead
+  Note this also means that both dapp and guardian will now sign every transaction over: `poseidon(transaction_hash, session_hash, cache_owner_guid)` where they used to use the cached_authorization bool instead
 
   The `is_session_authorization_cached(...)` method now needs to be called with the owner and the guardian GUIDs
 

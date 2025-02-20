@@ -346,7 +346,7 @@ describe("Session Account: execute caching", function () {
       allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
     });
 
-    await expectRevertWithErrorMessage("session/invalid-cache-owner", accountWithDappSigner.execute([]));
+    await expectRevertWithErrorMessage("session/owner-key-mismatch", accountWithDappSigner.execute([]));
   });
 
   describe("Session caching with legacy account", function () {

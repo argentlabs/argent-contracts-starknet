@@ -104,7 +104,7 @@ fn test_first() {
     linked_set.insert(signer_storage1);
 
     let first = linked_set.first().expect('Set should have an element');
-    assert_eq!(first.hash(), signer_storage1.hash());
+    assert_eq!(first, signer_storage1);
 }
 
 #[test]
@@ -121,10 +121,8 @@ fn test_remove_first_element() {
 
     linked_set.remove(owners[0].hash());
 
-    let remaining_owners = linked_set.get_all_hashes();
-    assert_eq!(remaining_owners.len(), 2);
-    assert_eq!(*remaining_owners[0], owners[1].hash());
-    assert_eq!(*remaining_owners[1], owners[2].hash());
+    let remaining_owners = linked_set.get_all();
+    assert_eq!(remaining_owners, array![*owners[1], *owners[2]]);
 }
 
 #[test]
@@ -133,10 +131,8 @@ fn test_remove_middle_element() {
 
     linked_set.remove(owners[1].hash());
 
-    let remaining_owners = linked_set.get_all_hashes();
-    assert_eq!(remaining_owners.len(), 2);
-    assert_eq!(*remaining_owners[0], owners[0].hash());
-    assert_eq!(*remaining_owners[1], owners[2].hash());
+    let remaining_owners = linked_set.get_all();
+    assert_eq!(remaining_owners, array![*owners[0], *owners[2]]);
 }
 
 #[test]
@@ -145,10 +141,42 @@ fn test_remove_last_element() {
 
     linked_set.remove(owners[2].hash());
 
-    let remaining_owners = linked_set.get_all_hashes();
-    assert_eq!(remaining_owners.len(), 2);
-    assert_eq!(*remaining_owners[0], owners[0].hash());
-    assert_eq!(*remaining_owners[1], owners[1].hash());
+    let remaining_owners = linked_set.get_all();
+    assert_eq!(remaining_owners, array![*owners[0], *owners[1]]);
+}
+
+#[test]
+fn test_remove_first_from_two() {
+    let mut linked_set = setup_linked_set();
+    let owner1 = starknet_signer_from_pubkey(1);
+    let signer_storage1 = owner1.storage_value();
+    linked_set.insert(signer_storage1);
+
+    let owner2 = starknet_signer_from_pubkey(2);
+    let signer_storage2 = owner2.storage_value();
+    linked_set.insert(signer_storage2);
+
+    linked_set.remove(signer_storage1.hash());
+
+    let remaining_owners = linked_set.get_all();
+    assert_eq!(remaining_owners, array![signer_storage2]);
+}
+
+#[test]
+fn test_remove_second_from_two() {
+    let mut linked_set = setup_linked_set();
+    let owner1 = starknet_signer_from_pubkey(1);
+    let signer_storage1 = owner1.storage_value();
+    linked_set.insert(signer_storage1);
+
+    let owner2 = starknet_signer_from_pubkey(2);
+    let signer_storage2 = owner2.storage_value();
+    linked_set.insert(signer_storage2);
+
+    linked_set.remove(signer_storage2.hash());
+
+    let remaining_owners = linked_set.get_all();
+    assert_eq!(remaining_owners, array![signer_storage1]);
 }
 
 #[test]

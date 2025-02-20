@@ -10,7 +10,7 @@ When the account has no guardians, it behaves like a 1-of-N multisig. The accoun
 
 ## Account with guardians
 
-When the account has any guardians, it requires **one owner** signature **AND** **one guardian** signature (unless calling [escape methods](./argent_account_escape.md#Escape-Methods)).
+When the account has at least one guardian, it requires **one owner** signature **AND one guardian** signature (unless calling [escape methods](./argent_account_escape.md#Escape-Methods)).
 
 The guardian keys are not typically managed by the user directly, but by a 3rd party which the user trusts (the trust only extends to some degree as the guardian alone can't control the account)
 

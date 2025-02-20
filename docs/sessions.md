@@ -60,7 +60,7 @@ When doing a fee estimation, its advised to estimate as if the `session_authoriz
 
 There is also a view method `is_session_authorization_cached` which returns a bool for a given session hash owner and guardian.
 
-Even if the authorization is cached. The account will **stop accepting a cached authorization if the owner or the guardian who signed it are not longer valid** in the account. That way the behavior is the same wether caching is used or not.
+Even if the authorization is cached, the account will **stop accepting a cached authorization if the owner or the guardian who signed it are not longer valid** in the account. That way the behavior is the same wether caching is used or not.
 
 See the notes about the breaking changes in version 0.5.0 [here](#history)
 

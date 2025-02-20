@@ -1,6 +1,8 @@
 # Argent Multisig Changelog
 
-# Version 0.3.0
+# Version 0.5.0
+
+We skipped v0.3 and v0.4 to align the versioning with the regular account
 
 - **WebAuthn Compatibility**
 

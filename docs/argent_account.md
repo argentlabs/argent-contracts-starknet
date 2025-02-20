@@ -99,8 +99,9 @@ The format of the concise signatures is the following:
 
 `[single_owner_r, single_owner_s, single_guardian_r, single_guardian_s]`
 
-The first format is intended to help the account be compatible with dev tools and will be supported
-But the last two formats are deprecated and likely to be removed in future versions
+The first format is intended to help the account be compatible with dev tools and will be supported.
+
+The last two formats are deprecated and likely to be removed in future versions
 
 ## Accurate Estimates
 

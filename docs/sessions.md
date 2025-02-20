@@ -27,7 +27,7 @@ Note that the user is not involved in the process.
 ### Offchain checks by guardian:
 
 - Session expiration (with higher accuracy than the onchain check)
-- Anything included in the `Metadata` field (it could include checks to make sure the dapp is not expending too much on gas fees)
+- Anything included in the `Metadata` field (it could include checks to make sure the dapp is not spending too much on gas fees)
 
 ### Sessions and multiple guardians
 

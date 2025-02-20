@@ -236,7 +236,7 @@ pub mod session_component {
                 let parsed_session_authorization = state.validate_authorization(session_hash, session_authorization);
                 let owner_guid_from_auth = parsed_session_authorization.owner_signature.signer().into_guid();
                 // assert owner specified in the token matches the one in the authorization
-                assert(owner_guid_from_auth == cache_owner_guid, 'session/invalid-cache-owner');
+                assert(owner_guid_from_auth == cache_owner_guid, 'session/owner-key-mismatch');
                 // assert guardian in the token is the same guardian as in the authorization
                 let guardian_from_auth = parsed_session_authorization.guardian_signature.unwrap().signer();
                 assert(guardian_from_auth == token_guardian, 'session/guardian-key-mismatch');

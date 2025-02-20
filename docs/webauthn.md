@@ -45,7 +45,7 @@ struct WebauthnSignature {
   ```
 
   The wallet building the account signature, must take the json payload and split it after the "origin" value.
-  Then check that the part before matches the expected JSON, and the rest will be submitted in the signature as the `client_data_json_outro`
+  Then check that the part before matches the expected JSON, and the rest will be submitted in the signature as the `client_data_json_outro`.
   If the remaining data is just the `}` character, the `client_data_json_outro` should be empty
 
 - `flags`:

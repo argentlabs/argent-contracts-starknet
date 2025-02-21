@@ -74,7 +74,7 @@ impl SignerGuidLinkedSetConfig of LinkedSetConfig<felt252> {
     }
 
     fn hash(self: @felt252) -> felt252 {
-        // No need to hash the value since it the value is already a hash.
+        // No need to hash the value since it is already a hash.
         // We also know that the this function will never return 0 as the guid 0 is invalid
         *self
     }

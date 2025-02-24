@@ -30,7 +30,9 @@ mod MockFutureArgentAccount {
         IUpgradableCallback, IUpgradableCallbackOld, upgrade_component, upgrade_component::UpgradableInternalImpl,
     };
 
-    use argent::utils::{asserts::assert_only_self, calls::execute_multicall, serialization::full_deserialize};
+    use argent::utils::{
+        asserts::{assert_no_self_call, assert_only_self}, calls::execute_multicall, serialization::full_deserialize,
+    };
     use starknet::{
         ClassHash, VALIDATED, account::Call, get_contract_address, get_tx_info,
         storage::{StoragePointerReadAccess, StoragePointerWriteAccess},
@@ -118,6 +120,12 @@ mod MockFutureArgentAccount {
             assert(previous_version >= Version { major: 0, minor: 4, patch: 0 }, 'argent/invalid-from-version');
             assert(previous_version < self.get_version(), 'argent/downgrade-not-allowed');
             self.upgrade.complete_upgrade(new_implementation);
+            if data.is_empty() {
+                return;
+            }
+            let calls: Array<Call> = full_deserialize(data).expect('argent/invalid-calls');
+            assert_no_self_call(calls.span(), get_contract_address());
+            execute_multicall(calls.span());
         }
     }
 

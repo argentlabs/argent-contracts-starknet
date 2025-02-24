@@ -40,7 +40,7 @@ const profilerClassHash = await manager.declareLocalContract("ArgentAccountProfi
 const latestClassHash = await manager.declareLocalContract("ArgentAccount");
 
 {
-  const {  transactionHash } = await deployAccountWithoutGuardians({
+  const { transactionHash } = await deployAccountWithoutGuardians({
     owner: starknetOwner,
     selfDeploy: true,
     salt: "0x200",
@@ -51,7 +51,7 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
 }
 
 {
-  const {  transactionHash } = await deployAccount({
+  const { transactionHash } = await deployAccount({
     owner: starknetOwner,
     guardian,
     selfDeploy: true,
@@ -203,7 +203,7 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
     fundingAmount,
   });
   await upgradeAccount(account, latestClassHash);
-  
+
   account.signer = new LegacyStarknetKeyPair(starknetOwner.privateKey);
   strkContract.connect(account);
   await profiler.profile("Transfer - No guardian (Old Sig)", await strkContract.transfer(recipient, amount));

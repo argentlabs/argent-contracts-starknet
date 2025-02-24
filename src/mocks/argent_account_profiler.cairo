@@ -3,19 +3,27 @@
 /// functionality of this contract for any production. 🚨
 
 use argent::account::Version;
+use argent::signer::signer_signature::Signer;
 
 // Those functions are called when upgrading
 #[starknet::interface]
 trait IArgentAccountProfiler<TContractState> {
+    fn __validate_deploy__(
+        self: @TContractState,
+        class_hash: felt252,
+        contract_address_salt: felt252,
+        owner: Signer,
+        guardian: Option<Signer>,
+    ) -> felt252;
     fn get_name(self: @TContractState) -> felt252;
     fn get_version(self: @TContractState) -> Version;
+    fn supports_interface(self: @TContractState, interface_id: felt252) -> bool;
 }
 
 
 #[starknet::contract(account)]
 mod ArgentAccountProfile {
     use argent::account::{IAccount, Version};
-    use argent::introspection::src5_component; // TODO Could be removed to depend on even less stuff
     use argent::multiowner_account::argent_account::ArgentAccount::Event as ArgentAccountEvent;
     use argent::multiowner_account::argent_account::IEmitArgentAccountEvent;
     use argent::multiowner_account::guardian_manager::{
@@ -34,16 +42,21 @@ mod ArgentAccountProfile {
     const NAME: felt252 = 'ArgentAccount';
     const VERSION: Version = Version { major: 0, minor: 4, patch: 0 };
 
+    // Do We use that or do I go even further?
     // Owner management
     component!(path: owner_manager_component, storage: owner_manager, event: OwnerManagerEvents);
     #[abi(embed_v0)]
     impl OwnerManager = owner_manager_component::OwnerManagerImpl<ContractState>;
+    // Do We use that or do I go even further?
     // Guardian management
     component!(path: guardian_manager_component, storage: guardian_manager, event: GuardianManagerEvents);
     #[abi(embed_v0)]
     impl GuardianManager = guardian_manager_component::GuardianManagerImpl<ContractState>;
     // Upgrade
     component!(path: upgrade_component, storage: upgrade, event: UpgradeEvents);
+    #[abi(embed_v0)]
+    impl Upgradable = upgrade_component::UpgradableImpl<ContractState>;
+
     #[abi(embed_v0)]
     #[storage]
     struct Storage {
@@ -62,8 +75,6 @@ mod ArgentAccountProfile {
         OwnerManagerEvents: owner_manager_component::Event,
         #[flat]
         GuardianManagerEvents: guardian_manager_component::Event,
-        #[flat]
-        SRC5Events: src5_component::Event,
         #[flat]
         UpgradeEvents: upgrade_component::Event,
     }
@@ -113,11 +124,25 @@ mod ArgentAccountProfile {
 
     #[abi(embed_v0)]
     impl ArgentAccountProfilerImpl of super::IArgentAccountProfiler<ContractState> {
+        fn __validate_deploy__(
+            self: @ContractState,
+            class_hash: felt252,
+            contract_address_salt: felt252,
+            owner: Signer,
+            guardian: Option<Signer>,
+        ) -> felt252 {
+            VALIDATED
+        }
+
         fn get_name(self: @ContractState) -> felt252 {
             NAME
         }
         fn get_version(self: @ContractState) -> Version {
             VERSION
+        }
+
+        fn supports_interface(self: @ContractState, interface_id: felt252) -> bool {
+            true
         }
     }
 }

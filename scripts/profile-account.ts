@@ -13,6 +13,7 @@ import {
   deployOpenZeppelinAccount,
   manager,
   setupSession,
+  upgradeAccount,
 } from "../lib";
 import { newProfiler } from "../lib/gas";
 
@@ -35,25 +36,29 @@ const recipient = "0xadbe1";
 const amount = uint256.bnToUint256(1);
 const starknetOwner = new StarknetKeyPair(privateKey);
 const guardian = new StarknetKeyPair(42n);
+const profilerClassHash = await manager.declareLocalContract("ArgentAccountProfile");
+const latestClassHash = await manager.declareLocalContract("ArgentAccount");
 
 {
-  const { transactionHash } = await deployAccountWithoutGuardians({
+  const {  transactionHash } = await deployAccountWithoutGuardians({
     owner: starknetOwner,
     selfDeploy: true,
     salt: "0x200",
     fundingAmount,
   });
+
   await profiler.profile("Deploy - No guardian", transactionHash);
 }
 
 {
-  const { transactionHash } = await deployAccount({
+  const {  transactionHash } = await deployAccount({
     owner: starknetOwner,
     guardian,
     selfDeploy: true,
     salt: "0xDE",
     fundingAmount,
   });
+
   await profiler.profile("Deploy - With guardian", transactionHash);
 }
 
@@ -74,32 +79,41 @@ const guardian = new StarknetKeyPair(42n);
 
 {
   const { account } = await deployAccountWithoutGuardians({
+    classHash: profilerClassHash,
     owner: starknetOwner,
     salt: "0x3",
     fundingAmount,
   });
+  await upgradeAccount(account, latestClassHash);
+
   strkContract.connect(account);
   await profiler.profile("Transfer - No guardian", await strkContract.transfer(recipient, amount));
 }
 
 {
   const { account } = await deployAccount({
+    classHash: profilerClassHash,
     owner: starknetOwner,
     guardian,
     salt: "0x2",
     fundingAmount,
   });
+  await upgradeAccount(account, latestClassHash);
+
   strkContract.connect(account);
   await profiler.profile("Transfer - With guardian", await strkContract.transfer(recipient, amount));
 }
 
 {
   const { account } = await deployAccount({
+    classHash: profilerClassHash,
     owner: starknetOwner,
     guardian,
     salt: "0x40",
     fundingAmount,
   });
+  await upgradeAccount(account, latestClassHash);
+
   const sessionTime = 1710167933n;
   await manager.setTime(sessionTime);
   const dappKey = new StarknetKeyPair(39n);
@@ -118,11 +132,14 @@ const guardian = new StarknetKeyPair(42n);
 
 {
   const { account, owner } = await deployAccount({
+    classHash: profilerClassHash,
     owner: starknetOwner,
     guardian,
     salt: "0x41",
     fundingAmount,
   });
+  await upgradeAccount(account, latestClassHash);
+
   const sessionTime = 1710167933n;
   await manager.setTime(sessionTime);
   const dappKey = new StarknetKeyPair(39n);
@@ -146,11 +163,14 @@ const guardian = new StarknetKeyPair(42n);
 
 {
   const { account, owner } = await deployAccount({
+    classHash: profilerClassHash,
     owner: new WebauthnOwner(privateKey),
     guardian,
     salt: "0x42",
     fundingAmount,
   });
+  await upgradeAccount(account, latestClassHash);
+
   const sessionTime = 1710167933n;
   await manager.setTime(sessionTime);
   const dappKey = new StarknetKeyPair(39n);
@@ -177,10 +197,13 @@ const guardian = new StarknetKeyPair(42n);
 
 {
   const { account } = await deployAccountWithoutGuardians({
+    classHash: profilerClassHash,
     owner: starknetOwner,
     salt: "0xF1",
     fundingAmount,
   });
+  await upgradeAccount(account, latestClassHash);
+  
   account.signer = new LegacyStarknetKeyPair(starknetOwner.privateKey);
   strkContract.connect(account);
   await profiler.profile("Transfer - No guardian (Old Sig)", await strkContract.transfer(recipient, amount));
@@ -188,11 +211,14 @@ const guardian = new StarknetKeyPair(42n);
 
 {
   const { account } = await deployAccount({
+    classHash: profilerClassHash,
     owner: starknetOwner,
     guardian,
     salt: "0xF2",
     fundingAmount,
   });
+  await upgradeAccount(account, latestClassHash);
+
   account.signer = new LegacyArgentSigner(
     new LegacyStarknetKeyPair(starknetOwner.privateKey),
     new LegacyStarknetKeyPair(guardian.privateKey),
@@ -209,44 +235,56 @@ const guardian = new StarknetKeyPair(42n);
 
 {
   const { account } = await deployAccount({
+    classHash: profilerClassHash,
     owner: new EthKeyPair(privateKey),
     guardian,
     salt: "0x4",
     fundingAmount,
   });
+  await upgradeAccount(account, latestClassHash);
+
   strkContract.connect(account);
   await profiler.profile("Transfer - Eth sig with guardian", await strkContract.transfer(recipient, amount));
 }
 
 {
   const { account } = await deployAccount({
+    classHash: profilerClassHash,
     owner: new Secp256r1KeyPair(privateKey),
     guardian,
     salt: "0x5",
     fundingAmount,
   });
+  await upgradeAccount(account, latestClassHash);
+
   strkContract.connect(account);
   await profiler.profile("Transfer - Secp256r1 with guardian", await strkContract.transfer(recipient, amount));
 }
 
 {
   const { account } = await deployAccount({
+    classHash: profilerClassHash,
     owner: new Eip191KeyPair(privateKey),
     guardian,
     salt: "0x6",
     fundingAmount,
   });
+  await upgradeAccount(account, latestClassHash);
+
   strkContract.connect(account);
   await profiler.profile("Transfer - Eip161 with guardian", await strkContract.transfer(recipient, amount));
 }
 
 {
   const { account } = await deployAccount({
+    classHash: profilerClassHash,
     owner: new WebauthnOwner(privateKey),
     guardian,
     salt: "0x8",
     fundingAmount,
   });
+  await upgradeAccount(account, latestClassHash);
+
   strkContract.connect(account);
   await profiler.profile("Transfer - Webauthn no guardian", await strkContract.transfer(recipient, amount));
 }

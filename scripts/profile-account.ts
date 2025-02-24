@@ -46,7 +46,6 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
     salt: "0x200",
     fundingAmount,
   });
-
   await profiler.profile("Deploy - No guardian", transactionHash);
 }
 
@@ -58,7 +57,6 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
     salt: "0xDE",
     fundingAmount,
   });
-
   await profiler.profile("Deploy - With guardian", transactionHash);
 }
 

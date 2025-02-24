@@ -294,7 +294,7 @@ pub mod ArgentAccount {
             let argent_dispatcher = IArgentMultiOwnerAccountDispatcher { contract_address: get_contract_address() };
             assert(argent_dispatcher.get_name() == self.get_name(), 'argent/invalid-name');
             let previous_version = argent_dispatcher.get_version();
-            assert(previous_version >= Version { major: 0, minor: 3, patch: 0 }, 'argent/invalid-from-version');
+            assert(previous_version >= Version { major: 0, minor: 4, patch: 0 }, 'argent/invalid-from-version');
             assert(previous_version < self.get_version(), 'argent/downgrade-not-allowed');
 
             self.upgrade.complete_upgrade(new_implementation);

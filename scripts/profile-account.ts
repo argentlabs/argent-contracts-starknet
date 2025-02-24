@@ -1,5 +1,6 @@
 import { uint256 } from "starknet";
 import {
+  ArgentAccount,
   Eip191KeyPair,
   EthKeyPair,
   LegacyArgentSigner,
@@ -13,7 +14,6 @@ import {
   deployOpenZeppelinAccount,
   manager,
   setupSession,
-  upgradeAccount,
 } from "../lib";
 import { newProfiler } from "../lib/gas";
 
@@ -38,6 +38,7 @@ const starknetOwner = new StarknetKeyPair(privateKey);
 const guardian = new StarknetKeyPair(42n);
 const profilerClassHash = await manager.declareLocalContract("ArgentAccountProfile");
 const latestClassHash = await manager.declareLocalContract("ArgentAccount");
+const { account: deployer } = await deployAccount();
 
 {
   const { transactionHash } = await deployAccountWithoutGuardians({
@@ -82,7 +83,7 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
     salt: "0x3",
     fundingAmount,
   });
-  await upgradeAccount(account, latestClassHash);
+  await upgrade(account);
 
   strkContract.connect(account);
   await profiler.profile("Transfer - No guardian", await strkContract.transfer(recipient, amount));
@@ -96,7 +97,7 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
     salt: "0x2",
     fundingAmount,
   });
-  await upgradeAccount(account, latestClassHash);
+  await upgrade(account);
 
   strkContract.connect(account);
   await profiler.profile("Transfer - With guardian", await strkContract.transfer(recipient, amount));
@@ -110,7 +111,7 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
     salt: "0x40",
     fundingAmount,
   });
-  await upgradeAccount(account, latestClassHash);
+  await upgrade(account);
 
   const sessionTime = 1710167933n;
   await manager.setTime(sessionTime);
@@ -136,7 +137,7 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
     salt: "0x41",
     fundingAmount,
   });
-  await upgradeAccount(account, latestClassHash);
+  await upgrade(account);
 
   const sessionTime = 1710167933n;
   await manager.setTime(sessionTime);
@@ -167,7 +168,7 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
     salt: "0x42",
     fundingAmount,
   });
-  await upgradeAccount(account, latestClassHash);
+  await upgrade(account);
 
   const sessionTime = 1710167933n;
   await manager.setTime(sessionTime);
@@ -200,7 +201,7 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
     salt: "0xF1",
     fundingAmount,
   });
-  await upgradeAccount(account, latestClassHash);
+  await upgrade(account);
 
   account.signer = new LegacyStarknetKeyPair(starknetOwner.privateKey);
   strkContract.connect(account);
@@ -215,7 +216,7 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
     salt: "0xF2",
     fundingAmount,
   });
-  await upgradeAccount(account, latestClassHash);
+  await upgrade(account);
 
   account.signer = new LegacyArgentSigner(
     new LegacyStarknetKeyPair(starknetOwner.privateKey),
@@ -239,7 +240,7 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
     salt: "0x4",
     fundingAmount,
   });
-  await upgradeAccount(account, latestClassHash);
+  await upgrade(account);
 
   strkContract.connect(account);
   await profiler.profile("Transfer - Eth sig with guardian", await strkContract.transfer(recipient, amount));
@@ -253,7 +254,7 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
     salt: "0x5",
     fundingAmount,
   });
-  await upgradeAccount(account, latestClassHash);
+  await upgrade(account);
 
   strkContract.connect(account);
   await profiler.profile("Transfer - Secp256r1 with guardian", await strkContract.transfer(recipient, amount));
@@ -267,7 +268,7 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
     salt: "0x6",
     fundingAmount,
   });
-  await upgradeAccount(account, latestClassHash);
+  await upgrade(account);
 
   strkContract.connect(account);
   await profiler.profile("Transfer - Eip161 with guardian", await strkContract.transfer(recipient, amount));
@@ -281,7 +282,7 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
     salt: "0x8",
     fundingAmount,
   });
-  await upgradeAccount(account, latestClassHash);
+  await upgrade(account);
 
   strkContract.connect(account);
   await profiler.profile("Transfer - Webauthn no guardian", await strkContract.transfer(recipient, amount));
@@ -289,3 +290,9 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
 
 profiler.printSummary();
 profiler.updateOrCheckReport();
+
+async function upgrade(account: ArgentAccount) {
+  const acc = await manager.loadContract(account.address);
+  acc.connect(deployer);
+  await acc.upgrade(latestClassHash);
+}

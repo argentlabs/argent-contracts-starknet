@@ -45,9 +45,7 @@ mod ArgentAccountProfile {
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
-        #[flat]
         OwnerManagerEvents: owner_manager_component::Event,
-        #[flat]
         GuardianManagerEvents: guardian_manager_component::Event,
     }
 

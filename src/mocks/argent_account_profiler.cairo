@@ -22,15 +22,12 @@ mod ArgentAccountProfile {
         owner_manager_component, owner_manager_component::OwnerManagerInternalImpl,
     };
     use argent::signer::signer_signature::Signer;
-    use starknet::{};
     use starknet::{ClassHash, syscalls::replace_class_syscall};
 
-    // Do We use that or do I go even further?
     // Owner management
     component!(path: owner_manager_component, storage: owner_manager, event: OwnerManagerEvents);
     #[abi(embed_v0)]
     impl OwnerManager = owner_manager_component::OwnerManagerImpl<ContractState>;
-    // Do We use that or do I go even further?
     // Guardian management
     component!(path: guardian_manager_component, storage: guardian_manager, event: GuardianManagerEvents);
     #[abi(embed_v0)]

@@ -1,4 +1,3 @@
-import assert from "assert";
 import { uint256 } from "starknet";
 import {
   Eip191KeyPair,
@@ -18,7 +17,7 @@ import {
 import { newProfiler } from "../lib/gas";
 
 const profiler = newProfiler(manager);
-const fundingAmount = 2e16;
+const fundingAmount = 1e18;
 
 let privateKey: string;
 if (manager.isDevnet) {
@@ -30,6 +29,7 @@ if (manager.isDevnet) {
   privateKey = new StarknetKeyPair().privateKey;
 }
 
+const strkContract = await manager.tokens.strkContract();
 const ethContract = await manager.tokens.ethContract();
 const recipient = "0xadbe1";
 const amount = uint256.bnToUint256(1);
@@ -78,8 +78,8 @@ const guardian = new StarknetKeyPair(42n);
     salt: "0x3",
     fundingAmount,
   });
-  ethContract.connect(account);
-  await profiler.profile("Transfer - No guardian", await ethContract.transfer(recipient, amount));
+  strkContract.connect(account);
+  await profiler.profile("Transfer - No guardian", await strkContract.transfer(recipient, amount));
 }
 
 {
@@ -89,8 +89,8 @@ const guardian = new StarknetKeyPair(42n);
     salt: "0x2",
     fundingAmount,
   });
-  ethContract.connect(account);
-  await profiler.profile("Transfer - With guardian", await ethContract.transfer(recipient, amount));
+  strkContract.connect(account);
+  await profiler.profile("Transfer - With guardian", await strkContract.transfer(recipient, amount));
 }
 
 {
@@ -103,7 +103,7 @@ const guardian = new StarknetKeyPair(42n);
   const sessionTime = 1710167933n;
   await manager.setTime(sessionTime);
   const dappKey = new StarknetKeyPair(39n);
-  const allowedMethods = [{ "Contract Address": ethContract.address, selector: "transfer" }];
+  const allowedMethods = [{ "Contract Address": strkContract.address, selector: "transfer" }];
 
   const { accountWithDappSigner } = await setupSession({
     guardian: guardian as StarknetKeyPair,
@@ -112,8 +112,8 @@ const guardian = new StarknetKeyPair(42n);
     allowedMethods,
     expiry: sessionTime + 150n,
   });
-  ethContract.connect(accountWithDappSigner);
-  await profiler.profile("Transfer - With Session", await ethContract.transfer(recipient, amount));
+  strkContract.connect(accountWithDappSigner);
+  await profiler.profile("Transfer - With Session", await strkContract.transfer(recipient, amount));
 }
 
 {
@@ -126,7 +126,7 @@ const guardian = new StarknetKeyPair(42n);
   const sessionTime = 1710167933n;
   await manager.setTime(sessionTime);
   const dappKey = new StarknetKeyPair(39n);
-  const allowedMethods = [{ "Contract Address": ethContract.address, selector: "transfer" }];
+  const allowedMethods = [{ "Contract Address": strkContract.address, selector: "transfer" }];
 
   const { accountWithDappSigner } = await setupSession({
     guardian: guardian as StarknetKeyPair,
@@ -136,9 +136,12 @@ const guardian = new StarknetKeyPair(42n);
     expiry: sessionTime + 150n,
     cacheOwnerGuid: owner.guid,
   });
-  ethContract.connect(accountWithDappSigner);
-  await profiler.profile("Transfer - With Session - Caching Values (1)", await ethContract.transfer(recipient, amount));
-  await profiler.profile("Transfer - With Session - Cached (2)", await ethContract.transfer(recipient, amount));
+  strkContract.connect(accountWithDappSigner);
+  await profiler.profile(
+    "Transfer - With Session - Caching Values (1)",
+    await strkContract.transfer(recipient, amount),
+  );
+  await profiler.profile("Transfer - With Session - Cached (2)", await strkContract.transfer(recipient, amount));
 }
 
 {
@@ -151,7 +154,7 @@ const guardian = new StarknetKeyPair(42n);
   const sessionTime = 1710167933n;
   await manager.setTime(sessionTime);
   const dappKey = new StarknetKeyPair(39n);
-  const allowedMethods = [{ "Contract Address": ethContract.address, selector: "transfer" }];
+  const allowedMethods = [{ "Contract Address": strkContract.address, selector: "transfer" }];
 
   const { accountWithDappSigner } = await setupSession({
     guardian: guardian as StarknetKeyPair,
@@ -161,14 +164,14 @@ const guardian = new StarknetKeyPair(42n);
     expiry: sessionTime + 150n,
     cacheOwnerGuid: owner.guid,
   });
-  ethContract.connect(accountWithDappSigner);
+  strkContract.connect(accountWithDappSigner);
   await profiler.profile(
     "Transfer - With Session (Webauthn owner) - Caching Values (1)",
-    await ethContract.transfer(recipient, amount),
+    await strkContract.transfer(recipient, amount),
   );
   await profiler.profile(
     "Transfer - With Session (Webauthn owner) - Cached (2)",
-    await ethContract.transfer(recipient, amount),
+    await strkContract.transfer(recipient, amount),
   );
 }
 
@@ -179,8 +182,8 @@ const guardian = new StarknetKeyPair(42n);
     fundingAmount,
   });
   account.signer = new LegacyStarknetKeyPair(starknetOwner.privateKey);
-  ethContract.connect(account);
-  await profiler.profile("Transfer - No guardian (Old Sig)", await ethContract.transfer(recipient, amount));
+  strkContract.connect(account);
+  await profiler.profile("Transfer - No guardian (Old Sig)", await strkContract.transfer(recipient, amount));
 }
 
 {
@@ -194,14 +197,14 @@ const guardian = new StarknetKeyPair(42n);
     new LegacyStarknetKeyPair(starknetOwner.privateKey),
     new LegacyStarknetKeyPair(guardian.privateKey),
   );
-  ethContract.connect(account);
-  await profiler.profile("Transfer - With guardian (Old Sig)", await ethContract.transfer(recipient, amount));
+  strkContract.connect(account);
+  await profiler.profile("Transfer - With guardian (Old Sig)", await strkContract.transfer(recipient, amount));
 }
 
 {
   const { account } = await deployOpenZeppelinAccount({ owner: new LegacyStarknetKeyPair(42n), salt: "0x1" });
-  ethContract.connect(account);
-  await profiler.profile("Transfer - OZ account", await ethContract.transfer(recipient, amount));
+  strkContract.connect(account);
+  await profiler.profile("Transfer - OZ account", await strkContract.transfer(recipient, amount));
 }
 
 {
@@ -211,8 +214,8 @@ const guardian = new StarknetKeyPair(42n);
     salt: "0x4",
     fundingAmount,
   });
-  ethContract.connect(account);
-  await profiler.profile("Transfer - Eth sig with guardian", await ethContract.transfer(recipient, amount));
+  strkContract.connect(account);
+  await profiler.profile("Transfer - Eth sig with guardian", await strkContract.transfer(recipient, amount));
 }
 
 {
@@ -222,8 +225,8 @@ const guardian = new StarknetKeyPair(42n);
     salt: "0x5",
     fundingAmount,
   });
-  ethContract.connect(account);
-  await profiler.profile("Transfer - Secp256r1 with guardian", await ethContract.transfer(recipient, amount));
+  strkContract.connect(account);
+  await profiler.profile("Transfer - Secp256r1 with guardian", await strkContract.transfer(recipient, amount));
 }
 
 {
@@ -233,21 +236,8 @@ const guardian = new StarknetKeyPair(42n);
     salt: "0x6",
     fundingAmount,
   });
-  ethContract.connect(account);
-  await profiler.profile("Transfer - Eip161 with guardian", await ethContract.transfer(recipient, amount));
-}
-
-{
-  const classHash = await manager.declareFixtureContract("Sha256Cairo0");
-  assert(BigInt(classHash) === 0x04dacc042b398d6f385a87e7dd65d2bcb3270bb71c4b34857b3c658c7f52cf6dn);
-  const { account } = await deployAccount({
-    owner: new WebauthnOwner(privateKey, undefined, undefined, true),
-    guardian,
-    salt: "0x7",
-    fundingAmount,
-  });
-  ethContract.connect(account);
-  await profiler.profile("Transfer (cairo0) - Webauthn no guardian", await ethContract.transfer(recipient, amount));
+  strkContract.connect(account);
+  await profiler.profile("Transfer - Eip161 with guardian", await strkContract.transfer(recipient, amount));
 }
 
 {
@@ -257,8 +247,8 @@ const guardian = new StarknetKeyPair(42n);
     salt: "0x8",
     fundingAmount,
   });
-  ethContract.connect(account);
-  await profiler.profile("Transfer - Webauthn no guardian", await ethContract.transfer(recipient, amount));
+  strkContract.connect(account);
+  await profiler.profile("Transfer - Webauthn no guardian", await strkContract.transfer(recipient, amount));
 }
 
 profiler.printSummary();

@@ -1,14 +1,18 @@
-import { CallData, Contract, num } from "starknet";
+import { CairoOption, CairoOptionVariant, CallData, Contract, num } from "starknet";
 import {
   AllowedMethod,
+  EstimateStarknetKeyPair,
+  SignerType,
   StarknetKeyPair,
   deployAccount,
   deployer,
+  estimateWithCustomSig,
   executeWithCustomSig,
   expectRevertWithErrorMessage,
   manager,
   randomStarknetKeyPair,
   setupSession,
+  signerTypeToCustomEnum,
 } from "../../lib";
 import { singleMethodAllowList } from "./sessionTestHelpers";
 
@@ -55,6 +59,69 @@ describe("ArgentAccount: session basics", function () {
     });
   }
 
+  it(`Should be possible to estimate a basic session given an invalid guardian signature`, async function () {
+    const { account, guardian } = await deployAccount({ classHash: sessionAccountClassHash });
+
+    const estimateGuardian = new EstimateStarknetKeyPair((guardian as StarknetKeyPair).publicKey);
+    const { accountWithDappSigner, sessionRequest, authorizationSignature, dappService } = await setupSession({
+      guardian: estimateGuardian,
+      account,
+      expiry: initialTime + 150n,
+      allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
+    });
+
+    const calls = [mockDappContract.populateTransaction.set_number_double(2)];
+    const sessionToken = await dappService.getSessionToken({
+      calls,
+      account: accountWithDappSigner,
+      completedSession: sessionRequest,
+      authorizationSignature,
+    });
+
+    // Should pass when estimating
+    await estimateWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature());
+    // Should fail when executing
+    await expectRevertWithErrorMessage(
+      "session/invalid-backend-sig",
+      executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature(), { skipValidate: true }),
+    );
+  });
+
+  it(`Should be possible to estimate a basic session given an invalid session signature`, async function () {
+    const { account, guardian } = await deployAccount();
+
+    const { accountWithDappSigner, sessionRequest, authorizationSignature, dappService } = await setupSession({
+      guardian: guardian as StarknetKeyPair,
+      account,
+      expiry: initialTime + 150n,
+      allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
+    });
+
+    const calls = [mockDappContract.populateTransaction.set_number_double(2)];
+    const sessionToken = await dappService.getSessionToken({
+      calls,
+      account: accountWithDappSigner,
+      completedSession: sessionRequest,
+      authorizationSignature,
+    });
+
+    const pubkey = sessionToken.sessionSignature.variant.Starknet.pubkey;
+    sessionToken.sessionSignature = signerTypeToCustomEnum(SignerType.Starknet, {
+      pubkey,
+      r: 42,
+      s: 69,
+    });
+
+    // Should pass when estimating
+    await estimateWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature());
+
+    // Should fail when executing
+    await expectRevertWithErrorMessage(
+      "session/invalid-session-sig",
+      executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature()),
+    );
+  });
+
   it(`Execute basic session when there a multiple owners`, async function () {
     const { accountContract, account, guardian } = await deployAccount({
       classHash: sessionAccountClassHash,
@@ -62,9 +129,13 @@ describe("ArgentAccount: session basics", function () {
 
     const newOwner1 = randomStarknetKeyPair();
     const newOwner2 = randomStarknetKeyPair();
-    const arrayOfSigner = CallData.compile({ new_owners: [newOwner1.signer, newOwner2.signer] });
-    await accountContract.add_owners(arrayOfSigner);
-
+    await accountContract.change_owners(
+      CallData.compile({
+        remove: [],
+        add: [newOwner1.signer, newOwner2.signer],
+        alive_signature: new CairoOption(CairoOptionVariant.None),
+      }),
+    );
     const { accountWithDappSigner } = await setupSession({
       guardian: guardian as StarknetKeyPair,
       account,
@@ -102,10 +173,7 @@ describe("ArgentAccount: session basics", function () {
 
     // Expired session
     await manager.setTime(expiresAt + 7200n);
-    await expectRevertWithErrorMessage(
-      "session/expired",
-      accountWithDappSigner.execute(calls, undefined, { maxFee: 1e16 }),
-    );
+    await expectRevertWithErrorMessage("session/expired", accountWithDappSigner.execute(calls));
     await mockDappContract.get_number(accountContract.address).should.eventually.equal(4n);
   });
 
@@ -125,14 +193,10 @@ describe("ArgentAccount: session basics", function () {
 
     await account.waitForTransaction(transaction_hash);
     await mockDappContract.get_number(accountContract.address).should.eventually.equal(4n);
-
     // Revoke Session
     await accountContract.revoke_session(sessionHash);
     await accountContract.is_session_revoked(sessionHash).should.eventually.be.true;
-    await expectRevertWithErrorMessage(
-      "session/revoked",
-      accountWithDappSigner.execute(calls, undefined, { maxFee: 1e16 }),
-    );
+    await expectRevertWithErrorMessage("session/revoked", accountWithDappSigner.execute(calls));
     await mockDappContract.get_number(accountContract.address).should.eventually.equal(4n);
 
     await expectRevertWithErrorMessage("session/already-revoked", accountContract.revoke_session(sessionHash));

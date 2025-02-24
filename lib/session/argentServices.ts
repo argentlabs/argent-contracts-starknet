@@ -5,11 +5,17 @@ import {
   InvocationsSignerDetails,
   TypedData,
   TypedDataRevision,
-  ec,
-  num,
   typedData,
 } from "starknet";
-import { OutsideExecution, Session, StarknetKeyPair, calculateTransactionHash, getTypedData, manager } from "..";
+import {
+  EstimateStarknetKeyPair,
+  OutsideExecution,
+  Session,
+  StarknetKeyPair,
+  calculateTransactionHash,
+  getTypedData,
+  manager,
+} from "..";
 
 export class ArgentX {
   constructor(
@@ -25,7 +31,7 @@ export class ArgentX {
 export class BackendService {
   // TODO We might want to update this to support KeyPair instead of StarknetKeyPair?
   // Or that backend becomes: "export class BackendService extends KeyPair {", can also extends RawSigner ?
-  constructor(private backendKey: StarknetKeyPair) {}
+  constructor(private backendKey: StarknetKeyPair | EstimateStarknetKeyPair) {}
 
   public async signTxAndSession(
     calls: Call[],
@@ -53,8 +59,8 @@ export class BackendService {
       transactionDetail.walletAddress,
       cacheOwnerGuid,
     );
-    const signature = ec.starkCurve.sign(sessionWithTxHash, num.toHex(this.backendKey.privateKey));
-    return [signature.r, signature.s];
+    const signature = await this.backendKey.signRaw(sessionWithTxHash);
+    return [BigInt(signature[2]), BigInt(signature[3])];
   }
 
   public async signOutsideTxAndSession(
@@ -69,8 +75,8 @@ export class BackendService {
     const currentTypedData = getTypedData(outsideExecution, await manager.getChainId(), revision);
     const messageHash = typedData.getMessageHash(currentTypedData, accountAddress);
     const sessionWithTxHash = await sessionTokenToSign.hashWithTransaction(messageHash, accountAddress, cacheOwnerGuid);
-    const signature = ec.starkCurve.sign(sessionWithTxHash, num.toHex(this.backendKey.privateKey));
-    return [signature.r, signature.s];
+    const signature = await this.backendKey.signRaw(sessionWithTxHash);
+    return [BigInt(signature[2]), BigInt(signature[3])];
   }
 
   public getBackendKey(_accountAddress: string): bigint {

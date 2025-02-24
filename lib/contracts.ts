@@ -46,11 +46,18 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
         return cachedClass;
       }
       const payload = getDeclareContractPayload(contractName, folder);
-      const skipSimulation = this.isDevnet;
-      // max fee avoids slow estimate
-      const maxFee = skipSimulation ? 1e18 : undefined;
+      let details: UniversalDetails | undefined;
 
-      const { class_hash, transaction_hash } = await deployer.declareIfNot(payload, { maxFee });
+      // Setting resourceBounds skips estimate
+      if (this.isDevnet) {
+        details = {
+          resourceBounds: {
+            l2_gas: { max_amount: "0x0", max_price_per_unit: "0x0" },
+            l1_gas: { max_amount: "0x30000", max_price_per_unit: "0x300000000000" },
+          },
+        };
+      }
+      const { class_hash, transaction_hash } = await deployer.declareIfNot(payload, details);
 
       if (wait && transaction_hash) {
         await this.waitForTransaction(transaction_hash);

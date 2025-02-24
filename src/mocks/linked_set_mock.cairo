@@ -4,15 +4,15 @@
 ///
 
 #[starknet::component]
-mod linked_set_mock {
+pub mod linked_set_mock {
+    use argent::linked_set::linked_set::LinkedSet;
+    use argent::linked_set::linked_set_with_head::LinkedSetWithHead;
     use argent::signer::signer_signature::SignerStorageValue;
-    use argent::utils::linked_set::LinkedSet;
-    use argent::utils::linked_set_with_head::LinkedSetWithHead;
 
     #[storage]
-    struct Storage {
-        linked_set_with_head: LinkedSetWithHead<SignerStorageValue>,
-        linked_set: LinkedSet<SignerStorageValue>,
+    pub struct Storage {
+        pub linked_set_with_head: LinkedSetWithHead<SignerStorageValue>,
+        pub linked_set: LinkedSet<SignerStorageValue>,
     }
 
     #[event]

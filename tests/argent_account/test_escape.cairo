@@ -1,13 +1,10 @@
-use argent::multiowner_account::argent_account::ArgentAccount;
+use argent::multiowner_account::{argent_account::ArgentAccount, events::EscapeSecurityPeriodChanged};
 use argent::recovery::EscapeStatus;
 use argent::signer::signer_signature::starknet_signer_from_pubkey;
+use crate::{Felt252TryIntoStarknetSigner, ITestArgentAccountDispatcherTrait, initialize_account};
 use snforge_std::{
-    spy_events, EventSpyAssertionsTrait, EventSpyTrait, start_cheat_block_timestamp_global,
-    start_cheat_caller_address_global
-};
-use super::super::{
-    ARGENT_ACCOUNT_ADDRESS, ITestArgentAccountDispatcherTrait, initialize_account_with, initialize_account,
-    initialize_account_without_guardian, Felt252TryIntoStarknetSigner, OWNER, WRONG_OWNER
+    EventSpyAssertionsTrait, EventSpyTrait, spy_events, start_cheat_block_timestamp_global,
+    start_cheat_caller_address_global,
 };
 
 #[test]
@@ -25,7 +22,7 @@ fn set_escape_security_period() {
     assert_eq!(new_escape_security_period, 4200);
 
     let event = ArgentAccount::Event::EscapeSecurityPeriodChanged(
-        ArgentAccount::EscapeSecurityPeriodChanged { escape_security_period: 4200 }
+        EscapeSecurityPeriodChanged { escape_security_period: 4200 },
     );
     spy.assert_emitted(@array![(account.contract_address, event)]);
 

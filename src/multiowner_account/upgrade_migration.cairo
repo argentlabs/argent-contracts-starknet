@@ -1,11 +1,6 @@
 use argent::signer::signer_signature::SignerStorageValue;
 
-trait IUpgradeMigrationInternal<TContractState> {
-    fn migrate_from_before_0_4_0(ref self: TContractState);
-    fn migrate_from_0_4_0(ref self: TContractState);
-}
-
-trait IUpgradeMigrationCallback<TContractState> {
+pub trait IUpgradeMigrationCallback<TContractState> {
     fn finalize_migration(ref self: TContractState);
     fn migrate_owner(ref self: TContractState, signer_storage_value: SignerStorageValue);
     fn migrate_guardians(ref self: TContractState, guardians_storage_value: Array<SignerStorageValue>);
@@ -20,58 +15,61 @@ trait IRecoveryFromLegacyUpgrade<TContractState> {
     fn recovery_from_legacy_upgrade(ref self: TContractState);
 }
 
+/// @notice Legacy escape data structure for <0.4.0 versions
+/// @dev Used to read escape data during upgrades
 #[derive(Drop, Copy, Serde, Default, starknet::Store)]
 struct LegacyEscape {
-    // timestamp for activation of escape mode, 0 otherwise
+    // Timestamp when escape becomes active (0 if no escape)
     ready_at: u64,
-    // None (0x0), Guardian (0x1), Owner (0x2)
+    // Type of escape: None (0x0), Guardian (0x1), Owner (0x2)
     escape_type: felt252,
-    // new owner or new guardian address
+    // starknet pub key of the new owner/guardian
     new_signer: felt252,
 }
 
 #[starknet::component]
-mod upgrade_migration_component {
-    use argent::account::interface::IEmitArgentAccountEvent;
+pub mod upgrade_migration_component {
     use argent::multiowner_account::account_interface::IArgentMultiOwnerAccount;
     use argent::multiowner_account::argent_account::ArgentAccount::Event as ArgentAccountEvent;
+    use argent::multiowner_account::argent_account::IEmitArgentAccountEvent;
     use argent::multiowner_account::events::{EscapeCanceled, SignerLinked};
     use argent::multiowner_account::owner_manager::{IOwnerManager, owner_manager_component};
-    use argent::multiowner_account::recovery::Escape;
     use argent::signer::signer_signature::{
-        SignerStorageValue, SignerType, Signer, starknet_signer_from_pubkey, SignerTrait
+        Signer, SignerStorageValue, SignerTrait, SignerType, starknet_signer_from_pubkey,
     };
-    use argent::upgrade::interface::{IUpgradableCallback, IUpgradeable, IUpgradableCallbackDispatcherTrait};
-    use starknet::{
-        syscalls::replace_class_syscall, SyscallResultTrait, get_block_timestamp, storage::Map,
-        storage_access::{storage_read_syscall, storage_address_from_base_and_offset, storage_base_address_from_felt252,}
+    use core::num::traits::Zero;
+    use starknet::storage::{
+        StorageMapReadAccess, StorageMapWriteAccess, StoragePointerReadAccess, StoragePointerWriteAccess,
     };
-    use super::{IRecoveryFromLegacyUpgrade, IUpgradeMigrationInternal, IUpgradeMigrationCallback, LegacyEscape};
+    use starknet::{get_block_timestamp, storage::Map, syscalls::replace_class_syscall};
+    use super::{IRecoveryFromLegacyUpgrade, IUpgradeMigrationCallback, LegacyEscape};
+
     const LEGACY_ESCAPE_SECURITY_PERIOD: u64 = 7 * 24 * 60 * 60; // 7 days
 
     #[storage]
-    struct Storage {
-        // proxy implementation before 0.3.0
+    pub struct Storage {
+        // Implementation address for proxy used before 0.3.0
         _implementation: felt252,
-        // single owner starkey pubkey before 0.5.0
+        // Single owner's Starknet public key before 0.5.0
         _signer: felt252,
-        // introduced in 0.4.0, removed in 0.5.0
+        // Non-Starknet type owner data (added in 0.4.0, removed in 0.5.0)
         _signer_non_stark: Map<felt252, felt252>,
-        // main guardian starkey pubkey before 0.5.0
+        // Main guardian's Starknet public key before 0.5.0
         _guardian: felt252,
-        // backup guardian starkey pubkey before 0.5.0
+        // Backup guardian's Starknet public key before 0.5.0
         _guardian_backup: felt252,
-        // backup guardian storage values by SignerType. introduced in 0.4.0, removed in 0.5.0
+        // Non-Starknet type backup guardian data (added in 0.4.0, removed in 0.5.0)
         _guardian_backup_non_stark: Map<felt252, felt252>,
-        // storage layout used to be different before 0.4.0
+        // Legacy escape data before 0.4.0 (different storage layout)
         _escape: LegacyEscape,
+        // Legacy escape attempt counters
         guardian_escape_attempts: felt252,
         owner_escape_attempts: felt252,
     }
 
     #[event]
     #[derive(Drop, starknet::Event)]
-    enum Event {}
+    pub enum Event {}
 
 
     #[embeddable_as(RecoveryFromLegacyUpgradeImpl)]
@@ -89,25 +87,26 @@ mod upgrade_migration_component {
             assert(self._signer.read() != 0, 'argent/no-signer-to-recover');
             assert(self._implementation.read() != 0, 'argent/wrong-implementation');
             let owner_manager = get_dep_component!(@self, OwnerManager);
-            assert(owner_manager.get_owner_guids().len() == 0, 'argent/owner-not-empty');
+            assert(owner_manager.get_owners_guids().len() == 0, 'argent/owner-not-empty');
 
             self.migrate_from_before_0_4_0();
 
             // Ensuring the recovery was successful
             assert(self._signer.read() == 0, 'argent/signer-not-removed');
             assert(self._implementation.read() == 0, 'argent/impl-not-removed');
-            assert(owner_manager.get_owner_guids().len() == 1, 'argent/owner-not-migrated');
+            assert(owner_manager.get_owners_guids().len() == 1, 'argent/owner-not-migrated');
         }
     }
 
-    impl UpgradeMigrationInternalImpl<
+    #[generate_trait]
+    pub impl UpgradeMigrationInternalImpl<
         TContractState,
         +HasComponent<TContractState>,
         +Drop<TContractState>,
         +IUpgradeMigrationCallback<TContractState>,
         +IArgentMultiOwnerAccount<TContractState>,
         +IEmitArgentAccountEvent<TContractState>,
-    > of IUpgradeMigrationInternal<ComponentState<TContractState>> {
+    > of IUpgradeMigrationInternal<TContractState> {
         fn migrate_from_before_0_4_0(ref self: ComponentState<TContractState>) {
             let legacy_escape = self._escape.read();
             if legacy_escape.ready_at != 0 && get_block_timestamp() < legacy_escape.ready_at
@@ -144,9 +143,9 @@ mod upgrade_migration_component {
 
             let implementation = self._implementation.read();
 
-            if implementation != Zeroable::zero() {
+            if implementation != Zero::zero() {
                 replace_class_syscall(implementation.try_into().unwrap()).expect('argent/invalid-after-upgrade');
-                self._implementation.write(Zeroable::zero());
+                self._implementation.write(Zero::zero());
             }
 
             self.migrate_from_0_4_0();
@@ -167,7 +166,7 @@ mod upgrade_migration_component {
                 self._signer.write(0);
             } else {
                 for signer_type in array![
-                    SignerType::Webauthn, SignerType::Secp256k1, SignerType::Secp256r1, SignerType::Eip191
+                    SignerType::Webauthn, SignerType::Secp256k1, SignerType::Secp256r1, SignerType::Eip191,
                 ] {
                     let stored_value = self._signer_non_stark.read(signer_type.into());
                     if (stored_value != 0) {
@@ -192,7 +191,7 @@ mod upgrade_migration_component {
                 self._guardian_backup.write(0);
             } else {
                 for signer_type in array![
-                    SignerType::Webauthn, SignerType::Secp256k1, SignerType::Secp256r1, SignerType::Eip191
+                    SignerType::Webauthn, SignerType::Secp256k1, SignerType::Secp256r1, SignerType::Eip191,
                 ] {
                     let stored_value = self._guardian_backup_non_stark.read(signer_type.into());
                     if (stored_value != 0) {
@@ -224,7 +223,7 @@ mod upgrade_migration_component {
             contract.emit_event_callback(event);
         }
 
-        fn emit_signer_linked(ref self: ComponentState<TContractState>, signer_guid: felt252, signer: Signer,) {
+        fn emit_signer_linked(ref self: ComponentState<TContractState>, signer_guid: felt252, signer: Signer) {
             let signer_linked = SignerLinked { signer_guid, signer };
             self.emit_event(ArgentAccountEvent::SignerLinked(signer_linked));
         }

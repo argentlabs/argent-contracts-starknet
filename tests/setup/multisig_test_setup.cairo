@@ -1,12 +1,11 @@
-use argent::account::interface::Version;
-use argent::multisig_account::multisig_account::ArgentMultisigAccount;
+use argent::account::Version;
 use argent::signer::signer_signature::{Signer, SignerSignature};
-use snforge_std::{declare, ContractClassTrait, ContractClass, start_cheat_caller_address_global, DeclareResultTrait};
+use crate::{SIGNER_1, SIGNER_2, SIGNER_3};
+use snforge_std::{ContractClass, ContractClassTrait, DeclareResultTrait, declare, start_cheat_caller_address_global};
 use starknet::account::Call;
-use super::super::{SIGNER_1, SIGNER_2, SIGNER_3};
 
 #[starknet::interface]
-trait ITestArgentMultisig<TContractState> {
+pub trait ITestArgentMultisig<TContractState> {
     // IAccount & IArgentAccount
     fn __validate_declare__(self: @TContractState, class_hash: felt252) -> felt252;
     fn __validate__(ref self: TContractState, calls: Array<Call>) -> felt252;
@@ -17,7 +16,7 @@ trait ITestArgentMultisig<TContractState> {
         class_hash: felt252,
         contract_address_salt: felt252,
         threshold: usize,
-        signers: Array<felt252>
+        signers: Array<felt252>,
     ) -> felt252;
     // External
     fn change_threshold(ref self: TContractState, new_threshold: usize);
@@ -44,23 +43,23 @@ trait ITestArgentMultisig<TContractState> {
     fn isValidSignature(self: @TContractState, hash: felt252, signatures: Array<felt252>) -> felt252;
 }
 
-fn declare_multisig() -> ContractClass {
+pub fn declare_multisig() -> ContractClass {
     *declare("ArgentMultisigAccount").expect('Fail decl ArgentMultisigAccount').contract_class()
 }
 
-fn initialize_multisig() -> ITestArgentMultisigDispatcher {
+pub fn initialize_multisig() -> ITestArgentMultisigDispatcher {
     let threshold = 1;
-    let signers_array = array![SIGNER_1(), SIGNER_2(), SIGNER_3(),];
+    let signers_array = array![SIGNER_1(), SIGNER_2(), SIGNER_3()];
     initialize_multisig_with(threshold, signers_array.span())
 }
 
-fn initialize_multisig_with_one_signer() -> ITestArgentMultisigDispatcher {
+pub fn initialize_multisig_with_one_signer() -> ITestArgentMultisigDispatcher {
     let threshold = 1;
     let signers_array = array![SIGNER_1()];
     initialize_multisig_with(threshold, signers_array.span())
 }
 
-fn initialize_multisig_with(threshold: usize, mut signers: Span<Signer>) -> ITestArgentMultisigDispatcher {
+pub fn initialize_multisig_with(threshold: usize, mut signers: Span<Signer>) -> ITestArgentMultisigDispatcher {
     let class_hash = declare_multisig();
     let mut calldata = array![];
     threshold.serialize(ref calldata);

@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { CallData, Contract, num } from "starknet";
+import { CairoOption, CairoOptionVariant, CallData, Contract, num } from "starknet";
 import {
   ArgentSigner,
   SignerType,
@@ -124,11 +124,7 @@ describe("Session Account: execute caching", function () {
       });
 
       const calls = [mockDappContract.populateTransaction.set_number_double(2)];
-
-      await expectRevertWithErrorMessage(
-        "session/guardian-key-mismatch",
-        accountWithDappSigner.execute(calls, undefined, { maxFee: 1e16 }),
-      );
+      await expectRevertWithErrorMessage("session/guardian-key-mismatch", accountWithDappSigner.execute(calls));
     });
 
     it(`Fail if a different dapp key signed session token (caching: ${useCaching})`, async function () {
@@ -184,7 +180,7 @@ describe("Session Account: execute caching", function () {
       );
     });
 
-    it(`Fail if a different guardian key signed session token (caching: ${useCaching})`, async function () {
+    it(`Fail if a different guardian public key signed session token (caching: ${useCaching})`, async function () {
       const { account, guardian, owner } = await deployAccount({ classHash: argentAccountClassHash });
 
       const { accountWithDappSigner, sessionRequest, authorizationSignature, dappService } = await setupSession({
@@ -216,7 +212,31 @@ describe("Session Account: execute caching", function () {
         "session/guardian-key-mismatch",
         executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature()),
       );
+    });
 
+    it(`Fail if a different guardian signature signed session token (caching: ${useCaching})`, async function () {
+      const { account, guardian, owner } = await deployAccount({ classHash: argentAccountClassHash });
+
+      const { accountWithDappSigner, sessionRequest, authorizationSignature, dappService } = await setupSession({
+        guardian: guardian as StarknetKeyPair,
+        account,
+        expiry: initialTime + 150n,
+        dappKey: randomStarknetKeyPair(),
+        cacheOwnerGuid: owner.guid,
+        allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
+      });
+
+      const calls = [mockDappContract.populateTransaction.set_number_double(2)];
+
+      const sessionToken = await dappService.getSessionToken({
+        calls,
+        account: accountWithDappSigner,
+        completedSession: sessionRequest,
+        authorizationSignature,
+        cacheOwnerGuid: useCaching ? owner.guid : undefined,
+      });
+
+      const originalGuardianSignature = sessionToken.guardianSignature;
       sessionToken.guardianSignature = signerTypeToCustomEnum(SignerType.Starknet, {
         pubkey: originalGuardianSignature.variant.Starknet.pubkey,
         r: 200n,
@@ -225,7 +245,7 @@ describe("Session Account: execute caching", function () {
 
       await expectRevertWithErrorMessage(
         "session/invalid-backend-sig",
-        executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature()),
+        executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature(), { skipValidate: true }),
       );
     });
   }
@@ -234,8 +254,13 @@ describe("Session Account: execute caching", function () {
     const { account, guardian, owner, accountContract } = await deployAccount({ classHash: argentAccountClassHash });
 
     const newOwner = randomStarknetKeyPair();
-    const arrayOfSigner = CallData.compile({ new_owners: [newOwner.signer] });
-    await accountContract.add_owners(arrayOfSigner);
+    await accountContract.change_owners(
+      CallData.compile({
+        remove: [],
+        add: [newOwner.signer],
+        alive_signature: new CairoOption(CairoOptionVariant.None),
+      }),
+    );
 
     const calls = [mockDappContract.populateTransaction.set_number_double(2)];
 
@@ -259,7 +284,13 @@ describe("Session Account: execute caching", function () {
 
     const signer = new ArgentSigner(newOwner, guardian);
     account.signer = signer;
-    await accountContract.remove_owners([owner.guid]);
+    await accountContract.change_owners(
+      CallData.compile({
+        remove: [owner.guid],
+        add: [],
+        alive_signature: new CairoOption(CairoOptionVariant.None),
+      }),
+    );
     await accountContract.is_session_authorization_cached(sessionHash, owner.guid, guardian.guid).should.eventually.be
       .false;
 
@@ -301,6 +332,21 @@ describe("Session Account: execute caching", function () {
       "session/cache-invalid-auth-len",
       executeWithCustomSig(accountWithDappSigner, calls, sessionToken.compileSignature()),
     );
+  });
+
+  it("Fail if a cache_owner_guid is incorrect", async function () {
+    const { account, guardian } = await deployAccount();
+
+    const { accountWithDappSigner } = await setupSession({
+      guardian: guardian as StarknetKeyPair,
+      account,
+      expiry: initialTime + 150n,
+      dappKey: randomStarknetKeyPair(),
+      cacheOwnerGuid: 42n,
+      allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
+    });
+
+    await expectRevertWithErrorMessage("session/owner-key-mismatch", accountWithDappSigner.execute([]));
   });
 
   describe("Session caching with legacy account", function () {
@@ -361,8 +407,13 @@ describe("Session Account: execute caching", function () {
 
       newContract.connect(account);
       const newOwner = randomStarknetKeyPair();
-      const arrayOfSigner = CallData.compile({ new_owners: [newOwner.signer] });
-      await newContract.add_owners(arrayOfSigner);
+      await newContract.change_owners(
+        CallData.compile({
+          remove: [],
+          add: [newOwner.signer],
+          alive_signature: new CairoOption(CairoOptionVariant.None),
+        }),
+      );
       await newContract
         .is_session_authorization_cached(sessionHash, owner.guid, guardian.guid)
         .should.eventually.be.equal(useCaching);

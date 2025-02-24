@@ -1,18 +1,17 @@
-use argent::mocks::recovery_mocks::ExternalRecoveryMock;
 use argent::multisig_account::external_recovery::{
-    interface::{IExternalRecoveryDispatcher, IExternalRecoveryDispatcherTrait,},
-    external_recovery::{external_recovery_component, EscapeCall, get_escape_call_hash}
+    EscapeCall, EscapeCanceled, EscapeTriggered, IExternalRecoveryDispatcher, IExternalRecoveryDispatcherTrait,
+    external_recovery_component, get_escape_call_hash,
 };
-use argent::multisig_account::signer_manager::interface::{ISignerManagerDispatcher, ISignerManagerDispatcherTrait};
+use argent::multisig_account::signer_manager::{ISignerManagerDispatcher, ISignerManagerDispatcherTrait};
 use argent::recovery::EscapeStatus;
 use argent::signer::signer_signature::Signer;
 use argent::utils::serialization::serialize;
+use crate::{SIGNER_1, SIGNER_2, SIGNER_3, SIGNER_4};
 use snforge_std::{
-    EventSpyTrait, EventSpyAssertionsTrait, start_cheat_caller_address_global, start_cheat_block_timestamp_global,
-    declare, ContractClassTrait, DeclareResultTrait, spy_events
+    ContractClassTrait, DeclareResultTrait, EventSpyAssertionsTrait, EventSpyTrait, declare, spy_events,
+    start_cheat_block_timestamp_global, start_cheat_caller_address_global,
 };
-use starknet::{contract_address_const, ContractAddress};
-use super::{SIGNER_1, SIGNER_2, SIGNER_3, SIGNER_4};
+use starknet::{ContractAddress, contract_address_const};
 
 fn GUARDIAN() -> ContractAddress {
     contract_address_const::<'guardian'>()
@@ -90,7 +89,7 @@ fn test_toggle_zero_guardian() {
 }
 
 fn replace_signer_call(remove: Signer, replace_with: Signer) -> EscapeCall {
-    EscapeCall { selector: selector!("replace_signer"), calldata: serialize(@(remove, replace_with)), }
+    EscapeCall { selector: selector!("replace_signer"), calldata: serialize(@(remove, replace_with)) }
 }
 
 #[test]
@@ -235,14 +234,12 @@ fn test_trigger_escape_can_override() {
     component.trigger_escape(second_call);
     let first_call_hash = get_escape_call_hash(@replace_signer_call(SIGNER_1(), SIGNER_4()));
     let escape_canceled_event = external_recovery_component::Event::EscapeCanceled(
-        external_recovery_component::EscapeCanceled { call_hash: first_call_hash }
+        EscapeCanceled { call_hash: first_call_hash },
     );
     spy.assert_emitted(@array![(component.contract_address, escape_canceled_event)]);
 
     let escape_event = external_recovery_component::Event::EscapeTriggered(
-        external_recovery_component::EscapeTriggered {
-            ready_at: 10 * 60, call: replace_signer_call(SIGNER_1(), SIGNER_3())
-        }
+        EscapeTriggered { ready_at: 10 * 60, call: replace_signer_call(SIGNER_1(), SIGNER_3()) },
     );
     spy.assert_emitted(@array![(component.contract_address, escape_event)]);
     assert_eq!(spy.get_events().events.len(), 2);
@@ -310,9 +307,7 @@ fn test_cancel_escape() {
 
     let call_hash = get_escape_call_hash(@replace_signer_call(SIGNER_2(), SIGNER_3()));
     assert_eq!(spy.get_events().events.len(), 1);
-    let event = external_recovery_component::Event::EscapeCanceled(
-        external_recovery_component::EscapeCanceled { call_hash }
-    );
+    let event = external_recovery_component::Event::EscapeCanceled(EscapeCanceled { call_hash });
     spy.assert_emitted(@array![(component.contract_address, event)]);
 }
 
@@ -334,9 +329,7 @@ fn test_cancel_escape_expired() {
 
     let call_hash = get_escape_call_hash(@replace_signer_call(SIGNER_2(), SIGNER_3()));
     assert_eq!(spy.get_events().events.len(), 0);
-    let event = external_recovery_component::Event::EscapeCanceled(
-        external_recovery_component::EscapeCanceled { call_hash: call_hash }
-    );
+    let event = external_recovery_component::Event::EscapeCanceled(EscapeCanceled { call_hash: call_hash });
     spy.assert_not_emitted(@array![(component.contract_address, event)]);
 }
 

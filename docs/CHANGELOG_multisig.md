@@ -1,5 +1,36 @@
 # Argent Multisig Changelog
 
+# Version 0.5.0
+
+We skipped v0.3 and v0.4 to align the versioning with the regular account
+
+- **WebAuthn Compatibility**
+
+  Increased support for more browsers. Includes breaking changes. [More details](./webauthn.md#history)
+
+- **TransactionExecuted** event was changed
+
+  From:
+
+  ```rust
+  struct TransactionExecuted {
+      #[key]
+      hash: felt252,
+      response: Span<Span<felt252>>
+  }
+  ```
+
+  The response data was removed to make the account more efficient
+
+  ```rust
+  struct TransactionExecuted {
+    #[key]
+    hash: felt252,
+  }
+  ```
+
+- **Latest compiler:** Compiled with Cairo v2.10.0
+
 # Version 0.2.0
 
 - **Multiple signer types:** See [Signers and signatures](signers_and_signatures.md)

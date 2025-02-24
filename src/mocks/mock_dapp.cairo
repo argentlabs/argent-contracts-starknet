@@ -1,7 +1,7 @@
 /// @dev 🚨 This smart contract is a mock implementation and is not meant for actual deployment or use in any live
 /// environment. It is solely for testing, educational, or demonstration purposes.
 /// Please refrain from relying on the functionality of this contract for any production code. 🚨
-use starknet::{ContractAddress, storage::Map};
+use starknet::ContractAddress;
 
 #[starknet::interface]
 trait IMockDapp<TContractState> {
@@ -16,7 +16,9 @@ trait IMockDapp<TContractState> {
 
 #[starknet::contract]
 mod MockDapp {
-    use starknet::{get_caller_address, ContractAddress, storage::Map};
+    use starknet::{
+        ContractAddress, get_caller_address, storage::Map, storage::{StorageMapReadAccess, StorageMapWriteAccess},
+    };
 
     #[storage]
     struct Storage {

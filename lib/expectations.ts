@@ -8,6 +8,7 @@ export async function expectRevertWithErrorMessage(
 ) {
   try {
     await manager.waitForTx(execute);
+    /* eslint-disable  @typescript-eslint/no-explicit-any */
   } catch (e: any) {
     if (!e.toString().includes(shortString.encodeShortString(errorMessage))) {
       const match = e.toString().match(/\[([^\]]+)]/);
@@ -25,10 +26,12 @@ export async function expectRevertWithErrorMessage(
 
 export async function expectExecutionRevert(errorMessage: string, execute: Promise<InvokeFunctionResponse>) {
   try {
-    await manager.waitForTx(execute);
+    const receipt = await manager.waitForTx(execute);
+    expect(receipt.isSuccess()).to.be.true;
     /* eslint-disable  @typescript-eslint/no-explicit-any */
   } catch (e: any) {
-    expect(e.toString()).to.contain(`Failure reason: ${shortString.encodeShortString(errorMessage)}`);
+    // console.log(e);
+    expect(e.toString()).to.contain(shortString.encodeShortString(errorMessage));
     return;
   }
   assert.fail("No error detected");

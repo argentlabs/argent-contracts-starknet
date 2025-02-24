@@ -5,8 +5,6 @@ import {
   CallData,
   InvocationsSignerDetails,
   TypedDataRevision,
-  ec,
-  num,
   typedData,
 } from "starknet";
 import {
@@ -45,51 +43,33 @@ export class DappService {
     authorizationSignature: ArraySignatureType,
     cacheOwnerGuid = 0n,
     isLegacyAccount = false,
-  ) {
-    const sessionSigner = new (class extends RawSigner {
-      constructor(
-        private signTransactionCallback: (
-          calls: Call[],
-          transactionsDetail: InvocationsSignerDetails,
-        ) => Promise<ArraySignatureType>,
-      ) {
-        super();
-      }
-
-      public async signRaw(messageHash: string): Promise<string[]> {
-        throw new Error("Method not implemented.");
-      }
-
-      public async signTransaction(
-        calls: Call[],
-        transactionsDetail: InvocationsSignerDetails,
-      ): Promise<ArraySignatureType> {
-        return this.signTransactionCallback(calls, transactionsDetail);
-      }
-    })((calls: Call[], transactionDetail: InvocationsSignerDetails) => {
-      // needs to return a promise otherwise it will fail
-      return new Promise(async (resolve, reject) => {
-        try {
-          const sessionToken = await this.getSessionToken({
-            calls,
-            account,
-            completedSession,
-            authorizationSignature,
-            cacheOwnerGuid,
-            isLegacyAccount,
-            transactionDetail,
-          });
-          const signature = sessionToken.compileSignature();
-          resolve(signature);
-        } catch (error) {
-          reject(error);
-        }
-      });
-    });
-    return new ArgentAccount(account, account.address, sessionSigner, account.cairoVersion, account.transactionVersion);
+  ): ArgentAccount {
+    const sessionSigner = new SessionSigner(
+      async (calls: Call[], transactionDetail: InvocationsSignerDetails): Promise<ArraySignatureType> => {
+        const sessionToken = await this.getSessionToken({
+          calls,
+          account,
+          completedSession,
+          authorizationSignature,
+          cacheOwnerGuid,
+          isLegacyAccount,
+          transactionDetail,
+        });
+        return sessionToken.compileSignature();
+      },
+    );
+    return new ArgentAccount(manager, account.address, sessionSigner, account.cairoVersion, account.transactionVersion);
   }
 
-  public async getSessionToken(arg: {
+  public async getSessionToken({
+    calls,
+    account,
+    completedSession,
+    authorizationSignature,
+    cacheOwnerGuid,
+    isLegacyAccount = false,
+    transactionDetail: providedTransactionDetail,
+  }: {
     calls: Call[];
     account: ArgentAccount;
     completedSession: Session;
@@ -98,18 +78,7 @@ export class DappService {
     isLegacyAccount?: boolean;
     transactionDetail?: InvocationsSignerDetails;
   }): Promise<SessionToken> {
-    const {
-      calls,
-      account,
-      completedSession,
-      authorizationSignature,
-      cacheOwnerGuid,
-      isLegacyAccount: isLegacyAccountArg,
-      transactionDetail: providedTransactionDetail,
-    } = arg;
-    const isLegacyAccount = isLegacyAccountArg ?? false;
-    const transactionDetail: InvocationsSignerDetails =
-      providedTransactionDetail ?? (await getSignerDetails(account, calls));
+    const transactionDetail = providedTransactionDetail ?? (await getSignerDetails(account, calls));
 
     const transactionHash = calculateTransactionHash(transactionDetail, calls);
     const accountAddress = transactionDetail.walletAddress;
@@ -193,7 +162,16 @@ export class DappService {
     };
   }
 
-  private async generateSessionSignatures(args: {
+  private async generateSessionSignatures({
+    completedSession,
+    transactionHash,
+    calls,
+    accountAddress,
+    cacheOwnerGuid,
+    transactionDetail,
+    outsideExecution,
+    revision,
+  }: {
     completedSession: Session;
     transactionHash: string;
     calls: Call[];
@@ -206,17 +184,6 @@ export class DappService {
     sessionSignature: bigint[];
     guardianSignature: bigint[];
   }> {
-    const {
-      completedSession,
-      transactionHash,
-      calls,
-      accountAddress,
-      cacheOwnerGuid,
-      transactionDetail,
-      outsideExecution,
-      revision,
-    } = args;
-
     let guardianSignature: bigint[];
 
     if (outsideExecution && revision) {
@@ -263,11 +230,33 @@ export class DappService {
       accountAddress,
       cacheOwnerGuid,
     );
-    const signature = ec.starkCurve.sign(sessionWithTxHash, num.toHex(this.sessionKey.privateKey));
-    return [signature.r, signature.s];
+    const signature = await this.sessionKey.signRaw(sessionWithTxHash);
+    return [BigInt(signature[2]), BigInt(signature[3])];
   }
   // function needed as starknetSignatureType in signer.ts is already compiled
   private getStarknetSignatureType(pubkey: BigNumberish, signature: bigint[]) {
     return signerTypeToCustomEnum(SignerType.Starknet, { pubkey, r: signature[0], s: signature[1] });
+  }
+}
+
+class SessionSigner extends RawSigner {
+  constructor(
+    private signTransactionCallback: (
+      calls: Call[],
+      transactionsDetail: InvocationsSignerDetails,
+    ) => Promise<ArraySignatureType>,
+  ) {
+    super();
+  }
+
+  public async signRaw(messageHash: string): Promise<string[]> {
+    throw new Error("Method not implemented.");
+  }
+
+  public async signTransaction(
+    calls: Call[],
+    transactionsDetail: InvocationsSignerDetails,
+  ): Promise<ArraySignatureType> {
+    return this.signTransactionCallback(calls, transactionsDetail);
   }
 }

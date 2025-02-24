@@ -1,9 +1,8 @@
-use argent::multisig::multisig::multisig_component;
 use argent::signer::signer_signature::{SignerTrait, starknet_signer_from_pubkey};
 use argent::signer_storage::signer_list::signer_list_component;
-use snforge_std::{spy_events, EventSpyAssertionsTrait, EventSpyTrait};
+use snforge_std::{EventSpyAssertionsTrait, EventSpyTrait, spy_events};
 use super::setup::constants::MULTISIG_OWNER;
-use super::setup::multisig_test_setup::{initialize_multisig_with, ITestArgentMultisigDispatcherTrait};
+use super::setup::multisig_test_setup::{ITestArgentMultisigDispatcherTrait, initialize_multisig_with};
 
 #[test]
 fn replace_signer_1() {
@@ -49,21 +48,21 @@ fn replace_signer_start() {
         (
             multisig.contract_address,
             signer_list_component::Event::OwnerRemovedGuid(
-                signer_list_component::OwnerRemovedGuid { removed_owner_guid: signer_1.into_guid() }
-            )
+                signer_list_component::OwnerRemovedGuid { removed_owner_guid: signer_1.into_guid() },
+            ),
         ),
         (
             multisig.contract_address,
             signer_list_component::Event::OwnerAddedGuid(
-                signer_list_component::OwnerAddedGuid { new_owner_guid: signer_to_add.into_guid() }
-            )
+                signer_list_component::OwnerAddedGuid { new_owner_guid: signer_to_add.into_guid() },
+            ),
         ),
         (
             multisig.contract_address,
             signer_list_component::Event::SignerLinked(
-                signer_list_component::SignerLinked { signer_guid: signer_to_add.into_guid(), signer: signer_to_add }
-            )
-        )
+                signer_list_component::SignerLinked { signer_guid: signer_to_add.into_guid(), signer: signer_to_add },
+            ),
+        ),
     ];
     spy.assert_emitted(@events);
 

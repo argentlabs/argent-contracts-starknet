@@ -2,7 +2,7 @@
 /// environment. It is solely for testing, educational, or demonstration purposes. Please refrain from relying on the
 /// functionality of this contract for any production. 🚨
 
-use argent::account::interface::Version;
+use argent::account::Version;
 
 // Those functions are called when upgrading
 #[starknet::interface]
@@ -14,19 +14,19 @@ trait IArgentAccountProfiler<TContractState> {
 
 #[starknet::contract(account)]
 mod ArgentAccountProfile {
-    use argent::account::interface::{IAccount, Version, IEmitArgentAccountEvent};
-    use argent::introspection::src5::src5_component; // TODO Could be removed to depend on even less stuff
+    use argent::account::{IAccount, Version};
+    use argent::introspection::src5_component; // TODO Could be removed to depend on even less stuff
     use argent::multiowner_account::argent_account::ArgentAccount::Event as ArgentAccountEvent;
+    use argent::multiowner_account::argent_account::IEmitArgentAccountEvent;
     use argent::multiowner_account::guardian_manager::{
-        guardian_manager_component, guardian_manager_component::GuardianManagerInternalImpl
+        guardian_manager_component, guardian_manager_component::GuardianManagerInternal,
     };
     use argent::multiowner_account::owner_manager::{
-        owner_manager_component, owner_manager_component::OwnerManagerInternalImpl
+        owner_manager_component, owner_manager_component::OwnerManagerInternalImpl,
     };
-    use argent::signer::signer_signature::{Signer, SignerStorageValue};
+    use argent::signer::signer_signature::Signer;
     use argent::upgrade::{
-        upgrade::{IUpgradeInternal, upgrade_component, upgrade_component::UpgradableInternalImpl},
-        interface::{IUpgradableCallback, IUpgradableCallbackOld}
+        IUpgradableCallback, IUpgradableCallbackOld, upgrade_component, upgrade_component::UpgradableInternalImpl,
     };
     use argent::utils::calls::execute_multicall;
     use starknet::{ClassHash, VALIDATED, account::Call};
@@ -45,8 +45,6 @@ mod ArgentAccountProfile {
     // Upgrade
     component!(path: upgrade_component, storage: upgrade, event: UpgradeEvents);
     #[abi(embed_v0)]
-    impl Upgradable = upgrade_component::UpgradableImpl<ContractState>;
-
     #[storage]
     struct Storage {
         #[substorage(v0)]
@@ -84,9 +82,8 @@ mod ArgentAccountProfile {
             VALIDATED
         }
 
-        fn __execute__(ref self: ContractState, calls: Array<Call>) -> Array<Span<felt252>> {
+        fn __execute__(ref self: ContractState, calls: Array<Call>) {
             execute_multicall(calls.span());
-            array![]
         }
 
         fn is_valid_signature(self: @ContractState, hash: felt252, signature: Array<felt252>) -> felt252 {

@@ -27,7 +27,7 @@ export async function deployOpenZeppelinAccount(params: DeployOzAccountParams): 
     ...params,
     salt: params.salt ?? num.toHex(randomStarknetKeyPair().privateKey),
     owner: params.owner ?? new LegacyStarknetKeyPair(),
-    useTxV3: params.useTxV3 ?? false,
+    useTxV3: params.useTxV3 ?? true,
   };
 
   const constructorCalldata = CallData.compile({

@@ -12,6 +12,7 @@ import {
   deployAccountWithoutGuardians,
   deployOldAccountWithProxy,
   deployOpenZeppelinAccount,
+  deployer,
   manager,
   setupSession,
 } from "../lib";
@@ -38,7 +39,6 @@ const starknetOwner = new StarknetKeyPair(privateKey);
 const guardian = new StarknetKeyPair(42n);
 const profilerClassHash = await manager.declareLocalContract("ArgentAccountProfile");
 const latestClassHash = await manager.declareLocalContract("ArgentAccount");
-const { account: deployer } = await deployAccount();
 
 {
   const { transactionHash } = await deployAccountWithoutGuardians({

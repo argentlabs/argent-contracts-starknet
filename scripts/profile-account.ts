@@ -80,19 +80,19 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
 }
 
 {
-  const account = await deploy(starknetOwner);
+  const account = await deploy(starknetOwner, "0x3");
   strkContract.connect(account);
   await profiler.profile("Transfer - No guardian", await strkContract.transfer(recipient, amount));
 }
 
 {
-  const account = await deploy(starknetOwner, guardian);
+  const account = await deploy(starknetOwner, "0x2", guardian);
   strkContract.connect(account);
   await profiler.profile("Transfer - With guardian", await strkContract.transfer(recipient, amount));
 }
 
 {
-  const account = await deploy(starknetOwner, guardian);
+  const account = await deploy(starknetOwner, "0x40",guardian);
   const sessionTime = 1710167933n;
   await manager.setTime(sessionTime);
   const dappKey = new StarknetKeyPair(39n);
@@ -110,7 +110,7 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
 }
 
 {
-  const account = await deploy(starknetOwner, guardian);
+  const account = await deploy(starknetOwner, "0x41", guardian);
 
   const sessionTime = 1710167933n;
   await manager.setTime(sessionTime);
@@ -135,7 +135,7 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
 
 {
   const key = new WebauthnOwner(privateKey);
-  const account = await deploy(key, guardian);
+  const account = await deploy(key, "0x42",guardian);
 
   const sessionTime = 1710167933n;
   await manager.setTime(sessionTime);
@@ -162,7 +162,7 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
 }
 
 {
-  const account = await deploy(starknetOwner);
+  const account = await deploy(starknetOwner, "0xF1");
 
   account.signer = new LegacyStarknetKeyPair(starknetOwner.privateKey);
   strkContract.connect(account);
@@ -170,7 +170,7 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
 }
 
 {
-  const account = await deploy(starknetOwner, guardian);
+  const account = await deploy(starknetOwner, "0xF2", guardian);
 
   account.signer = new LegacyArgentSigner(
     new LegacyStarknetKeyPair(starknetOwner.privateKey),
@@ -188,7 +188,7 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
 
 {
   const key = new EthKeyPair(privateKey);
-  const account = await deploy(key, guardian);
+  const account = await deploy(key, "0x4", guardian);
 
   strkContract.connect(account);
   await profiler.profile("Transfer - Eth sig with guardian", await strkContract.transfer(recipient, amount));
@@ -196,7 +196,7 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
 
 {
   const key = new Secp256r1KeyPair(privateKey);
-  const account = await deploy(key, guardian);
+  const account = await deploy(key, "0x5", guardian);
 
   strkContract.connect(account);
   await profiler.profile("Transfer - Secp256r1 with guardian", await strkContract.transfer(recipient, amount));
@@ -204,7 +204,7 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
 
 {
   const key = new Eip191KeyPair(privateKey);
-  const account = await deploy(key, guardian);
+  const account = await deploy(key, "0x6", guardian);
 
   strkContract.connect(account);
   await profiler.profile("Transfer - Eip161 with guardian", await strkContract.transfer(recipient, amount));
@@ -212,7 +212,7 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
 
 {
   const key = new WebauthnOwner(privateKey);
-  const account = await deploy(key, guardian);
+  const account = await deploy(key, "0x8", guardian);
 
   strkContract.connect(account);
   await profiler.profile("Transfer - Webauthn no guardian", await strkContract.transfer(recipient, amount));
@@ -221,8 +221,8 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
 profiler.printSummary();
 profiler.updateOrCheckReport();
 
-async function deploy(owner: KeyPair, guardian?: StarknetKeyPair) {
-  const { contract_address } = await deployer.deployContract({ classHash: profilerClassHash });
+async function deploy(owner: KeyPair, salt: string, guardian?: StarknetKeyPair) {
+  const { contract_address } = await deployer.deployContract({ classHash: profilerClassHash, salt });
   const contract = await manager.loadContract(contract_address, profilerClassHash);
   contract.connect(deployer);
   await contract.fill(hash.starknetKeccak("owners_storage"), owner.storedValue);

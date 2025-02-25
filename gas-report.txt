@@ -11,8 +11,8 @@ Summary:
 │                    Transfer - With Session                    │ '1.260.000.000.000.192'  │ 0.0005  │ 1260000000000000  │       36       │       31        │     2     │      4       │           'ec_op'            │       3       │  192   │ 'BLOB'  │
 │         Transfer - With Session - Caching Values (1)          │ '1.260.000.000.000.256'  │ 0.0005  │ 1260000000000000  │       36       │       31        │     2     │      4       │           'steps'            │       4       │  256   │ 'BLOB'  │
 │             Transfer - With Session - Cached (2)              │ '1.155.000.000.000.192'  │ 0.00046 │ 1155000000000000  │       33       │       28        │     2     │      4       │           'steps'            │       3       │  192   │ 'BLOB'  │
-│ Transfer - With Session (Webauthn owner) - Caching Values (1) │ '1.260.000.000.000.256'  │ 0.0005  │ 1260000000000000  │       36       │       31        │     2     │      4       │           'steps'            │       4       │  256   │ 'BLOB'  │
-│     Transfer - With Session (Webauthn owner) - Cached (2)     │ '1.155.000.000.000.192'  │ 0.00046 │ 1155000000000000  │       33       │       28        │     2     │      4       │           'steps'            │       3       │  192   │ 'BLOB'  │
+│ Transfer - With Session (Webauthn owner) - Caching Values (1) │ '43.610.000.000.000.260' │ 0.01744 │ 43610000000000000 │      1246      │      1235       │     2     │      10      │        'range_check'         │       4       │  256   │ 'BLOB'  │
+│     Transfer - With Session (Webauthn owner) - Cached (2)     │ '1.365.000.000.000.192'  │ 0.00054 │ 1365000000000000  │       39       │       28        │     2     │      10      │           'steps'            │       3       │  192   │ 'BLOB'  │
 │               Transfer - No guardian (Old Sig)                │  '910.000.000.000.192'   │ 0.00036 │  910000000000000  │       26       │       24        │     2     │      1       │           'steps'            │       3       │  192   │ 'BLOB'  │
 │              Transfer - With guardian (Old Sig)               │ '1.015.000.000.000.192'  │ 0.0004  │ 1015000000000000  │       29       │       26        │     2     │      1       │           'steps'            │       3       │  192   │ 'BLOB'  │
 │                     Transfer - OZ account                     │  '805.000.000.000.192'   │ 0.00032 │  805000000000000  │       23       │       21        │     2     │      1       │           'steps'            │       3       │  192   │ 'BLOB'  │
@@ -34,13 +34,13 @@ Resources:
 │                    Transfer - With Session                    │    0    │  12   │   0   │   0    │    26    │    14    │     327     │ 11453  │
 │         Transfer - With Session - Caching Values (1)          │    0    │  12   │   0   │   0    │    32    │    17    │     371     │ 12033  │
 │             Transfer - With Session - Cached (2)              │    0    │   6   │   0   │   0    │    29    │    16    │     328     │ 10826  │
-│ Transfer - With Session (Webauthn owner) - Caching Values (1) │    0    │  12   │   0   │   0    │    32    │    17    │     371     │ 12033  │
-│     Transfer - With Session (Webauthn owner) - Cached (2)     │    0    │   6   │   0   │   0    │    29    │    16    │     328     │ 10826  │
+│ Transfer - With Session (Webauthn owner) - Caching Values (1) │  5643   │   9   │   0   │   0    │    32    │    44    │    30854    │ 290676 │
+│     Transfer - With Session (Webauthn owner) - Cached (2)     │    0    │   6   │   0   │   0    │    29    │    15    │     328     │ 10829  │
 │               Transfer - No guardian (Old Sig)                │    0    │   3   │   0   │   0    │    26    │    4     │     281     │  9322  │
 │              Transfer - With guardian (Old Sig)               │    0    │   6   │   0   │   0    │    27    │    4     │     299     │ 10102  │
 │                     Transfer - OZ account                     │    0    │   3   │   0   │   0    │    25    │    4     │     267     │  8160  │
 │               Transfer - Eth sig with guardian                │   30    │   3   │   0   │   1    │    25    │    4     │    14863    │ 165889 │
 │              Transfer - Secp256r1 with guardian               │    0    │   3   │   0   │   0    │    25    │    6     │    28643    │ 263075 │
-│                Transfer - Eip161 with guardian                │   64    │   3   │   0   │   2    │    25    │    4     │    15036    │ 167085 │
-│                Transfer - Webauthn no guardian                │  5643   │   3   │   0   │   0    │    25    │    18    │    30733    │ 287086 │
+│                Transfer - Eip161 with guardian                │   64    │   3   │   0   │   2    │    25    │    4     │    15036    │ 167086 │
+│                Transfer - Webauthn no guardian                │  5643   │   3   │   0   │   0    │    25    │    18    │    30734    │ 287091 │
 └───────────────────────────────────────────────────────────────┴─────────┴───────┴───────┴────────┴──────────┴──────────┴─────────────┴────────┘

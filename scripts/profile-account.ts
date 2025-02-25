@@ -134,7 +134,8 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
 }
 
 {
-  const account = await deploy(starknetOwner, guardian);
+  const key = new WebauthnOwner(privateKey);
+  const account = await deploy(key, guardian);
 
   const sessionTime = 1710167933n;
   await manager.setTime(sessionTime);
@@ -147,7 +148,7 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
     account,
     allowedMethods,
     expiry: sessionTime + 150n,
-    cacheOwnerGuid: starknetOwner.guid,
+    cacheOwnerGuid: key.guid,
   });
   strkContract.connect(accountWithDappSigner);
   await profiler.profile(

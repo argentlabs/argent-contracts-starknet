@@ -92,7 +92,7 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
 }
 
 {
-  const account = await deploy(starknetOwner, "0x40",guardian);
+  const account = await deploy(starknetOwner, "0x40", guardian);
   const sessionTime = 1710167933n;
   await manager.setTime(sessionTime);
   const dappKey = new StarknetKeyPair(39n);
@@ -135,7 +135,7 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
 
 {
   const key = new WebauthnOwner(privateKey);
-  const account = await deploy(key, "0x42",guardian);
+  const account = await deploy(key, "0x42", guardian);
 
   const sessionTime = 1710167933n;
   await manager.setTime(sessionTime);

@@ -62,7 +62,7 @@ export class EthKeyPair extends KeyPair {
   }
 
   public get storedValue(): bigint {
-    throw new Error("Not implemented yet");
+    return this.address;
   }
 
   public get signer(): CairoCustomEnum {
@@ -102,7 +102,7 @@ export class Eip191KeyPair extends KeyPair {
   }
 
   public get storedValue(): bigint {
-    throw new Error("Not implemented yet");
+    return this.address;
   }
 
   public get signer(): CairoCustomEnum {
@@ -193,7 +193,7 @@ export class Secp256r1KeyPair extends KeyPair {
   }
 
   public get storedValue(): bigint {
-    throw new Error("Not implemented yet");
+    return this.guid;
   }
 
   public get signer() {

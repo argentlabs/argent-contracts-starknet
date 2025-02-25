@@ -3,7 +3,7 @@
 # Version 0.5.0
 
 This version introduces supports for **multiple owners** and **multiple guardians**.
-The account requires **one owner** signature **AND** **one guardian** signature if guardians are used (unless calling [escape methods](./argent_account_escape.md#Escape-Methods)).
+The account requires **one owner** signature **AND** **one guardian** signature if guardians are used (unless calling [escape methods](./argent_account_escape.md#escape-methods)).
 
 It also improves **WebAuthn** support compatibility with more browsers.
 

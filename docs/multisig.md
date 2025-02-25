@@ -16,11 +16,11 @@ By default the account can execute a sequence of operations such as calling exte
 
 ## Signer types
 
-The account owners can be of different types. There's more information about it in [Signers](./signers_and_signatures.md#Multiple_Signer_Types).
+The account owners can be of different types. There's more information about it in [Signers](./signers_and_signatures.md#multiple-signer-types).
 
 ## Signature format
 
-The information available in [Signatures](./signers_and_signatures.md#Signatures) is also applicable for the argent multisig.
+The information available in [Signatures](./signers_and_signatures.md#signatures) is also applicable for the argent multisig.
 The array provided as a signature must contain **exactly** `threshold` signatures and every owner can only sign once. Moreover, to simplify processing, the **signatures need to be ordered** by signer guid, in ascending order.
 
 ## Accurate Estimates

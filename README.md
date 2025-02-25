@@ -16,6 +16,27 @@ See deployed class hashes can be found here for the [Argent Account](./deploymen
 
 Other deployment artifacts are located in [/deployments/](./deployments/)
 
+## Documentation
+
+We use [mdBook](https://rust-lang.github.io/mdBook/index.html) to generate a browsable and searchable documentation website.
+
+Requirements :
+
+- [rust](https://www.rust-lang.org/tools/install)
+- [mdBook](https://rust-lang.github.io/mdBook/guide/installation.html#installation)
+
+To generate the documentation :
+
+```sh
+mdbook build
+```
+
+You can browse the documentation locally with :
+
+```sh
+mdbook serve --open
+```
+
 ## Development
 
 See [Development](./docs/development.md)

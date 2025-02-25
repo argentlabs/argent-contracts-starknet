@@ -87,4 +87,4 @@ Besides the format specified here, the argent account also supports concise sign
 
 **⚠️** The use of concise signatures is **discouraged** as they will stop working when more than one owner or guardian are added to the account
 
-See more details [here](./argent_account.md#Concise-Format)
+See more details [here](./argent_account.md#concise-format)

@@ -9,7 +9,7 @@ import {
   deployOpenZeppelinAccount,
   Eip191KeyPair,
   EthKeyPair,
-  fundAccount,
+  fundAccountCall,
   KeyPair,
   LegacyArgentSigner,
   LegacyStarknetKeyPair,
@@ -80,19 +80,19 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
 }
 
 {
-  const account = await deploy({ owner: starknetOwner, salt: "0x3" });
+  const account = await deployProxy({ owner: starknetOwner, salt: "0x3" });
   strkContract.connect(account);
   await profiler.profile("Transfer - No guardian", await strkContract.transfer(recipient, amount));
 }
 
 {
-  const account = await deploy({ owner: starknetOwner, guardian, salt: "0x2" });
+  const account = await deployProxy({ owner: starknetOwner, guardian, salt: "0x2" });
   strkContract.connect(account);
   await profiler.profile("Transfer - With guardian", await strkContract.transfer(recipient, amount));
 }
 
 {
-  const account = await deploy({ owner: starknetOwner, guardian, salt: "0x40" });
+  const account = await deployProxy({ owner: starknetOwner, guardian, salt: "0x40" });
   const sessionTime = 1710167933n;
   await manager.setTime(sessionTime);
   const dappKey = new StarknetKeyPair(39n);
@@ -110,7 +110,7 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
 }
 
 {
-  const account = await deploy({ owner: starknetOwner, guardian, salt: "0x41" });
+  const account = await deployProxy({ owner: starknetOwner, guardian, salt: "0x41" });
 
   const sessionTime = 1710167933n;
   await manager.setTime(sessionTime);
@@ -135,7 +135,7 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
 
 {
   const owner = new WebauthnOwner(privateKey);
-  const account = await deploy({ owner, guardian, salt: "0x42" });
+  const account = await deployProxy({ owner, guardian, salt: "0x42" });
 
   const sessionTime = 1710167933n;
   await manager.setTime(sessionTime);
@@ -162,7 +162,7 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
 }
 
 {
-  const account = await deploy({ owner: starknetOwner, salt: "0xF1" });
+  const account = await deployProxy({ owner: starknetOwner, salt: "0xF1" });
 
   account.signer = new LegacyStarknetKeyPair(starknetOwner.privateKey);
   strkContract.connect(account);
@@ -170,7 +170,7 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
 }
 
 {
-  const account = await deploy({ owner: starknetOwner, guardian, salt: "0xF2" });
+  const account = await deployProxy({ owner: starknetOwner, guardian, salt: "0xF2" });
 
   account.signer = new LegacyArgentSigner(
     new LegacyStarknetKeyPair(starknetOwner.privateKey),
@@ -188,7 +188,7 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
 
 {
   const owner = new EthKeyPair(privateKey);
-  const account = await deploy({ owner, guardian, salt: "0x4" });
+  const account = await deployProxy({ owner, guardian, salt: "0x4" });
 
   strkContract.connect(account);
   await profiler.profile("Transfer - Eth sig with guardian", await strkContract.transfer(recipient, amount));
@@ -196,7 +196,7 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
 
 {
   const owner = new Secp256r1KeyPair(privateKey);
-  const account = await deploy({ owner, guardian, salt: "0x5" });
+  const account = await deployProxy({ owner, guardian, salt: "0x5" });
 
   strkContract.connect(account);
   await profiler.profile("Transfer - Secp256r1 with guardian", await strkContract.transfer(recipient, amount));
@@ -204,7 +204,7 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
 
 {
   const owner = new Eip191KeyPair(privateKey);
-  const account = await deploy({ owner, guardian, salt: "0x6" });
+  const account = await deployProxy({ owner, guardian, salt: "0x6" });
 
   strkContract.connect(account);
   await profiler.profile("Transfer - Eip161 with guardian", await strkContract.transfer(recipient, amount));
@@ -212,7 +212,7 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
 
 {
   const owner = new WebauthnOwner(privateKey);
-  const account = await deploy({ owner, guardian, salt: "0x8" });
+  const account = await deployProxy({ owner, guardian, salt: "0x8" });
 
   strkContract.connect(account);
   await profiler.profile("Transfer - Webauthn no guardian", await strkContract.transfer(recipient, amount));
@@ -221,30 +221,24 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
 profiler.printSummary();
 profiler.updateOrCheckReport();
 
-async function deploy({ owner, guardian, salt }: { owner: KeyPair; guardian?: StarknetKeyPair; salt: string }) {
+async function deployProxy({ owner, guardian, salt }: { owner: KeyPair; guardian?: StarknetKeyPair; salt: string }) {
   const { contract_address } = await deployer.deployContract({ classHash: profilerClassHash, salt });
   const contract = await manager.loadContract(contract_address, profilerClassHash);
-  contract.connect(deployer);
-  await contract.fill(hash.starknetKeccak("owners_storage"), owner.storedValue);
-  // (ugly version atm)
-  // We could add a fn get type
-  if (owner instanceof EthKeyPair) {
-    await contract.fill(hash.starknetKeccak("owners_storage") + 1n, "0x1");
-  } else if (owner instanceof Secp256r1KeyPair) {
-    await contract.fill(hash.starknetKeccak("owners_storage") + 1n, "0x2");
-  } else if (owner instanceof Eip191KeyPair) {
-    await contract.fill(hash.starknetKeccak("owners_storage") + 1n, "0x3");
-  } else if (owner instanceof WebauthnOwner) {
-    await contract.fill(hash.starknetKeccak("owners_storage") + 1n, "0x4");
-  }
+  const calls = [];
+
+  calls.push(contract.populateTransaction.fill(hash.starknetKeccak("owners_storage"), owner.storedValue));
+  calls.push(contract.populateTransaction.fill(hash.starknetKeccak("owners_storage") + 1n, owner.signerType));
 
   if (guardian) {
-    await contract.fill(hash.starknetKeccak("guardians_storage"), guardian.storedValue);
+    calls.push(contract.populateTransaction.fill(hash.starknetKeccak("guardians_storage"), guardian.storedValue));
+    calls.push(contract.populateTransaction.fill(hash.starknetKeccak("guardians_storage") + 1n, guardian.signerType));
   }
-  // If guardian is of another type, we also need to fill the type
 
-  await contract.upgrade(latestClassHash);
-  await fundAccount(contract_address, fundingAmount, "STRK");
+  calls.push(contract.populateTransaction.upgrade(latestClassHash));
+  calls.push(fundAccountCall(contract_address, fundingAmount, "STRK"));
+
+  await deployer.execute(calls);
+
   return new ArgentAccount(
     manager,
     contract_address,

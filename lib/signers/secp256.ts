@@ -65,8 +65,12 @@ export class EthKeyPair extends KeyPair {
     return this.address;
   }
 
+  public get signerType(): SignerType {
+    return SignerType.Secp256k1;
+  }
+
   public get signer(): CairoCustomEnum {
-    return signerTypeToCustomEnum(SignerType.Secp256k1, { signer: this.address });
+    return signerTypeToCustomEnum(this.signerType, { signer: this.address });
   }
 
   public async signRaw(messageHash: string): Promise<string[]> {
@@ -75,7 +79,7 @@ export class EthKeyPair extends KeyPair {
     );
 
     return CallData.compile([
-      signerTypeToCustomEnum(SignerType.Secp256k1, {
+      signerTypeToCustomEnum(this.signerType, {
         pubkeyHash: this.address,
         r: uint256.bnToUint256(signature.r),
         s: uint256.bnToUint256(signature.s),
@@ -105,8 +109,12 @@ export class Eip191KeyPair extends KeyPair {
     return this.address;
   }
 
+  public get signerType(): SignerType {
+    return SignerType.Eip191;
+  }
+
   public get signer(): CairoCustomEnum {
-    return signerTypeToCustomEnum(SignerType.Eip191, { signer: this.address });
+    return signerTypeToCustomEnum(this.signerType, { signer: this.address });
   }
 
   public async signRaw(messageHash: string): Promise<string[]> {
@@ -121,7 +129,7 @@ export class Eip191KeyPair extends KeyPair {
     });
 
     return CallData.compile([
-      signerTypeToCustomEnum(SignerType.Eip191, {
+      signerTypeToCustomEnum(this.signerType, {
         ethAddress: this.address,
         r: uint256.bnToUint256(signature.r),
         s: uint256.bnToUint256(signature.s),
@@ -151,13 +159,17 @@ export class EstimateEip191KeyPair extends KeyPair {
     throw new Error("Not implemented yet");
   }
 
+  public get signerType(): SignerType {
+    return SignerType.Eip191;
+  }
+
   public get signer(): CairoCustomEnum {
-    return signerTypeToCustomEnum(SignerType.Eip191, { signer: this.address });
+    return signerTypeToCustomEnum(this.signerType, { signer: this.address });
   }
 
   public async signRaw(messageHash: string): Promise<string[]> {
     return CallData.compile([
-      signerTypeToCustomEnum(SignerType.Eip191, {
+      signerTypeToCustomEnum(this.signerType, {
         ethAddress: this.address,
         r: uint256.bnToUint256("0x1556a70d76cc452ae54e83bb167a9041f0d062d000fa0dcb42593f77c544f647"),
         s: uint256.bnToUint256("0x1643d14dbd6a6edc658f4b16699a585181a08dba4f6d16a9273e0e2cbed622da"),
@@ -196,15 +208,19 @@ export class Secp256r1KeyPair extends KeyPair {
     return this.guid;
   }
 
+  public get signerType(): SignerType {
+    return SignerType.Secp256r1;
+  }
+
   public get signer() {
-    return signerTypeToCustomEnum(SignerType.Secp256r1, { signer: this.publicKey });
+    return signerTypeToCustomEnum(this.signerType, { signer: this.publicKey });
   }
 
   public async signRaw(messageHash: string): Promise<string[]> {
     messageHash = padTo32Bytes(messageHash);
     const signature = normalizeSecpR1Signature(secp256r1.sign(messageHash, this.pk, { lowS: this.allowLowS }));
     return CallData.compile([
-      signerTypeToCustomEnum(SignerType.Secp256r1, {
+      signerTypeToCustomEnum(this.signerType, {
         pubkey: this.publicKey,
         r: uint256.bnToUint256(signature.r),
         s: uint256.bnToUint256(signature.s),

@@ -60,8 +60,8 @@ export async function deployMultisig(params: DeployMultisigParams): Promise<Mult
   const accountAddress = hash.calculateContractAddressFromHash(salt, classHash, constructorCalldata, 0);
 
   const fundingCall = finalParams.useTxV3
-    ? await fundAccountCall(accountAddress, finalParams.fundingAmount ?? 5e18, "STRK") // 5 STRK
-    : await fundAccountCall(accountAddress, finalParams.fundingAmount ?? 1e15, "ETH"); // 0.001 ETH
+    ? fundAccountCall(accountAddress, finalParams.fundingAmount ?? 5e18, "STRK") // 5 STRK
+    : fundAccountCall(accountAddress, finalParams.fundingAmount ?? 1e15, "ETH"); // 0.001 ETH
   const calls = fundingCall ? [fundingCall] : [];
 
   const transactionVersion = finalParams.useTxV3 ? RPC.ETransactionVersion.V3 : RPC.ETransactionVersion.V2;

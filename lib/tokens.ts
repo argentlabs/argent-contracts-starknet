@@ -1,5 +1,5 @@
-import { Call, CallData, Contract, num, uint256 } from "starknet";
-import { deployer } from ".";
+import { Contract, num } from "starknet";
+import { deployer, fundAccountCall } from ".";
 import { Manager } from "./manager";
 
 export const ethAddress = "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7";
@@ -47,25 +47,10 @@ export class TokenManager {
     const strkContract = await this.strkContract();
     return await strkContract.balanceOf(accountAddress);
   }
+
   async fundAccount(recipient: string, amount: number | bigint, token: "ETH" | "STRK") {
-    const call = await fundAccountCall(recipient, amount, token);
+    const call = fundAccountCall(recipient, amount, token);
     const response = await deployer.execute(call ? [call] : []);
     await this.manager.waitForTransaction(response.transaction_hash);
   }
-}
-
-export default async function fundAccountCall(
-  recipient: string,
-  amount: number | bigint,
-  token: "ETH" | "STRK",
-): Promise<Call | undefined> {
-  if (amount <= 0n) {
-    return;
-  }
-  const contractAddress = { ETH: ethAddress, STRK: strkAddress }[token];
-  if (!contractAddress) {
-    throw new Error(`Unsupported token ${token}`);
-  }
-  const calldata = CallData.compile([recipient, uint256.bnToUint256(amount)]);
-  return { contractAddress, calldata, entrypoint: "transfer" };
 }

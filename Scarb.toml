@@ -14,7 +14,7 @@ build-external-contracts = ["openzeppelin_presets::account::AccountUpgradeable"]
 [dependencies]
 starknet = "2.10.1"
 assert_macros = "2.10.1"
-snforge_std = "0.37.0"
+snforge_std = "0.38.0"
 alexandria_encoding = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "162bed1" }
 alexandria_merkle_tree = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev="162bed1" }
 openzeppelin_security = "0.20.0"

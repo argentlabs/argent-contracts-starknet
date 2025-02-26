@@ -60,7 +60,7 @@ fn encode_challenge(hash: felt252) -> Span<u8> {
 
     assert!(bytes.len() == 32, "webauthn/invalid-challenge-length");
     // Base64 encodes takes every 3bytes and encodes them as 4bytes.
-    // Since we are encoding 33bytes. ((32 / 3) * 4) = 42.666.. bytes.
+    // Since we are encoding 32bytes. ((32 / 3) * 4) = 42.666.. bytes.
     // The trailing '=' are omitted as specified in the spec:
     // https://www.w3.org/TR/webauthn-2/#sctn-dependencies
     // So this gets padded to the next byte only

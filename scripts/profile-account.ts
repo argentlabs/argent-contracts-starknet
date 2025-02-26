@@ -232,7 +232,7 @@ async function deployAccountUsingProxy({
 }) {
   const { contract_address } = await deployer.deployContract({ classHash: profilerClassHash, salt });
   const contract = await manager.loadContract(contract_address, profilerClassHash);
-  
+
   const calls = [];
 
   calls.push(contract.populateTransaction.write_storage(hash.starknetKeccak("owners_storage"), owner.storedValue));

@@ -2,17 +2,17 @@
 /// environment. It is solely for testing, educational, or demonstration purposes. Please refrain from relying on the
 /// functionality of this contract for any production. 🚨
 
-use starknet::ClassHash;
+use starknet::{ClassHash, StorageAddress};
 
 #[starknet::interface]
-trait IArgentAccountProfiler<TContractState> {
-    fn fill(ref self: TContractState, address: felt252, value: felt252);
+trait IProfilerProxy<TContractState> {
+    fn write_storage(ref self: TContractState, address: StorageAddress, value: felt252);
     fn upgrade(ref self: TContractState, new_implementation: ClassHash);
 }
 
 #[starknet::contract]
-mod ArgentAccountProfile {
-    use starknet::{ClassHash, syscalls::{replace_class_syscall, storage_write_syscall}};
+mod ProfilerProxy {
+    use starknet::{ClassHash, StorageAddress, syscalls::{replace_class_syscall, storage_write_syscall}};
 
     #[storage]
     struct Storage {}
@@ -22,9 +22,9 @@ mod ArgentAccountProfile {
     enum Event {}
 
     #[abi(embed_v0)]
-    impl ArgentAccountProfilerImpl of super::IArgentAccountProfiler<ContractState> {
-        fn fill(ref self: ContractState, address: felt252, value: felt252) {
-            storage_write_syscall(0, address.try_into().unwrap(), value).unwrap();
+    impl ProfilerProxyImpl of super::IProfilerProxy<ContractState> {
+        fn write_storage(ref self: ContractState, address: StorageAddress, value: felt252) {
+            storage_write_syscall(0, address, value).unwrap();
         }
 
         fn upgrade(ref self: ContractState, new_implementation: ClassHash) {

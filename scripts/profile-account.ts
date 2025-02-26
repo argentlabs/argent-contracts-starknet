@@ -40,7 +40,7 @@ const recipient = "0xadbe1";
 const amount = uint256.bnToUint256(1);
 const starknetOwner = new StarknetKeyPair(privateKey);
 const guardian = new StarknetKeyPair(42n);
-const profilerClassHash = await manager.declareLocalContract("ArgentAccountProfile");
+const profilerClassHash = await manager.declareLocalContract("ProfilerProxy");
 const latestClassHash = await manager.declareLocalContract("ArgentAccount");
 
 {
@@ -226,12 +226,12 @@ async function deployProxy({ owner, guardian, salt }: { owner: KeyPair; guardian
   const contract = await manager.loadContract(contract_address, profilerClassHash);
   const calls = [];
 
-  calls.push(contract.populateTransaction.fill(hash.starknetKeccak("owners_storage"), owner.storedValue));
-  calls.push(contract.populateTransaction.fill(hash.starknetKeccak("owners_storage") + 1n, owner.signerType));
+  calls.push(contract.populateTransaction.write_storage(hash.starknetKeccak("owners_storage"), owner.storedValue));
+  calls.push(contract.populateTransaction.write_storage(hash.starknetKeccak("owners_storage") + 1n, owner.signerType));
 
   if (guardian) {
-    calls.push(contract.populateTransaction.fill(hash.starknetKeccak("guardians_storage"), guardian.storedValue));
-    calls.push(contract.populateTransaction.fill(hash.starknetKeccak("guardians_storage") + 1n, guardian.signerType));
+    calls.push(contract.populateTransaction.write_storage(hash.starknetKeccak("guardians_storage"), guardian.storedValue));
+    calls.push(contract.populateTransaction.write_storage(hash.starknetKeccak("guardians_storage") + 1n, guardian.signerType));
   }
 
   calls.push(contract.populateTransaction.upgrade(latestClassHash));

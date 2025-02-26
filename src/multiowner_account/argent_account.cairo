@@ -766,15 +766,14 @@ pub mod ArgentAccount {
         /// Clear the escape from storage
         /// @param escape_completed Whether the escape was completed successfully, in case it wasn't, EscapeCanceled
         /// could be emitted @param reset_timestamps Whether to reset the timestamps for gas griefing protection
-        fn clear_escape(
-            ref self: ContractState, escape_canceled: bool, reset_timestamps: bool,
-        ) { // if escape_canceled {
-            //     // Emit Canceled event if needed
-            //     let current_escape_status = self.get_escape_status();
-            //     if current_escape_status == EscapeStatus::NotReady || current_escape_status == EscapeStatus::Ready {
-            //         self.emit(EscapeCanceled {});
-            //     }
-            // }
+        fn clear_escape(ref self: ContractState, escape_canceled: bool, reset_timestamps: bool) {
+            if escape_canceled {
+                // Emit Canceled event if needed
+                let current_escape_status = self.get_escape_status();
+                if current_escape_status == EscapeStatus::NotReady || current_escape_status == EscapeStatus::Ready {
+                    self.emit(EscapeCanceled {});
+                }
+            }
             self._escape.write(Default::default());
             if reset_timestamps {
                 self.last_owner_trigger_escape_attempt.write(0);

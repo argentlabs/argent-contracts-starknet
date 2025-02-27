@@ -111,7 +111,6 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
 
 {
   const account = await deployAccountUsingProxy({ owner: starknetOwner, guardian, salt: "0x41" });
-
   const sessionTime = 1710167933n;
   await manager.setTime(sessionTime);
   const dappKey = new StarknetKeyPair(39n);
@@ -136,7 +135,6 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
 {
   const owner = new WebauthnOwner(privateKey);
   const account = await deployAccountUsingProxy({ owner, guardian, salt: "0x42" });
-
   const sessionTime = 1710167933n;
   await manager.setTime(sessionTime);
   const dappKey = new StarknetKeyPair(39n);
@@ -163,7 +161,6 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
 
 {
   const account = await deployAccountUsingProxy({ owner: starknetOwner, salt: "0xF1" });
-
   account.signer = new LegacyStarknetKeyPair(starknetOwner.privateKey);
   strkContract.connect(account);
   await profiler.profile("Transfer - No guardian (Old Sig)", await strkContract.transfer(recipient, amount));
@@ -171,7 +168,6 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
 
 {
   const account = await deployAccountUsingProxy({ owner: starknetOwner, guardian, salt: "0xF2" });
-
   account.signer = new LegacyArgentSigner(
     new LegacyStarknetKeyPair(starknetOwner.privateKey),
     new LegacyStarknetKeyPair(guardian.privateKey),
@@ -187,33 +183,25 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
 }
 
 {
-  const owner = new EthKeyPair(privateKey);
-  const account = await deployAccountUsingProxy({ owner, guardian, salt: "0x4" });
-
+  const account = await deployAccountUsingProxy({ owner: new EthKeyPair(privateKey), guardian, salt: "0x4" });
   strkContract.connect(account);
   await profiler.profile("Transfer - Eth sig with guardian", await strkContract.transfer(recipient, amount));
 }
 
 {
-  const owner = new Secp256r1KeyPair(privateKey);
-  const account = await deployAccountUsingProxy({ owner, guardian, salt: "0x5" });
-
+  const account = await deployAccountUsingProxy({ owner: new Secp256r1KeyPair(privateKey), guardian, salt: "0x5" });
   strkContract.connect(account);
   await profiler.profile("Transfer - Secp256r1 with guardian", await strkContract.transfer(recipient, amount));
 }
 
 {
-  const owner = new Eip191KeyPair(privateKey);
-  const account = await deployAccountUsingProxy({ owner, guardian, salt: "0x6" });
-
+  const account = await deployAccountUsingProxy({ owner: new Eip191KeyPair(privateKey), guardian, salt: "0x6" });
   strkContract.connect(account);
   await profiler.profile("Transfer - Eip161 with guardian", await strkContract.transfer(recipient, amount));
 }
 
 {
-  const owner = new WebauthnOwner(privateKey);
-  const account = await deployAccountUsingProxy({ owner, guardian, salt: "0x8" });
-
+  const account = await deployAccountUsingProxy({ owner: new WebauthnOwner(privateKey), guardian, salt: "0x8" });
   strkContract.connect(account);
   await profiler.profile("Transfer - Webauthn no guardian", await strkContract.transfer(recipient, amount));
 }

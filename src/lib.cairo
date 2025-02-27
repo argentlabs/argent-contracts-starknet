@@ -58,7 +58,6 @@ pub mod session {
 
 
 pub mod mocks {
-    mod argent_account_profiler;
     mod future_argent_account;
     mod future_argent_multisig;
     pub mod linked_set_mock;
@@ -68,5 +67,6 @@ pub mod mocks {
     mod recovery_mocks;
     mod signature_verifier;
     pub mod src5_mocks;
+    mod stable_address_deployer_mock;
 }
 

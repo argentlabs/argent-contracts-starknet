@@ -40,7 +40,7 @@ const recipient = "0xadbe1";
 const amount = uint256.bnToUint256(1);
 const starknetOwner = new StarknetKeyPair(privateKey);
 const guardian = new StarknetKeyPair(42n);
-const profilerClassHash = await manager.declareLocalContract("ProfilerProxy");
+const profilerClassHash = await manager.declareLocalContract("StableAddressDeployer");
 const latestClassHash = await manager.declareLocalContract("ArgentAccount");
 
 {

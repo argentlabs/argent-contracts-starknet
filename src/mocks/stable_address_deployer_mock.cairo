@@ -5,13 +5,13 @@
 use starknet::{ClassHash, StorageAddress};
 
 #[starknet::interface]
-trait IProfilerProxy<TContractState> {
+trait IStableAddressDeployer<TContractState> {
     fn storage_write(ref self: TContractState, address: StorageAddress, value: felt252);
     fn upgrade(ref self: TContractState, new_implementation: ClassHash);
 }
 
 #[starknet::contract]
-mod ProfilerProxy {
+mod StableAddressDeployer {
     use starknet::{ClassHash, StorageAddress, syscalls::{replace_class_syscall, storage_write_syscall}};
 
     #[storage]
@@ -22,7 +22,7 @@ mod ProfilerProxy {
     enum Event {}
 
     #[abi(embed_v0)]
-    impl ProfilerProxyImpl of super::IProfilerProxy<ContractState> {
+    impl StableAddressDeployerImpl of super::IStableAddressDeployer<ContractState> {
         fn storage_write(ref self: ContractState, address: StorageAddress, value: felt252) {
             storage_write_syscall(0, address, value).unwrap();
         }

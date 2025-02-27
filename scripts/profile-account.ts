@@ -217,7 +217,7 @@ async function deployAccountUsingProxy({
   owner: KeyPair;
   guardian?: StarknetKeyPair;
   salt: string;
-}) {
+}): Promise<ArgentAccount> {
   const { contract_address } = await deployer.deployContract({ classHash: profilerClassHash, salt });
   const contract = await manager.loadContract(contract_address, profilerClassHash);
 

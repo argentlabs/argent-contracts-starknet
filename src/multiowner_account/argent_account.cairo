@@ -775,12 +775,12 @@ pub mod ArgentAccount {
                 }
             }
             self._escape.write(Default::default());
-            // if reset_timestamps {
-        //     self.last_owner_trigger_escape_attempt.write(0);
-        //     self.last_guardian_trigger_escape_attempt.write(0);
-        //     self.last_owner_escape_attempt.write(0);
-        //     self.last_guardian_escape_attempt.write(0);
-        // }
+            if reset_timestamps {
+                self.last_owner_trigger_escape_attempt.write(0);
+                self.last_guardian_trigger_escape_attempt.write(0);
+                self.last_owner_escape_attempt.write(0);
+                self.last_guardian_escape_attempt.write(0);
+            }
         }
     }
 

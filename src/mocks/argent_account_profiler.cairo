@@ -6,7 +6,7 @@ use starknet::{ClassHash, StorageAddress};
 
 #[starknet::interface]
 trait IProfilerProxy<TContractState> {
-    fn write_storage(ref self: TContractState, address: StorageAddress, value: felt252);
+    fn storage_write(ref self: TContractState, address: StorageAddress, value: felt252);
     fn upgrade(ref self: TContractState, new_implementation: ClassHash);
 }
 
@@ -23,7 +23,7 @@ mod ProfilerProxy {
 
     #[abi(embed_v0)]
     impl ProfilerProxyImpl of super::IProfilerProxy<ContractState> {
-        fn write_storage(ref self: ContractState, address: StorageAddress, value: felt252) {
+        fn storage_write(ref self: ContractState, address: StorageAddress, value: felt252) {
             storage_write_syscall(0, address, value).unwrap();
         }
 

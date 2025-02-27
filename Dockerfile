@@ -1,5 +1,5 @@
+# Temporarily building devnet manually because there's no official version that support starknet v0.13.4 while allowing to submit v1 and v2 transactions
 # Use Rust as the base image for building
-# TODO When released, revert to prev way of doing things
 FROM rust:latest AS builder
 
 # Install dependencies

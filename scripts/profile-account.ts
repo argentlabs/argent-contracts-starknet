@@ -222,17 +222,14 @@ async function deployAccountUsingProxy({
   const contract = await manager.loadContract(contract_address, profilerClassHash);
 
   const calls = [];
-
-  calls.push(contract.populateTransaction.write_storage(hash.starknetKeccak("owners_storage"), owner.storedValue));
-  calls.push(contract.populateTransaction.write_storage(hash.starknetKeccak("owners_storage") + 1n, owner.signerType));
+  const ownersStorageHash = hash.starknetKeccak("owners_storage");
+  calls.push(contract.populateTransaction.write_storage(ownersStorageHash, owner.storedValue));
+  calls.push(contract.populateTransaction.write_storage(ownersStorageHash + 1n, owner.signerType));
 
   if (guardian) {
-    calls.push(
-      contract.populateTransaction.write_storage(hash.starknetKeccak("guardians_storage"), guardian.storedValue),
-    );
-    calls.push(
-      contract.populateTransaction.write_storage(hash.starknetKeccak("guardians_storage") + 1n, guardian.signerType),
-    );
+    const guardiansStorageHash = hash.starknetKeccak("guardians_storage");
+    calls.push(contract.populateTransaction.write_storage(guardiansStorageHash, guardian.storedValue));
+    calls.push(contract.populateTransaction.write_storage(guardiansStorageHash + 1n, guardian.signerType));
   }
 
   calls.push(contract.populateTransaction.upgrade(latestClassHash));

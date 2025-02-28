@@ -96,7 +96,11 @@ export class WebauthnOwner extends KeyPair {
   }
 
   public get storedValue(): bigint {
-    throw new Error("Not implemented yet");
+    return this.guid;
+  }
+
+  public get signerType(): SignerType {
+    return SignerType.Webauthn;
   }
 
   public get signer(): CairoCustomEnum {
@@ -105,13 +109,13 @@ export class WebauthnOwner extends KeyPair {
       rp_id_hash: this.rpIdHash,
       pubkey: uint256.bnToUint256(buf2hex(this.publicKey)),
     };
-    return signerTypeToCustomEnum(SignerType.Webauthn, signer);
+    return signerTypeToCustomEnum(this.signerType, signer);
   }
 
   public async signRaw(messageHash: string): Promise<ArraySignatureType> {
     const webauthnSigner = this.signer.variant.Webauthn;
     const webauthnSignature = await this.signHash(messageHash);
-    return CallData.compile([signerTypeToCustomEnum(SignerType.Webauthn, { webauthnSigner, webauthnSignature })]);
+    return CallData.compile([signerTypeToCustomEnum(this.signerType, { webauthnSigner, webauthnSignature })]);
   }
 
   public async signHash(transactionHash: string): Promise<WebauthnSignature> {

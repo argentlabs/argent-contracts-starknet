@@ -95,7 +95,7 @@ describe("Gas griefing", function () {
     );
   });
 
-  // TODO With the next devnet we cannot run this test it will fail with
+  // TODO With this devnet we cannot run this test it will fail with
   // `53: Max fee is smaller than the minimal transaction cost (validation plus fee transfer): undefined`
   // it("Block high tip TxV3", async function () {
   //   const { account, accountContract, guardian } = await deployAccount({

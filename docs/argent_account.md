@@ -133,7 +133,7 @@ To prevent from accidentally bricking the account by changing the owner to some 
 
 ## Release Notes
 
-Find the Argent Account Release notes [here](./CHANGELOG_account.md)
+Find the Argent Account Release notes [here](./CHANGELOG_argent_account.md)
 
 ## Deployments
 

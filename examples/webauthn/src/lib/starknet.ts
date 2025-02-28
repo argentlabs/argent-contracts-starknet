@@ -1,6 +1,5 @@
 import * as env from "$env/static/public";
 import {
-  Account,
   CallData,
   Contract,
   ProviderInterface,
@@ -18,24 +17,25 @@ import {
   type Call,
   type RawArgs,
   type Signature,
-  type V2DeclareSignerDetails,
-  type V2DeployAccountSignerDetails,
-  type V2InvocationsSignerDetails,
+  type V3DeclareSignerDetails,
+  type V3DeployAccountSignerDetails,
+  type V3InvocationsSignerDetails,
 } from "starknet";
+import { ArgentAccount } from "./account";
 
 export type ProviderType = RpcProvider;
 
-let deployer: Account;
+let deployer: ArgentAccount;
 
-export const ethAddress = "0x49D36570D4E46F48E99674BD3FCC84644DDD6B96F7C741B1562B82F9E004DC7";
-let ethContract: Contract;
+export const strkAddress = "0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d";
+let strkContract: Contract;
 
-export async function getEthContract(provider: ProviderType) {
-  if (ethContract) {
-    return ethContract;
+export async function getStrkContract(provider: ProviderType) {
+  if (strkContract) {
+    return strkContract;
   }
-  ethContract = await loadContract(ethAddress, provider);
-  return ethContract;
+  strkContract = await loadContract(strkAddress, provider);
+  return strkContract;
 }
 
 export async function loadDeployer(provider: ProviderType) {
@@ -44,17 +44,17 @@ export async function loadDeployer(provider: ProviderType) {
   }
   if (providerUrl(provider).includes("localhost")) {
     const [{ address, private_key }] = await predeployedAccounts(provider);
-    return new Account(provider, address, private_key);
+    return new ArgentAccount(provider, address, private_key, "1", RPC.ETransactionVersion.V3);
   }
   if (!env.PUBLIC_DEPLOYER_ADDRESS || !env.PUBLIC_DEPLOYER_PRIVATE_KEY) {
     throw new Error("Need deployer credentials for non-devnet");
   }
-  return new Account(
+  return new ArgentAccount(
     provider,
     env.PUBLIC_DEPLOYER_ADDRESS,
     env.PUBLIC_DEPLOYER_PRIVATE_KEY,
     undefined,
-    RPC.ETransactionVersion.V2,
+    RPC.ETransactionVersion.V3,
   );
 }
 
@@ -72,13 +72,13 @@ export async function fundAccount(recipient: string, amount: number | bigint, pr
     await mintEth(recipient, provider);
     return;
   }
-  const ethContract = await getEthContract(provider);
+  const strkContract = await getStrkContract(provider);
   const deployer = await loadDeployer(provider);
-  ethContract.connect(deployer);
+  strkContract.connect(deployer);
 
   console.log("sending ETH from deployer to new account");
   const bn = uint256.bnToUint256(amount);
-  const { transaction_hash } = await ethContract.invoke("transfer", CallData.compile([recipient, bn]));
+  const { transaction_hash } = await strkContract.invoke("transfer", CallData.compile([recipient, bn]));
   console.log("waiting for funding tx", transaction_hash);
   await provider.waitForTransaction(transaction_hash);
 }
@@ -122,7 +122,7 @@ export abstract class RawSigner implements SignerInterface {
 
   public async signTransaction(
     transactions: Call[],
-    transactionsDetail: V2InvocationsSignerDetails,
+    transactionsDetail: V3InvocationsSignerDetails,
     abis?: Abi[],
   ): Promise<Signature> {
     if (abis && abis.length !== transactions.length) {
@@ -149,7 +149,7 @@ export abstract class RawSigner implements SignerInterface {
     version,
     chainId,
     nonce,
-  }: V2DeployAccountSignerDetails) {
+  }: V3DeployAccountSignerDetails) {
     const messageHash = hash.calculateDeployAccountTransactionHash({
       contractAddress,
       classHash,
@@ -167,7 +167,7 @@ export abstract class RawSigner implements SignerInterface {
 
   public async signDeclareTransaction(
     // contractClass: ContractClass,  // Should be used once class hash is present in ContractClass
-    { classHash, maxFee, senderAddress, chainId, version, nonce, compiledClassHash }: V2DeclareSignerDetails,
+    { classHash, maxFee, senderAddress, chainId, version, nonce, compiledClassHash }: V3DeclareSignerDetails,
   ) {
     const messageHash = hash.calculateDeclareTransactionHash({
       classHash,
@@ -198,7 +198,7 @@ export async function feeToken(provider: ProviderType): Promise<{ symbol: string
 }
 
 export async function mintEth(address: string, provider: ProviderType) {
-  await handlePost(provider, "mint", { address, amount: 1e18 });
+  await handlePost(provider, "mint", { address, amount: 100e18, unit: "FRI" });
 }
 
 async function handleGet(provider: any, path: string, args?: string) {

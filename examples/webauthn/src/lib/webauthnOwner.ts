@@ -225,3 +225,28 @@ const getYParity = (messageHash: Uint8Array, pubkey: bigint, r: bigint, s: bigin
   }
   throw new Error("Could not determine y_parity");
 };
+
+export function createEstimateWebauthnOwner(owner: WebauthnOwner): KeyPair {
+  class EstimateWebauthnOwner extends WebauthnOwner {
+    public override async signRaw(messageHash: string): Promise<ArraySignatureType> {
+      const webauthnSigner = this.signer.variant.Webauthn;
+      const webauthnSignature = {
+        client_data_outro: CallData.compile(Array.from(new TextEncoder().encode(',"crossOrigin":false}'))),
+        flags: 0b00011101,
+        sign_count: 0,
+        ec_signature: {
+          r: uint256.bnToUint256("0xc303f24e2f6970f0cd1521c1ff6c661337e4a397a9d4b1bed732f14ddcb828cb"),
+          s: uint256.bnToUint256("0x61d2ef1fa3c30486656361c783ae91316e9e78301fbf4f173057ea868487d387"),
+          y_parity: false,
+        },
+      };
+      return CallData.compile([
+        signerTypeToCustomEnum(SignerType.Webauthn, {
+          webauthnSigner,
+          webauthnSignature,
+        }),
+      ]);
+    }
+  }
+  return new EstimateWebauthnOwner(owner.attestation, owner.requestSignature);
+}

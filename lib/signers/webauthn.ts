@@ -11,7 +11,7 @@ import {
   shortString,
   uint256,
 } from "starknet";
-import { KeyPair, SignerType, normalizeSecpR1Signature, signerTypeToCustomEnum } from "..";
+import { EstimateKeyPair, KeyPair, SignerType, normalizeSecpR1Signature, signerTypeToCustomEnum } from "..";
 
 const buf2hex = (buffer: ArrayBuffer, prefix = true) =>
   `${prefix ? "0x" : ""}${[...new Uint8Array(buffer)].map((x) => x.toString(16).padStart(2, "0")).join("")}`;
@@ -108,6 +108,10 @@ export class WebauthnOwner extends KeyPair {
     return signerTypeToCustomEnum(SignerType.Webauthn, signer);
   }
 
+  public get estimateSigner(): KeyPair {
+    return new EstimateWebauthnOwner(this.publicKey, this.rpId, this.origin);
+  }
+
   public async signRaw(messageHash: string): Promise<ArraySignatureType> {
     const webauthnSigner = this.signer.variant.Webauthn;
     const webauthnSignature = await this.signHash(messageHash);
@@ -167,6 +171,68 @@ export class WebauthnOwner extends KeyPair {
   }
 }
 
+export class EstimateWebauthnOwner extends EstimateKeyPair {
+  rpIdHash: Uint256;
+
+  constructor(
+    public publicKey: ArrayBuffer,
+    public rpId = "localhost",
+    public origin = "http://localhost:5173",
+  ) {
+    super();
+    this.rpIdHash = uint256.bnToUint256(buf2hex(sha256(rpId)));
+  }
+
+  public get guid(): bigint {
+    const rpIdHashAsU256 = this.rpIdHash;
+    const publicKeyAsU256 = uint256.bnToUint256(buf2hex(this.publicKey));
+    const originBytes = toCharArray(this.origin);
+    const elements = [
+      shortString.encodeShortString("Webauthn Signer"),
+      originBytes.length,
+      ...originBytes,
+      rpIdHashAsU256.low,
+      rpIdHashAsU256.high,
+      publicKeyAsU256.low,
+      publicKeyAsU256.high,
+    ];
+    return BigInt(hash.computePoseidonHashOnElements(elements));
+  }
+
+  public get storedValue(): bigint {
+    throw new Error("Not implemented yet");
+  }
+
+  public get signer(): CairoCustomEnum {
+    const signer: WebauthnSigner = {
+      origin: toCharArray(this.origin),
+      rp_id_hash: this.rpIdHash,
+      pubkey: uint256.bnToUint256(buf2hex(this.publicKey)),
+    };
+    return signerTypeToCustomEnum(SignerType.Webauthn, signer);
+  }
+
+  public override async signRaw(messageHash: string): Promise<ArraySignatureType> {
+    const webauthnSigner = this.signer.variant.Webauthn;
+    const webauthnSignature = {
+      client_data_outro: CallData.compile(Array.from(new TextEncoder().encode(',"crossOrigin":false}'))),
+      flags: 0b00011101,
+      sign_count: 0,
+      ec_signature: {
+        r: uint256.bnToUint256("0xc303f24e2f6970f0cd1521c1ff6c661337e4a397a9d4b1bed732f14ddcb828cb"),
+        s: uint256.bnToUint256("0x61d2ef1fa3c30486656361c783ae91316e9e78301fbf4f173057ea868487d387"),
+        y_parity: false,
+      },
+    };
+    return CallData.compile([
+      signerTypeToCustomEnum(SignerType.Webauthn, {
+        webauthnSigner,
+        webauthnSignature,
+      }),
+    ]);
+  }
+}
+
 // LEGACY WEBAUTHN
 type LegacyWebauthnSignature = {
   cross_origin: boolean;
@@ -185,6 +251,10 @@ export class LegacyWebauthnOwner extends WebauthnOwner {
     return { ...super.getClientData(challenge), crossOrigin: this.crossOrigin };
   }
 
+  public override get estimateSigner(): KeyPair {
+    return new EstimateLegacyWebauthnOwner(this.publicKey, this.rpId, this.origin);
+  }
+
   public async signHash(transactionHash: string): Promise<LegacyWebauthnSignature> {
     const webauthnSignature = await super.signHash(`${normalizeTransactionHash(transactionHash)}01`);
     return {
@@ -195,6 +265,33 @@ export class LegacyWebauthnOwner extends WebauthnOwner {
         Cairo1: {},
       }),
     };
+  }
+}
+
+export class EstimateLegacyWebauthnOwner extends EstimateWebauthnOwner {
+  public override async signRaw(messageHash: string): Promise<ArraySignatureType> {
+    const webauthnSigner = this.signer.variant.Webauthn;
+    const webauthnSignature = {
+      cross_origin: false,
+      client_data_outro: CallData.compile(Array.from(new TextEncoder().encode(',"crossOrigin":false}'))),
+      flags: 0b00011101,
+      sign_count: 0,
+      ec_signature: {
+        r: uint256.bnToUint256("0xc303f24e2f6970f0cd1521c1ff6c661337e4a397a9d4b1bed732f14ddcb828cb"),
+        s: uint256.bnToUint256("0x61d2ef1fa3c30486656361c783ae91316e9e78301fbf4f173057ea868487d387"),
+        y_parity: false,
+      },
+      sha256_implementation: new CairoCustomEnum({
+        Cairo0: undefined,
+        Cairo1: {},
+      }),
+    };
+    return CallData.compile([
+      signerTypeToCustomEnum(SignerType.Webauthn, {
+        webauthnSigner,
+        webauthnSignature,
+      }),
+    ]);
   }
 }
 

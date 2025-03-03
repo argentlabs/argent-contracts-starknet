@@ -162,6 +162,7 @@ export abstract class KeyPair extends RawSigner {
   abstract get signer(): CairoCustomEnum;
   abstract get guid(): bigint;
   abstract get storedValue(): bigint;
+  abstract get estimateSigner(): KeyPair;
 
   public get compiledSigner(): Calldata {
     return CallData.compile([this.signer]);
@@ -174,6 +175,12 @@ export abstract class KeyPair extends RawSigner {
   }
   public get compiledSignerAsOption() {
     return CallData.compile([this.signerAsOption]);
+  }
+}
+
+export abstract class EstimateKeyPair extends KeyPair {
+  public get estimateSigner(): KeyPair {
+    return this;
   }
 }
 
@@ -205,13 +212,17 @@ export class StarknetKeyPair extends KeyPair {
     return signerTypeToCustomEnum(SignerType.Starknet, { signer: this.publicKey });
   }
 
+  public get estimateSigner(): KeyPair {
+    return new EstimateStarknetKeyPair(this.publicKey);
+  }
+
   public async signRaw(messageHash: string): Promise<string[]> {
     const { r, s } = ec.starkCurve.sign(messageHash, this.pk);
     return starknetSignatureType(this.publicKey, r, s);
   }
 }
 
-export class EstimateStarknetKeyPair extends KeyPair {
+export class EstimateStarknetKeyPair extends EstimateKeyPair {
   readonly pubKey: bigint;
 
   constructor(pubKey: bigint) {

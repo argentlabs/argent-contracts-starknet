@@ -1,9 +1,9 @@
 import { CairoOption, CairoOptionVariant, CallData, RPC, hash, uint256 } from "starknet";
-import { ArgentAccount } from "./account";
+import { ArgentAccount } from "./accounts";
 import accountCasm from "./argent_ArgentAccount.compiled_contract_class.json";
 import accountSierra from "./argent_ArgentAccount.contract_class.json";
 import { buf2hex, hex2buf, hexStringToUint8Array } from "./bytes";
-import { ArgentSigner } from "./signers";
+import { ArgentSigner } from "./signers/signers";
 import { fundAccount, getStrkContract, loadDeployer, type ProviderType } from "./starknet";
 import { WebauthnAttestation, createWebauthnAttestation, requestSignature } from "./webauthnAttestation";
 import { WebauthnOwner } from "./webauthnOwner";
@@ -156,6 +156,6 @@ export async function transferDust(account: ArgentAccount, provider: ProviderTyp
   strkContract.connect(account);
   const recipient = 69;
   const amount = uint256.bnToUint256(1);
-  const response = await strkContract.invoke("transfer", CallData.compile([recipient, amount]));
+  const response = await strkContract.transfer(recipient, amount);
   return response.transaction_hash;
 }

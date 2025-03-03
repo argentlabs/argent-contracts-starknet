@@ -21,7 +21,7 @@ import {
   type V3DeployAccountSignerDetails,
   type V3InvocationsSignerDetails,
 } from "starknet";
-import { ArgentAccount } from "./account";
+import { ArgentAccount } from "./accounts";
 
 export type ProviderType = RpcProvider;
 

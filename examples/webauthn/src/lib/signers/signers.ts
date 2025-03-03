@@ -11,6 +11,7 @@ import {
   RPC,
   Signature,
   SignerInterface,
+  TypedData,
   V2DeclareSignerDetails,
   V2DeployAccountSignerDetails,
   V2InvocationsSignerDetails,
@@ -38,7 +39,7 @@ export abstract class RawSigner implements SignerInterface {
     throw new Error("This signer allows multiple public keys");
   }
 
-  public async signMessage(typedDataArgument: typedData.TypedData, accountAddress: string): Promise<Signature> {
+  public async signMessage(typedDataArgument: TypedData, accountAddress: string): Promise<Signature> {
     const messageHash = typedData.getMessageHash(typedDataArgument, accountAddress);
     return this.signRaw(messageHash);
   }
@@ -161,6 +162,7 @@ export abstract class KeyPair extends RawSigner {
   abstract get signer(): CairoCustomEnum;
   abstract get guid(): bigint;
   abstract get storedValue(): bigint;
+  abstract get estimateSigner(): KeyPair;
 
   public get compiledSigner(): Calldata {
     return CallData.compile([this.signer]);
@@ -176,52 +178,10 @@ export abstract class KeyPair extends RawSigner {
   }
 }
 
-export class StarknetKeyPair extends KeyPair {
-  pk: string;
-
-  constructor(pk?: string | bigint) {
-    super();
-    this.pk = pk ? num.toHex(pk) : `0x${encode.buf2hex(ec.starkCurve.utils.randomPrivateKey())}`;
+export abstract class EstimateKeyPair extends KeyPair {
+  public get estimateSigner(): KeyPair {
+    return this;
   }
-
-  public get privateKey(): string {
-    return this.pk;
-  }
-
-  public get publicKey() {
-    return BigInt(ec.starkCurve.getStarkKey(this.pk));
-  }
-
-  public get guid() {
-    return BigInt(hash.computePoseidonHash(shortString.encodeShortString("Starknet Signer"), this.publicKey));
-  }
-
-  public get storedValue() {
-    return this.publicKey;
-  }
-
-  public get signer(): CairoCustomEnum {
-    return signerTypeToCustomEnum(SignerType.Starknet, {
-      signer: this.publicKey,
-    });
-  }
-
-  public async signRaw(messageHash: string): Promise<string[]> {
-    const { r, s } = ec.starkCurve.sign(messageHash, this.pk);
-    return starknetSignatureType(this.publicKey, r, s);
-  }
-}
-
-export function starknetSignatureType(
-  signer: bigint | number | string,
-  r: bigint | number | string,
-  s: bigint | number | string,
-) {
-  return CallData.compile([signerTypeToCustomEnum(SignerType.Starknet, { signer, r, s })]);
-}
-
-export function zeroStarknetSignatureType() {
-  return signerTypeToCustomEnum(SignerType.Starknet, { signer: 0 });
 }
 
 // reflects the signer type in signer_signature.cairo
@@ -260,10 +220,3 @@ export function signerTypeToCustomEnum(signerType: SignerType, value: any): Cair
 
   return new CairoCustomEnum(contents);
 }
-
-export function sortByGuid(keys: KeyPair[]) {
-  return keys.sort((n1, n2) => (n1.guid < n2.guid ? -1 : 1));
-}
-
-export const randomStarknetKeyPair = () => new StarknetKeyPair();
-export const randomStarknetKeyPairs = (length: number) => Array.from({ length }, randomStarknetKeyPair);

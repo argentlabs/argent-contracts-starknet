@@ -69,7 +69,7 @@ export async function loadContract(contractAddress: string, provider: ProviderIn
 export async function fundAccount(recipient: string, amount: number | bigint, provider: ProviderType) {
   console.log("funding account...");
   if (providerUrl(provider).includes("localhost")) {
-    await mintEth(recipient, provider);
+    await mintStrk(recipient, provider);
     return;
   }
   const strkContract = await getStrkContract(provider);
@@ -197,7 +197,7 @@ export async function feeToken(provider: ProviderType): Promise<{ symbol: string
   return handleGet(provider, "fee_token");
 }
 
-export async function mintEth(address: string, provider: ProviderType) {
+export async function mintStrk(address: string, provider: ProviderType) {
   await handlePost(provider, "mint", { address, amount: 100e18, unit: "FRI" });
 }
 

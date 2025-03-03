@@ -118,8 +118,6 @@
         {/if}
         {#await deployPromise}
           <p>Deploying...</p>
-        {:catch error}
-          <p style="color: red">Couldn't deploy account: {error.message}</p>
         {/await}
       {:else}
         <div>Account address: <small>{account.address}</small></div>

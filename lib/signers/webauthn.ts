@@ -216,6 +216,10 @@ export class EstimateWebauthnOwner extends EstimateKeyPair {
     return signerTypeToCustomEnum(SignerType.Webauthn, signer);
   }
 
+  public get signerType(): SignerType {
+    return SignerType.Webauthn;
+  }
+
   public override async signRaw(messageHash: string): Promise<ArraySignatureType> {
     const webauthnSigner = this.signer.variant.Webauthn;
     const webauthnSignature = {

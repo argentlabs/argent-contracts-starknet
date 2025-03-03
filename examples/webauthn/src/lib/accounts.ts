@@ -1,12 +1,4 @@
-import { expect } from "chai";
-import {
-  Account,
-  EstimateFee,
-  EstimateFeeAction,
-  Provider,
-  UniversalDetails,
-  num,
-} from "starknet";
+import { Account, EstimateFee, EstimateFeeAction, Provider, UniversalDetails, num } from "starknet";
 import { ArgentSigner } from "./signers/signers";
 
 export class ArgentAccount extends Account {

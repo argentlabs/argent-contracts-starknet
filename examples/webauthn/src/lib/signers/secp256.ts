@@ -1,9 +1,5 @@
-import * as utils from "@noble/curves/abstract/utils";
 import { p256 as secp256r1 } from "@noble/curves/p256";
 import { secp256k1 } from "@noble/curves/secp256k1";
-import { Signature as EthersSignature, Wallet } from "ethers";
-import { CairoCustomEnum, CallData, Uint256, hash, num, shortString, uint256 } from "starknet";
-import { EstimateKeyPair, KeyPair, SignerType, signerTypeToCustomEnum } from "../signers/signers";
 
 export type NormalizedSecpSignature = { r: bigint; s: bigint; yParity: boolean };
 

@@ -110,6 +110,10 @@ export class EstimateEthKeyPair extends EstimateKeyPair {
     return signerTypeToCustomEnum(SignerType.Secp256k1, { signer: this.address });
   }
 
+  public get signerType(): SignerType {
+    return SignerType.Secp256k1;
+  }
+
   public async signRaw(messageHash: string): Promise<string[]> {
     return CallData.compile([
       signerTypeToCustomEnum(SignerType.Secp256k1, {
@@ -292,6 +296,10 @@ export class EstimateSecp256r1KeyPair extends EstimateKeyPair {
 
   public get signer() {
     return signerTypeToCustomEnum(SignerType.Secp256r1, { signer: this.publicKey });
+  }
+
+  public get signerType(): SignerType {
+    return SignerType.Secp256r1;
   }
 
   public async signRaw(messageHash: string): Promise<string[]> {

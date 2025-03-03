@@ -122,7 +122,7 @@
       {:else}
         <div>Account address: <small>{account.address}</small></div>
         <h1>3. Send transaction</h1>
-        <p>Transfer 1 wei to address {recipient}:</p>
+        <p>Transfer 1 fri to address {recipient}:</p>
         <input type="text" bind:value={recipient} />
         <br />
         <br />

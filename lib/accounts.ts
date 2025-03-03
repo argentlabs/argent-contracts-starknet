@@ -213,8 +213,8 @@ async function deployAccountInner(params: DeployAccountParams): Promise<ArgentWa
   const { classHash, salt } = finalParams;
   const contractAddress = hash.calculateContractAddressFromHash(salt, classHash, constructorCalldata, 0);
   const fundingCall = finalParams.useTxV3
-    ? await fundAccountCall(contractAddress, finalParams.fundingAmount ?? 5e18, "STRK") // 5 STRK
-    : await fundAccountCall(contractAddress, finalParams.fundingAmount ?? 1e18, "ETH"); // 1 ETH
+    ? fundAccountCall(contractAddress, finalParams.fundingAmount ?? 5e18, "STRK") // 5 STRK
+    : fundAccountCall(contractAddress, finalParams.fundingAmount ?? 1e18, "ETH"); // 1 ETH
   const calls = fundingCall ? [fundingCall] : [];
 
   const transactionVersion = finalParams.useTxV3 ? RPC.ETransactionVersion.V3 : RPC.ETransactionVersion.V2;
@@ -457,16 +457,12 @@ export async function getSignerDetails(account: ArgentAccount, calls: Call[]): P
 }
 
 export async function fundAccount(recipient: string, amount: number | bigint, token: "ETH" | "STRK") {
-  const call = await fundAccountCall(recipient, amount, token);
+  const call = fundAccountCall(recipient, amount, token);
   const response = await deployer.execute(call ? [call] : []);
   await manager.waitForTx(response.transaction_hash);
 }
 
-export async function fundAccountCall(
-  recipient: string,
-  amount: number | bigint,
-  token: "ETH" | "STRK",
-): Promise<Call | undefined> {
+export function fundAccountCall(recipient: string, amount: number | bigint, token: "ETH" | "STRK"): Call | undefined {
   if (amount <= 0n) {
     return;
   }

@@ -67,5 +67,6 @@ pub mod mocks {
     mod recovery_mocks;
     mod signature_verifier;
     pub mod src5_mocks;
+    mod stable_address_deployer_mock;
 }
 

@@ -20,8 +20,8 @@ export const WithReceipts = <T extends Constructor<RpcProvider>>(Base: T) =>
       if (typeof execute === "string") {
         transactionHash = execute;
       } else {
-        const executionResult = await execute;
-        transactionHash = executionResult["transaction_hash"];
+        const { transaction_hash } = await execute;
+        transactionHash = transaction_hash;
       }
       return this.waitForTransaction(transactionHash, { ...options });
     }

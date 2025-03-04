@@ -6,12 +6,13 @@ import { WithReceipts } from "./receipts";
 import { TokenManager } from "./tokens";
 
 dotenv.config({ override: true });
+config.update({ logLevel: "ERROR" });
 
 export class Manager extends WithReceipts(WithContracts(WithDevnet(RpcProvider))) {
   tokens: TokenManager;
 
   constructor(nodeUrl: string) {
-    // If devnet, use mainnet chain id
+    // If devnet, hardcode chain id
     const details: any = { nodeUrl };
     if (nodeUrl === devnetBaseUrl) {
       details.chainId = constants.StarknetChainId.SN_SEPOLIA;
@@ -31,8 +32,6 @@ if (process.env.RPC_URL && !process.argv.includes(`--allow-rpc-url-env`)) {
   console.log("When using RPC_URL, you must pass --allow-rpc-url-env");
   process.exit(1);
 }
-
-config.update({ logLevel: "ERROR" });
 
 export const manager = new Manager(process.env.RPC_URL || `${devnetBaseUrl}`);
 

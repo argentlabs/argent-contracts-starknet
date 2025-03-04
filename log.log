@@ -1,0 +1,326 @@
+yarn run v1.22.22
+$ /Users/gaetanansotte/argent-contracts-starknet-private/node_modules/.bin/tsc
+Done in 1.55s.
+yarn run v1.22.22
+$ /Users/gaetanansotte/argent-contracts-starknet-private/node_modules/.bin/mocha --recursive tests-integration/ --extension .test.ts
+Provider: http://127.0.0.1:5050
+RPC version: 0.7.1
+Deployer: 0x64b48806902a367c8598f4f95c305e8c1a1acba5f082d294a43793113115691
+
+
+  ArgentAccount
+    ✔ Deploy externally
+    ✔ Self deployment (TxV3: false)
+    ✔ Self deployment (TxV3: true)
+    ✔ Expect an error when owner is zero
+    ✔ Expect 'Entry point X not found' when calling the constructor
+    change_owners(...)
+      ✔ Should be possible to change_owners
+      ✔ Should not require a signature if owner is still valid
+      ✔ Expect parsing error when new_owner is zero
+    change_guardians()
+      ✔ Expect the escape to be reset
+
+  ArgentAccount: declare
+	ArgentAccount declared
+    ✔ Expect 'argent/invalid-contract-version' when trying to declare Cairo contract version1 (CASM) (TxV3: false) (24069ms)
+	ArgentAccount declared
+    ✔ Expect the account to be able to declare a Cairo contract version2 (SIERRA) (TxV3:false) (24945ms)
+	ArgentAccount declared
+    ✔ Expect 'argent/invalid-contract-version' when trying to declare Cairo contract version1 (CASM) (TxV3: true) (25158ms)
+	ArgentAccount declared
+    ✔ Expect the account to be able to declare a Cairo contract version2 (SIERRA) (TxV3:true) (24747ms)
+
+  ArgentAccount: escape mechanism
+    trigger_escape_owner(new_owner)
+      ✔ Expect 'argent/only-self' when called from another account
+      ✔ Expect parsing error when setting the new_owner to zero
+      ✔ Expect 'argent/last-escape-too-recent' when trying to escape again too early
+      ✔ Cancel owner escape by another owner escape
+      Triggered by guardian
+        ✔ Expect to be able to trigger it alone
+        ✔ Should be possible to escape_owner when a small escape security period is used
+        ✔ Expect 'argent/invalid-escape' when escaping too early when a small escape security period is used
+        ✔ Should be possible to use the legacy signature on trigger_escape_owner
+        ✔ Triggered by guardian. Expect 'argent/cannot-override-escape' when the owner is already being escaped
+        ✔ Expect to be able to trigger it alone when the previous escape expired
+    escape_owner()
+      ✔ Expect 'argent/only-self' when called from another account
+	Proxy declared
+	Account-0.2.3.1 declared
+      ✔ Cancel escape when upgrading (13503ms)
+      ✔ Clear expired escape when upgrading (3694ms)
+      Escaping by guardian
+        ✔ Expect to be able to escape the owner alone
+        ✔ Should be possible to escape at max U64
+        ✔ Expect 'argent/invalid-escape' when escape status == NotReady
+        ✔ Expect 'argent/invalid-escape' when escape status == None
+        ✔ Expect 'argent/invalid-escape' when escape status == Expired
+        ✔ Expect 'argent/invalid-escape' when escape_type != ESCAPE_TYPE_OWNER
+    trigger_escape_guardian(new_guardian)
+      ✔ Expect the owner to be able to trigger it alone
+      ✔ Should be possible to escape_guardian when a small escape security period is used
+      ✔ Expect 'argent/invalid-escape' when escaping too early when a small escape security period is used
+      ✔ Should be possible to use the legacy signature on trigger_escape_guardian
+      ✔ Expect 'argent/last-escape-too-recent' when trying too escape again too early
+      ✔ Expect the owner to be able to trigger_escape_guardian when trigger_escape_owner was performed
+      ✔ Expect 'argent/only-self' when called from another account
+      ✔ Expect 'argent/guardian-required' when guardian is zero
+    escape_guardian()
+      ✔ Expect the owner to be able to escape the guardian alone
+      ✔ Should be possible to use the legacy signature on escape_guardian
+      ✔ Expect 'argent/only-self' when called from another account
+      ✔ Expect 'argent/guardian-required' when guardian is zero
+      ✔ Expect 'argent/invalid-escape' when escape status == NotReady
+      ✔ Expect 'argent/invalid-escape' when escape status == None
+      ✔ Expect 'argent/invalid-escape' when escape status == Expired
+      ✔ Expect 'argent/invalid-escape' when escape_type != ESCAPE_TYPE_GUARDIAN
+    cancel_escape()
+      ✔ Expect the escape to be canceled when trigger_escape_owner
+      ✔ Expect the escape to be canceled when trigger_escape_guardian
+      ✔ Expect the escape to be canceled even if expired
+      ✔ Expect the escape to be canceled by another guardian when trigger_escape_owner
+      ✔ Expect the escape to be canceled by another owner when trigger_escape_owner
+      ✔ Expect 'argent/only-self' when called from another account
+      ✔ Expect 'argent/invalid-escape' when escape == None
+
+  Estimates
+    ArgentAccount
+      ✔ Should be able to estimate using the wrong signature but fail execution using txv3: false
+      ✔ Use Eip191Signer using txv3: false
+    Multisig
+	ArgentMultisigAccount declared
+      ✔ Should be able to estimate using the wrong signature but fail execution (15698ms)
+      ✔ Use Eip191Signer using txv3: false
+    ArgentAccount
+      ✔ Should be able to estimate using the wrong signature but fail execution using txv3: true
+      ✔ Use Eip191Signer using txv3: true
+    Multisig
+      ✔ Should be able to estimate using the wrong signature but fail execution
+      ✔ Use Eip191Signer using txv3: true
+
+  ArgentAccount: multicall
+    ✔ Should be possible to send strk (12237ms)
+    ✔ Should be possible to send strk with a Cairo1 account using a multicall (11590ms)
+    ✔ Should be possible to invoke different contracts in a multicall (11675ms)
+    ✔ Should keep the tx in correct order (11197ms)
+    ✔ Expect an error when a multicall contains a Call referencing the account itself
+
+  ArgentAccount: outside execution
+    ✔ Correct message hash
+    ✔ Basics: Rev 0 (3899ms)
+    ✔ Basics: Revision 1 (3700ms)
+    ✔ Avoid caller check if it caller is ANY_CALLER
+    ✔ Owner only account
+    ✔ Escape method
+    ✔ No reentrancy
+
+  ArgentAccount: Signer types
+    ✔ Waiting accounts to be filled
+
+  ArgentAccount: upgrade
+	/account-0.3.0-0x1a736d6ed154502257f02b1ccdf4d9d1089f80811cd6acad48e6b6a9d1f2003/ArgentAccount declared
+	/account-0.3.1-0x29927c8af6bccf3f6fda035981e765a7bdbf18a2dc0d630494f8758aa908e2b/ArgentAccount declared
+	/account-0.4.0-0x036078334509b514626504edc9fb252328d1a240e4e948bef8d0c08dff45927f/ArgentAccount declared
+    ✔ Waiting for upgradeData to be filled
+	MockFutureArgentAccount declared
+    ✔ Upgrade from current version FutureVersion (10344ms)
+    ✔ Reject invalid upgrade targets
+    ✔ Shouldn't upgrade from current version to itself
+    Testing recovery_from_legacy_upgrade when upgrading from 0.2.3
+      ✔ Should be possible to recover the signer (6070ms)
+      ✔ Shouldn't be possible to recover the signer twice (4009ms)
+      ✔ Shouldn't be possible to recover the signer an account that was correctly upgraded (3478ms)
+    Testing upgrade version 0.4.0 with every signer type
+      ✔ [Ethereum signature] Testing upgrade
+      ✔ [Ethereum signature] Testing upgrade without guardian Ethereum signature
+      ✔ [Secp256r1 signature] Testing upgrade
+      ✔ [Secp256r1 signature] Testing upgrade without guardian Secp256r1 signature
+      ✔ [Eip191 signature] Testing upgrade
+      ✔ [Eip191 signature] Testing upgrade without guardian Eip191 signature
+      ✔ [Webauthn signature] Testing upgrade
+      ✔ [Webauthn signature] Testing upgrade without guardian Webauthn signature
+
+  Upgrades to a different account type
+    ✔ Upgrade Account to Multisig should fail
+    ✔ Upgrade Multisig to Account should fail
+
+  Deploy UDC
+    ✔ Calculated contract address should match UDC (21155ms)
+
+  Gas griefing
+    ✔ Block guardian attempts (TxV3:false)
+    ✔ Block guardian attempts (TxV3:true)
+    ✔ Block high fee TxV1
+    ✔ Block high fee TxV3
+    ✔ Doesn't block high fee TxV3 when just under
+    ✔ Block other DA modes
+    ✔ Block deployment data
+
+  ArgentMultisig
+    ✔ Should deploy multisig contract (TxV3:false) (4100ms)
+    ✔ Should deploy multisig contract (TxV3:true) (4006ms)
+    ✔ Should fail to deploy with invalid signatures
+    ✔ Block deployment data
+
+  ArgentMultisig: Execute
+    ✔ Should be able to execute a transaction using one owner when (signer_list = 1, threshold = 1) (TxV3:false) (2580ms)
+    ✔ Should be able to execute a transaction using one owner when (signer_list = 1, threshold = 1) (TxV3:true) (2548ms)
+    ✔ Should be able to execute a transaction using one owner when (signer_list > 1, threshold = 1) 
+    ✔ Should be able to execute a transaction using multiple owners when (signer_list > 1, threshold > 1)
+    ✔ Should be able to execute multiple transactions using multiple owners when (signer_list > 1, threshold > 1) (11718ms)
+    ✔ Expect 'argent/signatures-not-sorted' when signed tx is given in the wrong order (signer_list > 1, threshold > 1)
+    ✔ Expect 'argent/signatures-not-sorted' when tx is signed by one owner twice (signer_list > 1, threshold > 1)
+
+  ArgentMultisig: outside execution
+    ✔ Correct message hash
+    ✔ Basics: Rev 0 (3773ms)
+    ✔ Avoid caller check if it caller is ANY_CALLER
+    ✔ Basics: Rev 1 (3746ms)
+    ✔ Avoid caller check if it caller is ANY_CALLER
+    ✔ No reentrancy
+
+  ArgentMultisig Recovery
+    ✔ Should be able to perform recovery on multisig (4430ms)
+    ✔ Shouldn't be possible to call 'execute_escape' when calling 'trigger_escape' (2879ms)
+    ✔ Shouldn't be possible to call 'execute_escape' when calling 'trigger_escape' (2642ms)
+    ✔ Escape should fail outside time window (2916ms)
+
+  ArgentMultisig: signer storage
+    ✔ Expect deserialization error when adding a zero signer
+    ✔ Expect deserialization error when replacing an owner with a zero signer
+    remove_signers(new_threshold, signers_to_remove)
+      ✔ Expect deserialization error when removing a 0 signer
+      ✔ Removing at index(es): 0
+      ✔ Removing at index(es): 1
+      ✔ Removing at index(es): 2
+      ✔ Removing at index(es): 0, 2
+
+  Multisig: Signers types
+    ✔ Waiting accounts to be filled
+
+  ArgentMultisig: upgrade
+	/multisig-0.1.0-0x737ee2f87ce571a58c6c8da558ec18a07ceb64a6172d5ec46171fbc80077a48/ArgentMultisig declared
+	/multisig-0.1.1-0x6e150953b26271a740bf2b6e9bca17cc52c68d765f761295de51ceb8526ee72/ArgentMultisig declared
+	/multisig-0.2.0-0x07aeca3456816e3b833506d7cc5c1313d371fbdb0ae95ee70af72a4ddbf42594/ArgentMultisig declared
+	MockFutureArgentMultisig declared
+    ✔ Upgrade from current version to FutureVersionMultisig (12538ms)
+    ✔ Shouldn't be possible to upgrade from current version to FutureVersionMultisig with extra calldata
+    ✔ Waiting for data to be filled
+    ✔ Reject invalid upgrade targets
+
+  Owner Manager Tests
+    Add Owners
+      ✔ Add 1 Owner
+      ✔ Add 2 Owners
+      ✔ Add Owner Already in the List
+    Remove Owners Tests
+      ✔ Remove 1 Owner
+      ✔ Remove 2 Owners
+      ✔ Remove Owner not in the List
+      ✔ Can't self remove without signature
+
+  ArgentAccount: session basics
+    ✔ Execute basic session (TxV3: false) (11496ms)
+    ✔ Execute basic session (TxV3: true) (11217ms)
+    ✔ Should be possible to estimate a basic session given an invalid guardian signature
+    ✔ Should be possible to estimate a basic session given an invalid session signature
+    ✔ Execute basic session when there a multiple owners (11732ms)
+    ✔ Only execute tx if session not expired (11882ms)
+    ✔ Revoke a session (12572ms)
+    ✔ Fail if proofs are misaligned
+
+  Session Account: execute caching
+    ✔ Session is successfully cached when flag set (caching: false) (22644ms)
+    ✔ Fail with 'argent/invalid-signature-len' if more than owner + guardian signed session (caching: false)
+    ✔ Expect 'session/guardian-key-mismatch' if the backend signer != guardian (caching: false)
+    ✔ Fail if a different dapp key signed session token (caching: false)
+    ✔ Fail if a different guardian public key signed session token (caching: false)
+    ✔ Fail if a different guardian signature signed session token (caching: false)
+    ✔ Session is successfully cached when flag set (caching: true) (22332ms)
+    ✔ Fail with 'argent/invalid-signature-len' if more than owner + guardian signed session (caching: true) (12007ms)
+    ✔ Expect 'session/guardian-key-mismatch' if the backend signer != guardian (caching: true)
+    ✔ Fail if a different dapp key signed session token (caching: true) (12147ms)
+    ✔ Fail if a different guardian public key signed session token (caching: true)
+    ✔ Fail if a different guardian signature signed session token (caching: true)
+    ✔ Invalidate Cache if owner that signed session is removed (12457ms)
+    ✔ Fail if a large authorization is injected (11818ms)
+    ✔ Fail if a cache_owner_guid is incorrect
+    Session caching with legacy account
+      ✔ Caching is unaffected between contract upgrades
+      ✔ Caching is unaffected between contract upgrades and if you add more owners (2533ms)
+
+  ArgentAccount: session outside execution
+    ✔ Basics: Revision 0
+    ✔ Basics: Revision 1
+
+  TxV3 individual account
+    ✔ Should be possible to call dapp (11281ms)
+    ✔ Should reject paymaster data
+
+  TxV3 multisig account
+    ✔ Should be possible to call dapp (11840ms)
+    ✔ Should reject paymaster data
+
+  Simple transfer
+    ✔ Using "Starknet signature"
+    ✔ Using "Starknet signature (without guardian)"
+    ✔ Using "Ethereum signature"
+    ✔ Using "Ethereum signature (without guardian)"
+    ✔ Using "Secp256r1 signature"
+    ✔ Using "Secp256r1 signature (without guardian)"
+    ✔ Using "Eip191 signature"
+    ✔ Using "Eip191 signature (without guardian)"
+    ✔ Using "Webauthn signature"
+    ✔ Using "Webauthn signature (without guardian)"
+
+  Upgrade to latest version
+    ✔ [0.2.3.1] Should be possible to upgrade  (5286ms)
+    ✔ [0.2.3.1] Should be possible to upgrade without guardian from 0.2.3.1 (5260ms)
+    ✔ [0.2.3.1] Upgrade cairo with multicall (5079ms)
+    ✔ [0.2.3.1] Should be possible to upgrade if an owner escape is ongoing (4404ms)
+    ✔ [0.2.3.1] Should be possible to upgrade if a guardian escape is ongoing (4402ms)
+    ✔ [0.3.0] Should be possible to upgrade  (4789ms)
+    ✔ [0.3.0] Should be possible to upgrade without guardian from 0.3.0 (4854ms)
+    ✔ [0.3.0] Upgrade cairo with multicall (4943ms)
+    ✔ [0.3.0] Should be possible to upgrade if an owner escape is ongoing (3957ms)
+    ✔ [0.3.0] Should be possible to upgrade if a guardian escape is ongoing (3688ms)
+    ✔ [0.3.1] Should be possible to upgrade  (3249ms)
+    ✔ [0.3.1] Should be possible to upgrade without guardian from 0.3.1 (3237ms)
+    ✔ [0.3.1] Upgrade cairo with multicall (3323ms)
+    ✔ [0.3.1] Should be possible to upgrade if an owner escape is ongoing (3600ms)
+    ✔ [0.3.1] Should be possible to upgrade if a guardian escape is ongoing (3587ms)
+    ✔ [0.4.0] Should be possible to upgrade 
+    ✔ [0.4.0] Should be possible to upgrade without guardian from 0.4.0
+    ✔ [0.4.0] Upgrade cairo with multicall
+    ✔ [0.4.0] Should be possible to upgrade if an owner escape is ongoing (2589ms)
+    ✔ [0.4.0] Should be possible to upgrade if a guardian escape is ongoing (2552ms)
+
+  Simple transfer
+    ✔ Using "1 Starknet signature"
+    ✔ Using "5 Starknet signature"
+    ✔ Using "1 Ethereum signature"
+    ✔ Using "5 Ethereum signature"
+    ✔ Using "1 Secp256r1 signature"
+    ✔ Using "5 Secp256r1 signature"
+    ✔ Using "1 Eip191 signature"
+    ✔ Using "5 Eip191 signature"
+    ✔ Using "1 Webauthn signature"
+    ✔ Using "5 Webauthn signature"
+    ✔ Using "One of each"
+
+  Upgrade to latest version
+    ✔ Upgrade from 0.1.0 to Current Version with 1 key(s) (5786ms)
+    ✔ Upgrade from 0.1.0 to Current Version with 3 key(s) (6326ms)
+    ✔ Upgrade from 0.1.0 to Current Version with 10 key(s) (11333ms)
+    ✔ Upgrade from 0.1.1 to Current Version with 1 key(s) (5036ms)
+    ✔ Upgrade from 0.1.1 to Current Version with 3 key(s) (6093ms)
+    ✔ Upgrade from 0.1.1 to Current Version with 10 key(s) (9356ms)
+    ✔ Upgrade from 0.2.0 to Current Version with 1 key(s) (4196ms)
+    ✔ Upgrade from 0.2.0 to Current Version with 3 key(s) (4158ms)
+    ✔ Upgrade from 0.2.0 to Current Version with 10 key(s) (4147ms)
+
+
+  222 passing (17m)
+
+Done in 1002.77s.

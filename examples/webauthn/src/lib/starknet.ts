@@ -58,7 +58,6 @@ export async function loadDeployer(provider: ProviderType) {
   );
 }
 
-// TODO dup fn?
 export async function loadContract(contractAddress: string, provider: ProviderInterface): Promise<Contract> {
   const { abi } = await provider.getClassAt(contractAddress);
   if (!abi) {

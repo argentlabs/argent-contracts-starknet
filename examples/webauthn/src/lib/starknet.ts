@@ -58,7 +58,7 @@ export async function loadDeployer(provider: ProviderType) {
   );
 }
 
-export async function loadContract(contractAddress: string, provider: ProviderInterface): Promise<Contract> {
+export async function loadContract(contractAddress: string, provider: ProviderInterface) {
   const { abi } = await provider.getClassAt(contractAddress);
   if (!abi) {
     throw new Error("Error while getting ABI");

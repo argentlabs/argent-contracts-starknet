@@ -9,7 +9,7 @@ interface Event {
   data?: string[];
 }
 
-export interface EventWithName extends Event {
+interface EventWithName extends Event {
   eventName: string;
 }
 

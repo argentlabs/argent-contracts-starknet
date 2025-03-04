@@ -22,7 +22,6 @@ import {
   UniversalDetails,
   hash,
   num,
-  shortString,
   uint256,
 } from "starknet";
 import { manager } from "./manager";
@@ -30,8 +29,6 @@ import { getOutsideExecutionCall } from "./outsideExecution";
 import { LegacyArgentSigner, LegacyKeyPair, LegacyMultisigSigner, LegacyStarknetKeyPair } from "./signers/legacy";
 import { ArgentSigner, KeyPair, RawSigner, randomStarknetKeyPair } from "./signers/signers";
 import { ethAddress, strkAddress } from "./tokens";
-
-export const VALID = BigInt(shortString.encodeShortString("VALID"));
 
 export class ArgentAccount extends Account {
   // Increase the gas limit by 30% to avoid failures due to gas estimation being too low with tx v3 and transactions the use escaping
@@ -60,24 +57,11 @@ export class ArgentAccount extends Account {
     if (!detail.skipValidate) {
       detail.skipValidate = false;
     }
-    if (detail.resourceBounds) {
-      return super.execute(calls, abi, detail);
-    }
-    const estimate = await this.estimateFee(calls, detail);
-    return super.execute(calls, abi, {
-      ...detail,
-      resourceBounds: {
-        ...estimate.resourceBounds,
-        l1_gas: {
-          ...estimate.resourceBounds.l1_gas,
-          max_amount: num.toHexString(num.addPercent(estimate.resourceBounds.l1_gas.max_amount, 30)),
-        },
-      },
-    });
+    return super.execute(calls, abi, detail);
   }
 }
 
-export class ArgentWallet implements ArgentWallet {
+class ArgentWallet implements ArgentWallet {
   constructor(
     public readonly account: ArgentAccount,
     public readonly classHash: string,
@@ -134,12 +118,12 @@ export const deployer = (() => {
   if (manager.isDevnet) {
     const devnetAddress = "0x64b48806902a367c8598f4f95c305e8c1a1acba5f082d294a43793113115691";
     const devnetPrivateKey = "0x71d7bb07b9a64f6f78ac4c816aff4da9";
-    return new Account(manager, devnetAddress, devnetPrivateKey, undefined, RPC.ETransactionVersion.V3);
+    return new Account(manager, devnetAddress, devnetPrivateKey, "1", RPC.ETransactionVersion.V3);
   }
   const address = process.env.ADDRESS;
   const privateKey = process.env.PRIVATE_KEY;
   if (address && privateKey) {
-    return new Account(manager, address, privateKey, undefined, RPC.ETransactionVersion.V3);
+    return new Account(manager, address, privateKey, "1", RPC.ETransactionVersion.V3);
   }
   throw new Error("Missing deployer address or private key, please set ADDRESS and PRIVATE_KEY env variables.");
 })();
@@ -302,15 +286,26 @@ async function deployAccountInner(params: DeployAccountParams): Promise<ArgentWa
       };
       finalCalls.push(await getOutsideExecutionCall(outsideCall, contractAddress, signer, TypedDataRevision.ACTIVE));
     }
-    const { transaction_hash } = await deployer.execute(finalCalls);
+    // if devnet, hardcode resource bounds
+    const details = manager.isDevnet
+      ? {
+          resourceBounds: {
+            l1_gas: { max_amount: "0x30000", max_price_per_unit: "0x300000000000" },
+            l2_gas: { max_amount: "0x0", max_price_per_unit: "0x0" },
+          },
+        }
+      : {};
+    const { transaction_hash } = await deployer.execute(finalCalls, undefined, details);
     transactionHash = transaction_hash;
   }
 
-  await manager.waitForTransaction(transactionHash);
+  if (!manager.isDevnet) {
+    await manager.waitForTransaction(transactionHash);
+  }
   return await ArgentWallet.create({ ...finalParams, account, transactionHash });
 }
 
-export type DeployAccountParams = {
+type DeployAccountParams = {
   useTxV3?: boolean;
   classHash?: string;
   owners?: KeyPair[];

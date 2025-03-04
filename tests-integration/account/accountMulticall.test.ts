@@ -7,7 +7,7 @@ describe("ArgentAccount: multicall", function () {
   let strkContract: Contract;
 
   before(async () => {
-    mockDappContract = await manager.deployContract("MockDapp");
+    mockDappContract = await manager.declareAndDeployContract("MockDapp");
     strkContract = await manager.tokens.strkContract();
   });
 

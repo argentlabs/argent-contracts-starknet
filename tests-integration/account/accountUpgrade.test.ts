@@ -55,7 +55,7 @@ describe("ArgentAccount: upgrade", function () {
 
   before(async () => {
     argentAccountClassHash = await manager.declareLocalContract("ArgentAccount");
-    mockDapp = await manager.deployContract("MockDapp");
+    mockDapp = await manager.declareAndDeployContract("MockDapp");
 
     upgradeData.push({
       name: "0.2.3.1",

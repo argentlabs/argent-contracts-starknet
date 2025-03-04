@@ -25,7 +25,7 @@ describe("ArgentAccount: outside execution", function () {
   let mockDapp: Contract;
 
   before(async () => {
-    mockDapp = await manager.deployContract("MockDapp");
+    mockDapp = await manager.declareAndDeployContract("MockDapp");
   });
 
   it("Correct message hash", async function () {

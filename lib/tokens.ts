@@ -51,6 +51,8 @@ export class TokenManager {
   async fundAccount(recipient: string, amount: number | bigint, token: "ETH" | "STRK") {
     const call = fundAccountCall(recipient, amount, token);
     const response = await deployer.execute(call ? [call] : []);
-    await this.manager.waitForTransaction(response.transaction_hash);
+    if (!this.manager.isDevnet) {
+      await this.manager.waitForTransaction(response.transaction_hash);
+    }
   }
 }

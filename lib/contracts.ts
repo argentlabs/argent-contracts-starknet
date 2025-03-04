@@ -7,7 +7,6 @@ import {
   Contract,
   DeclareContractPayload,
   ProviderInterface,
-  UniversalDeployerContractPayload,
   UniversalDetails,
   json,
 } from "starknet";
@@ -16,7 +15,7 @@ import { WithDevnet } from "./devnet";
 
 export const contractsFolder = "./target/release/argent_";
 export const fixturesFolder = "./tests-integration/fixtures/argent_";
-export const artifactsFolder = "./deployments/artifacts";
+const artifactsFolder = "./deployments/artifacts";
 
 export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) =>
   class extends Base {
@@ -97,16 +96,10 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
       return new ContractWithClass(abi, contractAddress, this, classHash);
     }
 
-    async deployContract(
-      contractName: string,
-      payload: Omit<UniversalDeployerContractPayload, "classHash"> | UniversalDeployerContractPayload[] = {},
-      details?: UniversalDetails,
-      folder = contractsFolder,
-    ): Promise<ContractWithClass> {
-      const classHash = await this.declareLocalContract(contractName, true, folder);
-      const { contract_address } = await deployer.deployContract({ ...payload, classHash }, details);
+    async declareAndDeployContract(contractName: string): Promise<ContractWithClass> {
+      const classHash = await this.declareLocalContract(contractName, true, contractsFolder);
+      const { contract_address } = await deployer.deployContract({ classHash });
 
-      // TODO could avoid network request and just create the contract using the ABI
       return await this.loadContract(contract_address, classHash);
     }
   };

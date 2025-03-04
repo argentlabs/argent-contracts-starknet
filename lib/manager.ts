@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-import { RpcProvider, config } from "starknet";
+import { RpcProvider, config, constants } from "starknet";
 import { WithContracts } from "./contracts";
 import { WithDevnet, devnetBaseUrl } from "./devnet";
 import { WithReceipts } from "./receipts";
@@ -11,7 +11,12 @@ export class Manager extends WithReceipts(WithContracts(WithDevnet(RpcProvider))
   tokens: TokenManager;
 
   constructor(nodeUrl: string) {
-    super({ nodeUrl });
+    // If devnet, use mainnet chain id
+    const details: any = { nodeUrl };
+    if (nodeUrl === devnetBaseUrl) {
+      details.chainId = constants.StarknetChainId.SN_SEPOLIA;
+    }
+    super(details);
     this.tokens = new TokenManager(this);
   }
 

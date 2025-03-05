@@ -4,13 +4,13 @@ import { StarknetKeyPair, deployContractUDC, manager, randomStarknetKeyPair } fr
 
 describe("Deploy UDC", function () {
   let argentAccountClassHash: string;
-  let guardian: StarknetKeyPair;
   let owner: StarknetKeyPair;
+  let guardian: StarknetKeyPair;
 
   before(async () => {
     argentAccountClassHash = await manager.declareLocalContract("ArgentAccount");
-    guardian = randomStarknetKeyPair();
     owner = randomStarknetKeyPair();
+    guardian = randomStarknetKeyPair();
   });
 
   it("Calculated contract address should match UDC", async function () {

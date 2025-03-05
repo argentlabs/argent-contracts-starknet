@@ -47,20 +47,18 @@ describe("Session Account: execute caching", function () {
 
       await accountContract.is_session_authorization_cached(sessionHash, owner.guid, guardian.guid).should.eventually.be
         .false;
-      const { transaction_hash } = await accountWithDappSigner.execute(calls);
+      await accountWithDappSigner.execute(calls);
 
       await accountContract
         .is_session_authorization_cached(sessionHash, owner.guid, guardian.guid)
         .should.eventually.be.equal(useCaching);
 
-      await account.waitForTransaction(transaction_hash);
       await mockDappContract.get_number(accountContract.address).should.eventually.equal(4n);
 
       const calls2 = [mockDappContract.populateTransaction.set_number_double(4)];
 
-      const { transaction_hash: tx2 } = await accountWithDappSigner.execute(calls2);
+      await accountWithDappSigner.execute(calls2);
 
-      await account.waitForTransaction(tx2);
       await mockDappContract.get_number(accountContract.address).should.eventually.equal(8n);
     });
 

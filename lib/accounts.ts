@@ -49,20 +49,7 @@ export class ArgentAccount extends Account {
       );
       return await estimateAccount.getSuggestedFee(action, details);
     } else {
-      // TODO: make accurate estimates work with sessions and legacy signers
-      const estimateFee = await super.getSuggestedFee(action, details);
-      const PERCENT = 30;
-      return {
-        ...estimateFee,
-        suggestedMaxFee: num.addPercent(estimateFee.suggestedMaxFee, PERCENT),
-        resourceBounds: {
-          ...estimateFee.resourceBounds,
-          l1_gas: {
-            ...estimateFee.resourceBounds.l1_gas,
-            max_amount: num.toHexString(num.addPercent(estimateFee.resourceBounds.l1_gas.max_amount, PERCENT)),
-          },
-        },
-      };
+      return await super.getSuggestedFee(action, details);
     }
   }
 }

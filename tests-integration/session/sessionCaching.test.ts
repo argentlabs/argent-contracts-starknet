@@ -61,7 +61,6 @@ describe("Session Account: execute caching", function () {
       const { transaction_hash: tx2 } = await accountWithDappSigner.execute(calls2);
 
       await account.waitForTransaction(tx2);
-
       await mockDappContract.get_number(accountContract.address).should.eventually.equal(8n);
     });
 

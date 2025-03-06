@@ -46,15 +46,14 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
       }
       const payload = getDeclareContractPayload(contractName, folder);
       let details: UniversalDetails | undefined;
-      console.log(`[${new Date().toISOString()}] declareLocalContract ${contractName} start`);
       // Setting resourceBounds skips estimate
       if (this.isDevnet) {
         // TODO If we can have a mapping like this, we can save quite some time
+        // I have to clue why classHash is different from compiledClassHash
         if (contractName === "MockDapp") {
-          payload.compiledClassHash = "0x5bedb8d78b3874d1154d55adb41f08e4f576a48c8ead801b1d7c87ce59ce889";
+          payload.compiledClassHash = "0x4003961703135586f0b819506a9ac3beae88a7d76122bb8f27f4aeb9f446fa3";
           payload.classHash = "0x5bedb8d78b3874d1154d55adb41f08e4f576a48c8ead801b1d7c87ce59ce889";
         } else if (contractName === "ArgentAccount") {
-          // I have to clue why classHash is different from compiledClassHash
           payload.compiledClassHash = "0x3e701e026a27215090f6d1c14d197622344c91f7305a31049e6635c7041bd20";
           payload.classHash = "0xbe187ea57c1dcf8b0b954bf68b7aeeafe071418acbfcab5951125dca69bb97";
         } else if (contractName === "Proxy") {
@@ -97,11 +96,10 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
           },
         };
       }
-      console.log(`[${new Date().toISOString()}] declareIfNot ${contractName} start`);
-      // TODO This is taking 11s to resolve
-      // Lots of hashes done to compute the class hash...
+      // TODO This is taking 10s to resolve
+      // Lots of hashes tbd. 
+      // On my machine approx 7s for compiledClassHash and 3s for classHash
       const { class_hash, transaction_hash } = await deployer.declareIfNot(payload, details);
-      console.log(`[${new Date().toISOString()}] declareIfNot ${contractName} => ${class_hash} done`);
       if (wait && transaction_hash && this.isDevnet) {
         await this.waitForTransaction(transaction_hash);
         console.log(`\t${contractName} declared`);

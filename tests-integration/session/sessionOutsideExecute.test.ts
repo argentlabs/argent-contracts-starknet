@@ -10,10 +10,8 @@ describe("ArgentAccount: session outside execution", function () {
   let mockDapp: Contract;
 
   before(async () => {
-    [argentSessionAccountClassHash, mockDapp] = (await Promise.all([
-      manager.declareLocalContract("ArgentAccount"),
-      manager.declareAndDeployContract("MockDapp"),
-    ])) as [string, Contract];
+    argentSessionAccountClassHash = await manager.declareLocalContract("ArgentAccount");
+    mockDapp = await manager.declareAndDeployContract("MockDapp");
   });
 
   it("Basics: Revision 0", async function () {

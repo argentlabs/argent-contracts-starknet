@@ -1,4 +1,4 @@
-import { RpcProvider, constants } from "starknet";
+import { RpcProvider } from "starknet";
 import { WithContracts } from "./contracts";
 import { WithDevnet, devnetBaseUrl } from "./devnet";
 import { WithReceipts } from "./receipts";
@@ -8,12 +8,7 @@ export class Manager extends WithReceipts(WithContracts(WithDevnet(RpcProvider))
   tokens: TokenManager;
 
   constructor(nodeUrl: string) {
-    // If devnet, hardcode chain id
-    const details: any = { nodeUrl };
-    if (nodeUrl === devnetBaseUrl) {
-      details.chainId = constants.StarknetChainId.SN_SEPOLIA;
-    }
-    super(details);
+    super({ nodeUrl });
     this.tokens = new TokenManager(this);
   }
 

@@ -30,7 +30,6 @@ describe("Multisig: Signers types", function () {
   ];
 
   before(async () => {
-    // TODO promises?
     strkContract = await manager.tokens.strkContract();
 
     for (const { name, keyPair } of keyPairs) {

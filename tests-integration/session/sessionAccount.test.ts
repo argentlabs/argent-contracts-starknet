@@ -21,7 +21,6 @@ describe("ArgentAccount: session basics", function () {
   const initialTime = 1710167933n;
 
   before(async () => {
-    // TODO promises?
     sessionAccountClassHash = await manager.declareLocalContract("ArgentAccount");
     mockDappContract = await manager.declareAndDeployContract("MockDapp");
   });

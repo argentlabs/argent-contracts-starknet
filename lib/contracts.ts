@@ -48,12 +48,8 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
       let details: UniversalDetails | undefined;
       // Setting resourceBounds skips estimate
       if (this.isDevnet) {
-      console.log("PRE");
-      console.log(payload);
-      populatePayloadWithClassHashes(payload, contractName);
-      console.log("POST");
-      console.log(payload);
-      details = {
+        populatePayloadWithClassHashes(payload, contractName);
+        details = {
           skipValidate: true,
           resourceBounds: {
             l2_gas: { max_amount: "0x0", max_price_per_unit: "0x0" },
@@ -137,7 +133,7 @@ function populatePayloadWithClassHashes(payload: DeclareContractPayload, contrac
   // TODO This is taking 10s to resolve
   // Lots of hashes tbd.
   // On my machine approx 7s for compiledClassHash and 3s for classHash
-  // Only annoying when working on contracts... 
+  // Only annoying when working on contracts...
   // Should we remove the account && multisig maybe?
   // I have no clue why classHash is different from compiledClassHash
   if (contractName === "MockDapp") {

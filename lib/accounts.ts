@@ -298,6 +298,7 @@ async function deployAccountInner(params: DeployAccountParams): Promise<ArgentWa
     const { transaction_hash } = await deployer.execute(finalCalls, undefined, details);
     transactionHash = transaction_hash;
   }
+
   await manager.waitForTransaction(transactionHash);
   return await ArgentWallet.create({ ...finalParams, account, transactionHash });
 }

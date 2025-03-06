@@ -3,7 +3,7 @@ import { p256 as secp256r1 } from "@noble/curves/p256";
 import { secp256k1 } from "@noble/curves/secp256k1";
 import { Signature as EthersSignature, Wallet } from "ethers";
 import { CairoCustomEnum, CallData, Uint256, hash, num, shortString, uint256 } from "starknet";
-import { EstimateKeyPair, KeyPair, SignerType, signerTypeToCustomEnum } from "../signers/signers";
+import { KeyPair, SignerType, signerTypeToCustomEnum } from "../signers/signers";
 
 export type NormalizedSecpSignature = { r: bigint; s: bigint; yParity: boolean };
 
@@ -74,7 +74,7 @@ export class EthKeyPair extends KeyPair {
   }
 
   public get estimateSigner(): KeyPair {
-    return new EstimateEthKeyPair(this.address);
+    return new EstimateEthKeyPair(this.address, this.allowLowS);
   }
 
   public async signRaw(messageHash: string): Promise<string[]> {
@@ -93,36 +93,16 @@ export class EthKeyPair extends KeyPair {
   }
 }
 
-export class EstimateEthKeyPair extends EstimateKeyPair {
-  constructor(public address: bigint) {
-    super();
+export class EstimateEthKeyPair extends EthKeyPair {
+  constructor(
+    private _address: bigint,
+    allowLowS?: boolean,
+  ) {
+    super("0x1234561", allowLowS);
   }
 
-  public get guid(): bigint {
-    return BigInt(hash.computePoseidonHash(shortString.encodeShortString("Secp256k1 Signer"), this.address));
-  }
-
-  public get storedValue(): bigint {
-    throw new Error("Not implemented yet");
-  }
-
-  public get signer(): CairoCustomEnum {
-    return signerTypeToCustomEnum(SignerType.Secp256k1, { signer: this.address });
-  }
-
-  public get signerType(): SignerType {
-    return SignerType.Secp256k1;
-  }
-
-  public async signRaw(messageHash: string): Promise<string[]> {
-    return CallData.compile([
-      signerTypeToCustomEnum(SignerType.Secp256k1, {
-        pubkeyHash: this.address,
-        r: uint256.bnToUint256("0x6cefb49a1f4eb406e8112db9b8cdf247965852ddc5ca4d74b09e42471689495"),
-        s: uint256.bnToUint256("0x25760910405a052b7f08ec533939c54948bc530c662c5d79e8ff416579087f7"),
-        y_parity: false,
-      }),
-    ]);
+  public override get address(): bigint {
+    return this._address;
   }
 }
 
@@ -180,43 +160,13 @@ export class Eip191KeyPair extends KeyPair {
   }
 }
 
-export class EstimateEip191KeyPair extends EstimateKeyPair {
-  readonly address: bigint;
-
-  constructor(address: bigint) {
-    super();
-    this.address = address;
+export class EstimateEip191KeyPair extends Eip191KeyPair {
+  constructor(private _address: bigint) {
+    super("0x1234562");
   }
 
-  public get privateKey(): string {
-    throw new Error("EstimateEip191KeyPair does not have a private key");
-  }
-
-  public get guid(): bigint {
-    throw new Error("Not implemented yet");
-  }
-
-  public get storedValue(): bigint {
-    throw new Error("Not implemented yet");
-  }
-
-  public get signerType(): SignerType {
-    return SignerType.Eip191;
-  }
-
-  public get signer(): CairoCustomEnum {
-    return signerTypeToCustomEnum(this.signerType, { signer: this.address });
-  }
-
-  public async signRaw(messageHash: string): Promise<string[]> {
-    return CallData.compile([
-      signerTypeToCustomEnum(this.signerType, {
-        ethAddress: this.address,
-        r: uint256.bnToUint256("0x1556a70d76cc452ae54e83bb167a9041f0d062d000fa0dcb42593f77c544f647"),
-        s: uint256.bnToUint256("0x1643d14dbd6a6edc658f4b16699a585181a08dba4f6d16a9273e0e2cbed622da"),
-        y_parity: false,
-      }),
-    ]);
+  public override get address(): bigint {
+    return this._address;
   }
 }
 
@@ -258,7 +208,7 @@ export class Secp256r1KeyPair extends KeyPair {
   }
 
   public get estimateSigner(): KeyPair {
-    return new EstimateSecp256r1KeyPair(this.publicKey);
+    return new EstimateSecp256r1KeyPair(this.publicKey, this.allowLowS);
   }
 
   public async signRaw(messageHash: string): Promise<string[]> {
@@ -275,42 +225,16 @@ export class Secp256r1KeyPair extends KeyPair {
   }
 }
 
-export class EstimateSecp256r1KeyPair extends EstimateKeyPair {
-  constructor(public publicKey: Uint256) {
-    super();
+export class EstimateSecp256r1KeyPair extends Secp256r1KeyPair {
+  constructor(
+    private _publicKey: Uint256,
+    allowLowS?: boolean,
+  ) {
+    super("0x12345672", allowLowS);
   }
 
-  public get guid(): bigint {
-    return BigInt(
-      hash.computePoseidonHashOnElements([
-        shortString.encodeShortString("Secp256r1 Signer"),
-        this.publicKey.low,
-        this.publicKey.high,
-      ]),
-    );
-  }
-
-  public get storedValue(): bigint {
-    throw new Error("Not implemented yet");
-  }
-
-  public get signer() {
-    return signerTypeToCustomEnum(SignerType.Secp256r1, { signer: this.publicKey });
-  }
-
-  public get signerType(): SignerType {
-    return SignerType.Secp256r1;
-  }
-
-  public async signRaw(messageHash: string): Promise<string[]> {
-    return CallData.compile([
-      signerTypeToCustomEnum(SignerType.Secp256r1, {
-        pubkey: this.publicKey,
-        r: uint256.bnToUint256("0xc303f24e2f6970f0cd1521c1ff6c661337e4a397a9d4b1bed732f14ddcb828cb"),
-        s: uint256.bnToUint256("0x61d2ef1fa3c30486656361c783ae91316e9e78301fbf4f173057ea868487d387"),
-        y_parity: false,
-      }),
-    ]);
+  public override get publicKey(): Uint256 {
+    return this._publicKey;
   }
 }
 

@@ -97,7 +97,7 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
         };
       }
       // TODO This is taking 10s to resolve
-      // Lots of hashes tbd. 
+      // Lots of hashes tbd.
       // On my machine approx 7s for compiledClassHash and 3s for classHash
       const { class_hash, transaction_hash } = await deployer.declareIfNot(payload, details);
       if (wait && transaction_hash) {

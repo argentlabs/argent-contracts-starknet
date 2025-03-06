@@ -5,6 +5,7 @@ import {
   ArraySignatureType,
   CairoOption,
   CairoOptionVariant,
+  CairoVersion,
   Call,
   CallData,
   Contract,
@@ -13,9 +14,12 @@ import {
   InvocationsSignerDetails,
   InvokeFunctionResponse,
   Provider,
+  ProviderInterface,
+  ProviderOptions,
   RPC,
   RawCalldata,
   Signature,
+  SignerInterface,
   TransactionReceipt,
   TypedDataRevision,
   UniversalDetails,
@@ -33,6 +37,16 @@ import { ethAddress, strkAddress } from "./tokens";
 export const VALID = BigInt(shortString.encodeShortString("VALID"));
 
 export class ArgentAccount extends Account {
+  constructor(
+    providerOrOptions: ProviderOptions | ProviderInterface,
+    address: string,
+    pkOrSigner: string | Uint8Array | SignerInterface,
+    cairoVersion: CairoVersion = "1",
+    transactionVersion: "0x2" | "0x3" = "0x3",
+  ) {
+    super(providerOrOptions, address, pkOrSigner, cairoVersion, transactionVersion);
+  }
+
   override async getSuggestedFee(action: EstimateFeeAction, details: UniversalDetails): Promise<EstimateFee> {
     if (!details.skipValidate) {
       details.skipValidate = false;

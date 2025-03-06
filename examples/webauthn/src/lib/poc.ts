@@ -1,4 +1,4 @@
-import { CairoOption, CairoOptionVariant, CallData, RPC, hash, uint256 } from "starknet";
+import { CairoOption, CairoOptionVariant, CallData, hash, uint256 } from "starknet";
 import { ArgentAccount } from "./accounts";
 import accountCasm from "./argent_ArgentAccount.compiled_contract_class.json";
 import accountSierra from "./argent_ArgentAccount.contract_class.json";
@@ -109,13 +109,7 @@ export async function retrieveAccount(
   });
   const addressSalt = 12n;
   const accountAddress = hash.calculateContractAddressFromHash(addressSalt, classHash, constructorCalldata, 0);
-  const account = new ArgentAccount(
-    provider,
-    accountAddress,
-    new ArgentSigner(webauthnOwner),
-    "1",
-    RPC.ETransactionVersion.V3,
-  );
+  const account = new ArgentAccount(provider, accountAddress, new ArgentSigner(webauthnOwner));
   // This fails silently if the account does not exist, which is good enough
   await account.getNonce();
   return account;
@@ -135,13 +129,7 @@ export async function deployAccount(
 
   await fundAccount(accountAddress, 5e17, provider);
 
-  const account = new ArgentAccount(
-    provider,
-    accountAddress,
-    new ArgentSigner(webauthnOwner),
-    "1",
-    RPC.ETransactionVersion.V3,
-  );
+  const account = new ArgentAccount(provider, accountAddress, new ArgentSigner(webauthnOwner));
 
   console.log("deploying account to address", accountAddress);
   const response = await account.deploySelf({ classHash, constructorCalldata, addressSalt });

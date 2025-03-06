@@ -1,7 +1,28 @@
-import { Account, EstimateFee, EstimateFeeAction, Provider, UniversalDetails, num } from "starknet";
+import {
+  Account,
+  CairoVersion,
+  EstimateFee,
+  EstimateFeeAction,
+  Provider,
+  ProviderInterface,
+  ProviderOptions,
+  SignerInterface,
+  UniversalDetails,
+  num,
+} from "starknet";
 import { ArgentSigner } from "./signers/signers";
 
 export class ArgentAccount extends Account {
+  constructor(
+    providerOrOptions: ProviderOptions | ProviderInterface,
+    address: string,
+    pkOrSigner: string | Uint8Array | SignerInterface,
+    cairoVersion: CairoVersion = "1",
+    transactionVersion: "0x2" | "0x3" = "0x3",
+  ) {
+    super(providerOrOptions, address, pkOrSigner, cairoVersion, transactionVersion);
+  }
+
   override async getSuggestedFee(action: EstimateFeeAction, details: UniversalDetails): Promise<EstimateFee> {
     if (!details.skipValidate) {
       details.skipValidate = false;

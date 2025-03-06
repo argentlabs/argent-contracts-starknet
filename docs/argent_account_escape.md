@@ -28,7 +28,7 @@ The default security period is **7 days** but it can be changed by the user.
 
 The following diagram shows the escape process in a simplified way. The blue checkmark represents an owner signature, the orange one a guardian signature.&#x20;
 
-<figure><img src="escape.png" alt=""><figcaption></figcaption></figure>
+<figure><img src="escape.png" alt="escape process"><figcaption></figcaption></figure>
 
 ## Escape Methods
 

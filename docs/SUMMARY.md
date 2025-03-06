@@ -1,6 +1,7 @@
 # Table of contents
 
-* [Argent Account](README.md)
+* [Introduction](README.md)
+* [Argent Account](argent_account.md)
   * [Owner Alive Signature](owner_alive.md)
   * [Escape](argent_account_escape.md)
   * [Session](sessions.md)

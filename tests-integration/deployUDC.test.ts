@@ -24,7 +24,6 @@ describe("Deploy UDC", function () {
     expect(calculatedAddress).to.equal(udcDeploymentAddress);
 
     // TODO: We should make sure event correctly triggered?
-    
     // note about self deployment: As the address we get from self deployment
     // is calculated using calculateContractAddressFromHash
     // there is no need to test that the self deployment address is the
@@ -38,6 +37,8 @@ describe("Deploy UDC", function () {
     });
     const salt = num.toHex(randomStarknetKeyPair().privateKey);
     await deployContractUDC(argentAccountClassHash, salt, callData);
-    await deployContractUDC(argentAccountClassHash, salt, callData).should.be.rejectedWith("Deployment failed: contract already deployed at address 0x");
+    await deployContractUDC(argentAccountClassHash, salt, callData).should.be.rejectedWith(
+      "Deployment failed: contract already deployed at address 0x",
+    );
   });
 });

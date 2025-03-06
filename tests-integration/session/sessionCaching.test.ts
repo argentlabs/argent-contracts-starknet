@@ -21,6 +21,7 @@ describe("Session Account: execute caching", function () {
   const initialTime = 1710167933n;
 
   before(async () => {
+    // TODO promises?
     argentAccountClassHash = await manager.declareLocalContract("ArgentAccount");
     mockDappContract = await manager.declareAndDeployContract("MockDapp");
   });

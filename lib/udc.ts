@@ -12,8 +12,8 @@ export async function deployContractUDC(
   udcContract.connect(deployer);
   // deployContract uses the UDC
   // TODO There is an issue here, isn't there?
-  const {transaction_hash} = await udcContract.deployContract(classHash, salt, 0, constructorCalldata);
+  const { transaction_hash } = await udcContract.deployContract(classHash, salt, 0, constructorCalldata);
   // Any: Ugly hack to get the contract address from the receipt
-  const receipt:any =  await deployer.getTransactionReceipt(transaction_hash);
+  const receipt: any = await deployer.getTransactionReceipt(transaction_hash);
   return receipt.contract_address;
 }

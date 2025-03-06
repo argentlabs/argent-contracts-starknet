@@ -1,8 +1,12 @@
 import chai from "chai";
 import chaiAsPromised from "chai-as-promised";
+import dotenv from "dotenv";
+import { config } from "starknet";
 
 chai.use(chaiAsPromised);
 chai.should();
+dotenv.config({ override: true });
+config.update({ logLevel: "ERROR" });
 
 export * from "./accounts";
 export * from "./contracts";

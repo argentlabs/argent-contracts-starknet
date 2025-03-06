@@ -54,6 +54,7 @@ describe("ArgentAccount: upgrade", function () {
   const upgradeData: UpgradeDataEntry[] = [];
 
   before(async () => {
+    // TODO promises?
     argentAccountClassHash = await manager.declareLocalContract("ArgentAccount");
     mockDapp = await manager.declareAndDeployContract("MockDapp");
 

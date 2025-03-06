@@ -7,8 +7,10 @@ describe("ArgentAccount: multicall", function () {
   let strkContract: Contract;
 
   before(async () => {
-    mockDappContract = await manager.declareAndDeployContract("MockDapp");
-    strkContract = await manager.tokens.strkContract();
+    [mockDappContract, strkContract] = await Promise.all([
+      manager.declareAndDeployContract("MockDapp"),
+      manager.tokens.strkContract(),
+    ]);
   });
 
   it("Should be possible to send strk", async function () {

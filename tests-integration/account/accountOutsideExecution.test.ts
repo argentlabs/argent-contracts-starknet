@@ -19,9 +19,6 @@ const legacyRevision = TypedDataRevision.LEGACY;
 
 const initialTime = 1713139200;
 describe("ArgentAccount: outside execution", function () {
-  // Avoid timeout
-  this.timeout(320000);
-
   let mockDapp: Contract;
 
   before(async () => {

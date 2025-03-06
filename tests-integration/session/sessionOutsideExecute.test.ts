@@ -6,15 +6,14 @@ const initialTime = 1713139200n;
 const legacyRevision = TypedDataRevision.LEGACY;
 const activeRevision = TypedDataRevision.ACTIVE;
 describe("ArgentAccount: session outside execution", function () {
-  // Avoid timeout
-  this.timeout(320000);
-
   let argentSessionAccountClassHash: string;
   let mockDapp: Contract;
 
   before(async () => {
-    argentSessionAccountClassHash = await manager.declareLocalContract("ArgentAccount");
-    mockDapp = await manager.declareAndDeployContract("MockDapp");
+    [argentSessionAccountClassHash, mockDapp] = (await Promise.all([
+      manager.declareLocalContract("ArgentAccount"),
+      manager.declareAndDeployContract("MockDapp"),
+    ])) as [string, Contract];
   });
 
   it("Basics: Revision 0", async function () {

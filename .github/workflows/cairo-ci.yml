@@ -9,7 +9,7 @@ jobs:
       - name: Step 1 - Check out main branch
         uses: actions/checkout@v3
       - name: Step 2 - Getting scarb
-        uses: software-mansion/setup-scarb@v1.3.2
+        uses: software-mansion/setup-scarb@v1.5.0
       - name: Step 3 - Setting up snfoundry
         uses: foundry-rs/setup-snfoundry@v3
       - name: Step 4 - Installing USC
@@ -23,6 +23,6 @@ jobs:
       - name: Step 1 - Check out main branch
         uses: actions/checkout@v3
       - name: Step 2 - Getting scarb
-        uses: software-mansion/setup-scarb@v1.3.2
+        uses: software-mansion/setup-scarb@v1.5.0
       - name: Step 3 - Checking format
         run: scarb fmt --check

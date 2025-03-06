@@ -100,7 +100,7 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
       // Lots of hashes tbd. 
       // On my machine approx 7s for compiledClassHash and 3s for classHash
       const { class_hash, transaction_hash } = await deployer.declareIfNot(payload, details);
-      if (wait && transaction_hash && this.isDevnet) {
+      if (wait && transaction_hash) {
         await this.waitForTransaction(transaction_hash);
         console.log(`\t${contractName} declared`);
       }

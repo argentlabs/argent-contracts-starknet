@@ -11,7 +11,7 @@ import {
   shortString,
   uint256,
 } from "starknet";
-import { KeyPair, SignerType, normalizeSecpR1Signature, signerTypeToCustomEnum } from "..";
+import { ESTIMATE_PRIVATE_KEY, KeyPair, SignerType, normalizeSecpR1Signature, signerTypeToCustomEnum } from "..";
 
 const buf2hex = (buffer: ArrayBuffer, prefix = true) =>
   `${prefix ? "0x" : ""}${[...new Uint8Array(buffer)].map((x) => x.toString(16).padStart(2, "0")).join("")}`;
@@ -181,7 +181,7 @@ export class EstimateWebauthnOwner extends WebauthnOwner {
     public rpId = "localhost",
     public origin = "http://localhost:5173",
   ) {
-    super("0x12345674", rpId, origin);
+    super(ESTIMATE_PRIVATE_KEY, rpId, origin);
   }
 
   public override get publicKey(): Uint8Array {

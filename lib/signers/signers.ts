@@ -28,6 +28,9 @@ import {
   typedData,
 } from "starknet";
 
+// this is a random value that is used to mock signers for estimation
+export const ESTIMATE_PRIVATE_KEY = "0x123456";
+
 /**
  * This class allows to easily implement custom signers by overriding the `signRaw` method.
  * This is based on Starknet.js implementation of Signer, but it delegates the actual signing to an abstract function

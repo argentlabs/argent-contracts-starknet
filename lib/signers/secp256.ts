@@ -3,7 +3,7 @@ import { p256 as secp256r1 } from "@noble/curves/p256";
 import { secp256k1 } from "@noble/curves/secp256k1";
 import { Signature as EthersSignature, Wallet } from "ethers";
 import { CairoCustomEnum, CallData, Uint256, hash, num, shortString, uint256 } from "starknet";
-import { KeyPair, SignerType, signerTypeToCustomEnum } from "../signers/signers";
+import { ESTIMATE_PRIVATE_KEY, KeyPair, SignerType, signerTypeToCustomEnum } from "../signers/signers";
 
 export type NormalizedSecpSignature = { r: bigint; s: bigint; yParity: boolean };
 
@@ -98,7 +98,7 @@ export class EstimateEthKeyPair extends EthKeyPair {
     private _address: bigint,
     allowLowS?: boolean,
   ) {
-    super("0x1234561", allowLowS);
+    super(ESTIMATE_PRIVATE_KEY, allowLowS);
   }
 
   public override get address(): bigint {
@@ -162,7 +162,7 @@ export class Eip191KeyPair extends KeyPair {
 
 export class EstimateEip191KeyPair extends Eip191KeyPair {
   constructor(private _address: bigint) {
-    super("0x1234562");
+    super(ESTIMATE_PRIVATE_KEY);
   }
 
   public override get address(): bigint {
@@ -230,7 +230,7 @@ export class EstimateSecp256r1KeyPair extends Secp256r1KeyPair {
     private _publicKey: Uint256,
     allowLowS?: boolean,
   ) {
-    super("0x12345672", allowLowS);
+    super(ESTIMATE_PRIVATE_KEY, allowLowS);
   }
 
   public override get publicKey(): Uint256 {

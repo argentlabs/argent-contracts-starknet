@@ -395,5 +395,5 @@ async function getAccountV3(account: Account): Promise<Account> {
   if (account.transactionVersion == RPC.ETransactionVersion.V2) {
     await fundAccount(account.address, 1e18, "STRK");
   }
-  return new ArgentAccount(account, account.address, account.signer, "1", RPC.ETransactionVersion.V3);
+  return new ArgentAccount(account, account.address, account.signer);
 }

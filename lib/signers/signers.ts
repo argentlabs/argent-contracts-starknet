@@ -28,6 +28,9 @@ import {
   typedData,
 } from "starknet";
 
+// this is a value that is used to mock signers for estimation
+export const ESTIMATE_PRIVATE_KEY = "0x123456";
+
 /**
  * This class allows to easily implement custom signers by overriding the `signRaw` method.
  * This is based on Starknet.js implementation of Signer, but it delegates the actual signing to an abstract function
@@ -162,6 +165,7 @@ export abstract class KeyPair extends RawSigner {
   abstract get signer(): CairoCustomEnum;
   abstract get guid(): bigint;
   abstract get storedValue(): bigint;
+  abstract get estimateSigner(): KeyPair;
   abstract get signerType(): SignerType;
 
   public get compiledSigner(): Calldata {
@@ -211,48 +215,26 @@ export class StarknetKeyPair extends KeyPair {
     return signerTypeToCustomEnum(this.signerType, { signer: this.publicKey });
   }
 
+  public get estimateSigner(): KeyPair {
+    return new EstimateStarknetKeyPair(this.publicKey);
+  }
+
   public async signRaw(messageHash: string): Promise<string[]> {
     const { r, s } = ec.starkCurve.sign(messageHash, this.pk);
     return starknetSignatureType(this.publicKey, r, s);
   }
 }
 
-export class EstimateStarknetKeyPair extends KeyPair {
+export class EstimateStarknetKeyPair extends StarknetKeyPair {
   readonly pubKey: bigint;
 
   constructor(pubKey: bigint) {
-    super();
+    super(ESTIMATE_PRIVATE_KEY);
     this.pubKey = pubKey;
   }
 
-  public get privateKey(): string {
-    throw new Error("EstimateStarknetKeyPair does not have a private key");
-  }
-
-  public get publicKey() {
+  public override get publicKey() {
     return this.pubKey;
-  }
-
-  public get guid() {
-    return BigInt(hash.computePoseidonHash(shortString.encodeShortString("Starknet Signer"), this.publicKey));
-  }
-
-  public get storedValue() {
-    return this.publicKey;
-  }
-
-  public get signerType(): SignerType {
-    return SignerType.Starknet;
-  }
-
-  public get signer(): CairoCustomEnum {
-    return signerTypeToCustomEnum(this.signerType, { signer: this.publicKey });
-  }
-
-  public async signRaw(messageHash: string): Promise<string[]> {
-    const fakeR = "0x6cefb49a1f4eb406e8112db9b8cdf247965852ddc5ca4d74b09e42471689495";
-    const fakeS = "0x25760910405a052b7f08ec533939c54948bc530c662c5d79e8ff416579087f7";
-    return starknetSignatureType(this.publicKey, fakeR, fakeS);
   }
 }
 

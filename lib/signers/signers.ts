@@ -28,7 +28,7 @@ import {
   typedData,
 } from "starknet";
 
-// this is a random value that is used to mock signers for estimation
+// this is a value that is used to mock signers for estimation
 export const ESTIMATE_PRIVATE_KEY = "0x123456";
 
 /**
@@ -229,7 +229,7 @@ export class EstimateStarknetKeyPair extends StarknetKeyPair {
   readonly pubKey: bigint;
 
   constructor(pubKey: bigint) {
-    super("0x123456");
+    super(ESTIMATE_PRIVATE_KEY);
     this.pubKey = pubKey;
   }
 

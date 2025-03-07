@@ -13,7 +13,7 @@ import {
   uint256,
 } from "starknet";
 import { buf2base64url, buf2hex, hex2buf } from "./bytes";
-import { KeyPair, SignerType, signerTypeToCustomEnum } from "./signers";
+import { EstimateKeyPair, KeyPair, SignerType, signerTypeToCustomEnum } from "./signers/signers";
 import type { WebauthnAttestation } from "./webauthnAttestation";
 
 import { Message, sha256 as jssha256 } from "js-sha256";
@@ -112,6 +112,10 @@ export class WebauthnOwner extends KeyPair {
     });
   }
 
+  public get estimateSigner(): KeyPair {
+    return new EstimateWebauthnOwner(this.attestation.pubKey, this.rpId, this.origin);
+  }
+
   public async signRaw(messageHash: string): Promise<ArraySignatureType> {
     const webauthnSigner = this.signer.variant.Webauthn;
     const webauthnSignature = await this.signHash(messageHash);
@@ -186,6 +190,68 @@ export class WebauthnOwner extends KeyPair {
   }
 }
 
+export class EstimateWebauthnOwner extends EstimateKeyPair {
+  rpIdHash: Uint256;
+
+  constructor(
+    public publicKey: ArrayBuffer,
+    public rpId = "localhost",
+    public origin = "http://localhost:5173",
+  ) {
+    super();
+    this.rpIdHash = uint256.bnToUint256(buf2hex(sha256(rpId)));
+  }
+
+  public get guid(): bigint {
+    const rpIdHashAsU256 = this.rpIdHash;
+    const publicKeyAsU256 = uint256.bnToUint256(buf2hex(this.publicKey));
+    const originBytes = toCharArray(this.origin);
+    const elements = [
+      shortString.encodeShortString("Webauthn Signer"),
+      originBytes.length,
+      ...originBytes,
+      rpIdHashAsU256.low,
+      rpIdHashAsU256.high,
+      publicKeyAsU256.low,
+      publicKeyAsU256.high,
+    ];
+    return BigInt(hash.computePoseidonHashOnElements(elements));
+  }
+
+  public get storedValue(): bigint {
+    throw new Error("Not implemented yet");
+  }
+
+  public get signer(): CairoCustomEnum {
+    const signer: WebauthnSigner = {
+      origin: toCharArray(this.origin),
+      rp_id_hash: this.rpIdHash,
+      pubkey: uint256.bnToUint256(buf2hex(this.publicKey)),
+    };
+    return signerTypeToCustomEnum(SignerType.Webauthn, signer);
+  }
+
+  public override async signRaw(messageHash: string): Promise<ArraySignatureType> {
+    const webauthnSigner = this.signer.variant.Webauthn;
+    const webauthnSignature = {
+      client_data_outro: CallData.compile(Array.from(new TextEncoder().encode(',"crossOrigin":false}'))),
+      flags: 0b00011101,
+      sign_count: 0,
+      ec_signature: {
+        r: uint256.bnToUint256("0xc303f24e2f6970f0cd1521c1ff6c661337e4a397a9d4b1bed732f14ddcb828cb"),
+        s: uint256.bnToUint256("0x61d2ef1fa3c30486656361c783ae91316e9e78301fbf4f173057ea868487d387"),
+        y_parity: false,
+      },
+    };
+    return CallData.compile([
+      signerTypeToCustomEnum(SignerType.Webauthn, {
+        webauthnSigner,
+        webauthnSignature,
+      }),
+    ]);
+  }
+}
+
 /**
  * In WebAuthn, EC2 signatures are wrapped in ASN.1 structure so we need to peel r and s apart.
  *
@@ -225,3 +291,28 @@ const getYParity = (messageHash: Uint8Array, pubkey: bigint, r: bigint, s: bigin
   }
   throw new Error("Could not determine y_parity");
 };
+
+export function createEstimateWebauthnOwner(owner: WebauthnOwner): KeyPair {
+  class EstimateWebauthnOwner extends WebauthnOwner {
+    public override async signRaw(messageHash: string): Promise<ArraySignatureType> {
+      const webauthnSigner = this.signer.variant.Webauthn;
+      const webauthnSignature = {
+        client_data_outro: CallData.compile(Array.from(new TextEncoder().encode(',"crossOrigin":false}'))),
+        flags: 0b00011101,
+        sign_count: 0,
+        ec_signature: {
+          r: uint256.bnToUint256("0xc303f24e2f6970f0cd1521c1ff6c661337e4a397a9d4b1bed732f14ddcb828cb"),
+          s: uint256.bnToUint256("0x61d2ef1fa3c30486656361c783ae91316e9e78301fbf4f173057ea868487d387"),
+          y_parity: false,
+        },
+      };
+      return CallData.compile([
+        signerTypeToCustomEnum(SignerType.Webauthn, {
+          webauthnSigner,
+          webauthnSignature,
+        }),
+      ]);
+    }
+  }
+  return new EstimateWebauthnOwner(owner.attestation, owner.requestSignature);
+}

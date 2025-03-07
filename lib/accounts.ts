@@ -1,22 +1,25 @@
 import { expect } from "chai";
 import {
-  Abi,
   Account,
   AllowArray,
   ArraySignatureType,
   CairoOption,
   CairoOptionVariant,
+  CairoVersion,
   Call,
   CallData,
   Contract,
-  DeployAccountContractPayload,
-  DeployContractResponse,
   EstimateFee,
+  EstimateFeeAction,
   InvocationsSignerDetails,
   InvokeFunctionResponse,
+  Provider,
+  ProviderInterface,
+  ProviderOptions,
   RPC,
   RawCalldata,
   Signature,
+  SignerInterface,
   TransactionReceipt,
   TypedDataRevision,
   UniversalDetails,
@@ -34,46 +37,34 @@ import { ethAddress, strkAddress } from "./tokens";
 export const VALID = BigInt(shortString.encodeShortString("VALID"));
 
 export class ArgentAccount extends Account {
-  // Increase the gas limit by 30% to avoid failures due to gas estimation being too low with tx v3 and transactions the use escaping
-  override async deployAccount(
-    payload: DeployAccountContractPayload,
-    details?: UniversalDetails,
-  ): Promise<DeployContractResponse> {
-    details ||= {};
+  constructor(
+    providerOrOptions: ProviderOptions | ProviderInterface,
+    address: string,
+    pkOrSigner: string | Uint8Array | SignerInterface,
+    cairoVersion: CairoVersion = "1",
+    transactionVersion: "0x2" | "0x3" = "0x3",
+  ) {
+    super(providerOrOptions, address, pkOrSigner, cairoVersion, transactionVersion);
+  }
+
+  override async getSuggestedFee(action: EstimateFeeAction, details: UniversalDetails): Promise<EstimateFee> {
     if (!details.skipValidate) {
       details.skipValidate = false;
     }
-    return super.deployAccount(payload, details);
-  }
-
-  override async execute(
-    calls: AllowArray<Call>,
-    arg2?: Abi[] | UniversalDetails,
-    transactionDetail: UniversalDetails = {},
-  ): Promise<InvokeFunctionResponse> {
-    const isArg2UniversalDetails = arg2 && !Array.isArray(arg2);
-    if (isArg2UniversalDetails && !(Object.keys(transactionDetail).length === 0)) {
-      throw new Error("arg2 cannot be UniversalDetails when transactionDetail is non-null");
+    if (this.signer instanceof ArgentSigner) {
+      const { owner, guardian } = this.signer as ArgentSigner;
+      const estimateSigner = new ArgentSigner(owner.estimateSigner, guardian?.estimateSigner);
+      const estimateAccount = new Account(
+        this as Provider,
+        this.address,
+        estimateSigner,
+        this.cairoVersion,
+        this.transactionVersion,
+      );
+      return await estimateAccount.getSuggestedFee(action, details);
+    } else {
+      return await super.getSuggestedFee(action, details);
     }
-    const detail = isArg2UniversalDetails ? (arg2 as UniversalDetails) : transactionDetail;
-    const abi = Array.isArray(arg2) ? (arg2 as Abi[]) : undefined;
-    if (!detail.skipValidate) {
-      detail.skipValidate = false;
-    }
-    if (detail.resourceBounds) {
-      return super.execute(calls, abi, detail);
-    }
-    const estimate = await this.estimateFee(calls, detail);
-    return super.execute(calls, abi, {
-      ...detail,
-      resourceBounds: {
-        ...estimate.resourceBounds,
-        l1_gas: {
-          ...estimate.resourceBounds.l1_gas,
-          max_amount: num.toHexString(num.addPercent(estimate.resourceBounds.l1_gas.max_amount, 30)),
-        },
-      },
-    });
   }
 }
 

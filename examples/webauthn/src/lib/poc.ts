@@ -1,9 +1,10 @@
-import { Account, CairoOption, CairoOptionVariant, CallData, hash, uint256 } from "starknet";
+import { CairoOption, CairoOptionVariant, CallData, hash, uint256 } from "starknet";
+import { ArgentAccount } from "./accounts";
 import accountCasm from "./argent_ArgentAccount.compiled_contract_class.json";
 import accountSierra from "./argent_ArgentAccount.contract_class.json";
 import { buf2hex, hex2buf, hexStringToUint8Array } from "./bytes";
-import { ArgentSigner } from "./signers";
-import { fundAccount, getEthContract, loadDeployer, type ProviderType } from "./starknet";
+import { ArgentSigner } from "./signers/signers";
+import { fundAccount, getStrkContract, loadDeployer, type ProviderType } from "./starknet";
 import { WebauthnAttestation, createWebauthnAttestation, requestSignature } from "./webauthnAttestation";
 import { WebauthnOwner } from "./webauthnOwner";
 
@@ -108,7 +109,7 @@ export async function retrieveAccount(
   });
   const addressSalt = 12n;
   const accountAddress = hash.calculateContractAddressFromHash(addressSalt, classHash, constructorCalldata, 0);
-  const account = new Account(provider, accountAddress, new ArgentSigner(webauthnOwner), "1");
+  const account = new ArgentAccount(provider, accountAddress, new ArgentSigner(webauthnOwner));
   // This fails silently if the account does not exist, which is good enough
   await account.getNonce();
   return account;
@@ -126,23 +127,23 @@ export async function deployAccount(
   const addressSalt = 12n;
   const accountAddress = hash.calculateContractAddressFromHash(addressSalt, classHash, constructorCalldata, 0);
 
-  await fundAccount(accountAddress, 5e14, provider);
+  await fundAccount(accountAddress, 5e17, provider);
 
-  const account = new Account(provider, accountAddress, new ArgentSigner(webauthnOwner), "1");
+  const account = new ArgentAccount(provider, accountAddress, new ArgentSigner(webauthnOwner));
 
   console.log("deploying account to address", accountAddress);
-  const response = await account.deploySelf({ classHash, constructorCalldata, addressSalt }, { maxFee: 4e14 });
+  const response = await account.deploySelf({ classHash, constructorCalldata, addressSalt });
   console.log("waiting for deployment tx", response.transaction_hash);
   await provider.waitForTransaction(response.transaction_hash);
   console.log("deployed");
   return account;
 }
 
-export async function transferDust(account: Account, provider: ProviderType): Promise<string> {
-  const ethContract = await getEthContract(provider);
-  ethContract.connect(account);
+export async function transferDust(account: ArgentAccount, provider: ProviderType): Promise<string> {
+  const strkContract = await getStrkContract(provider);
+  strkContract.connect(account);
   const recipient = 69;
   const amount = uint256.bnToUint256(1);
-  const response = await ethContract.invoke("transfer", CallData.compile([recipient, amount]), { maxFee: 1e14 });
+  const response = await strkContract.transfer(recipient, amount);
   return response.transaction_hash;
 }

@@ -59,13 +59,7 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
         };
       }
       try {
-        const { class_hash, transaction_hash } = await deployer.declareIfNot(payload, details);
-        if (wait && transaction_hash) {
-          await this.waitForTransaction(transaction_hash);
-          console.log(`\t${contractName} declared`);
-        }
-        this.classCache[contractName] = class_hash;
-        return class_hash;
+        return await this.declareIfNotAndCache(contractName, payload, details, wait);
       } catch (e: any) {
         if (e.toString().includes("the compiled class hash did not match the one supplied in the transaction")) {
           payload.compiledClassHash = undefined;
@@ -74,18 +68,27 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
           payload.compiledClassHash = compiledClassHash;
           payload.classHash = classHash;
           console.error(`Mapping outdated: compiledClassHash: ${compiledClassHash}, classHash: ${classHash}`);
-          const { class_hash, transaction_hash } = await deployer.declareIfNot(payload, details);
-          if (wait && transaction_hash) {
-            await this.waitForTransaction(transaction_hash);
-            console.log(`\t${contractName} declared`);
-          }
-          this.classCache[contractName] = class_hash;
-          return class_hash;
+          return await this.declareIfNotAndCache(contractName, payload, details, wait);
         }
         throw e;
       }
     }
-    
+
+    async declareIfNotAndCache(
+      contractName: string,
+      payload: DeclareContractPayload,
+      details?: UniversalDetails,
+      wait = true,
+    ) {
+      const { class_hash, transaction_hash } = await deployer.declareIfNot(payload, details);
+      if (wait && transaction_hash) {
+        await this.waitForTransaction(transaction_hash);
+        console.log(`\t${contractName} declared`);
+      }
+      this.classCache[contractName] = class_hash;
+      return class_hash;
+    }
+
     async declareFixtureContract(contractName: string, wait = true): Promise<string> {
       return await this.declareLocalContract(contractName, wait, fixturesFolder);
     }

@@ -184,7 +184,10 @@ async function deployOldAccountWithProxyInner(
     addressSalt: salt,
   });
   await manager.waitForTx(transaction_hash);
-  const accountContract = await manager.loadContract(account.address);
+
+  const { abi } = await manager.getClass(oldArgentAccountClassHash);
+  const accountContract = new Contract(abi, account.address, account);
+
   accountContract.connect(account);
   return { account, accountContract, owner, guardian };
 }

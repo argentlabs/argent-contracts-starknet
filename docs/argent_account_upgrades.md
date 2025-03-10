@@ -1,4 +1,8 @@
-# Argent Account Upgrade
+---
+icon: chevrons-up
+---
+
+# Upgrades
 
 **⚠️ IMPORTANT ⚠️** Make sure you read this document before upgrading you account, as incorrect upgrades can brick the account
 
@@ -6,8 +10,7 @@ This documents covers the upgrade process starting with version 0.2.3
 
 In general downgrading is not supported, but it won't always be enforced onchain
 
-Depending on the versions, some upgrades might cancel an ongoing escape, and it might need to be triggered again after the upgrade.
-This shouldn't be a security risk since the two roles (owners and guardians) need to sign an upgrade when there's a guardian set.
+Depending on the versions, some upgrades might cancel an ongoing escape, and it might need to be triggered again after the upgrade. This shouldn't be a security risk since the two roles (owners and guardians) need to sign an upgrade when there's a guardian set.
 
 ## Upgrading from v0.2.3.\* to >=0.3.0
 

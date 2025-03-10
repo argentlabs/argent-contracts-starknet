@@ -1,4 +1,8 @@
-# Escape
+---
+icon: hands-holding-child
+---
+
+# Escape Process (Recovery)
 
 The escape process allows the guardians to request a change of the account owners. If the request is not challenged during a security period, the new owner requested by the guardians will be set as the new account owner.
 
@@ -26,9 +30,9 @@ An escape can be **triggered** by one role (owner or guardian), requesting to mo
 
 The default security period is **7 days** but it can be changed by the user.
 
-The following diagram shows the escape process in a simplified way. The blue checkmark represents an owner signature, the orange one a guardian signature.&#x20;
+The following diagram shows the escape process in a simplified way. The blue checkmark represents an owner signature, the orange one a guardian signature.
 
-<figure><img src="escape.png" alt="escape process"><figcaption></figcaption></figure>
+<figure><img src="escape.png" alt="escape process"><figcaption><p>Escape Process</p></figcaption></figure>
 
 ## Escape Methods
 

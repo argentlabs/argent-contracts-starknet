@@ -1,9 +1,15 @@
+---
+icon: user-hoodie
+---
+
 # Development
+
+You only need to go through this is you want to make changes to the account contract
 
 ### Setup
 
-We recommend you to install scarb through ASDF. Please refer to [these instructions](https://docs.swmansion.com/scarb/download.html#install-via-asdf).  
-Thanks to the [.tool-versions file](../.tool-versions), you don't need to install a specific scarb or starknet foundry version. The correct one will be automatically downloaded and installed.  
+We recommend you to install scarb through ASDF. Please refer to [these instructions](https://docs.swmansion.com/scarb/download.html#install-via-asdf).\
+Thanks to the [.tool-versions file](../.tool-versions/), you don't need to install a specific scarb or starknet foundry version. The correct one will be automatically downloaded and installed.\
 You need also to install the Universal-Sierra-Compiler (USC) please refer to [these instructions](https://github.com/software-mansion/universal-sierra-compiler).
 
 ## Test the contracts (Cairo)
@@ -51,21 +57,20 @@ scarb run format
 
 ### Contract fixtures
 
-The [fixtures folder](./tests-integration/fixtures/) contains pre-compiled contracts used for tests (both json and casm).
+The [fixtures folder](tests-integration/fixtures/) contains pre-compiled contracts used for tests (both json and casm).
 
 ### Interface IDs
 
-For compatibility reasons we support legacy interface IDs. But new interface IDs will follow [SNIP-5](https://github.com/starknet-io/SNIPs/blob/main/SNIPS/snip-5.md#how-interfaces-are-identified)
-Tool to calculate interface IDs: https://github.com/ericnordelo/src5-rs
+For compatibility reasons we support legacy interface IDs. But new interface IDs will follow [SNIP-5](https://github.com/starknet-io/SNIPs/blob/main/SNIPS/snip-5.md#how-interfaces-are-identified) Tool to calculate interface IDs: https://github.com/ericnordelo/src5-rs
 
 ## Release checklist
 
-- Bump version if needed (new deployment in mainnet)
-- Set up your .env file with the deployer info and run `scarb run deploy-account` and `scarb run deploy-multisig` to declare the accounts
-- Verify the contracts if possible
-- Deploy to as many environments as possible: mainnet, sepolia and integration
-- Update the contents of the `deployments` folder with the new addresses
-- Copy relevant build artifacts from `target/release` to `deployments/artifacts`, include abi file.
-- Tag the commit used for the release (include the same name as in the `deployments` folder for easy tracking)
-- Create release in GitHub if needed
-- Make this checklist better if you learned something during the process
+* Bump version if needed (new deployment in mainnet)
+* Set up your .env file with the deployer info and run `scarb run deploy-account` and `scarb run deploy-multisig` to declare the accounts
+* Verify the contracts if possible
+* Deploy to as many environments as possible: mainnet, sepolia and integration
+* Update the contents of the `deployments` folder with the new addresses
+* Copy relevant build artifacts from `target/release` to `deployments/artifacts`, include abi file.
+* Tag the commit used for the release (include the same name as in the `deployments` folder for easy tracking)
+* Create release in GitHub if needed
+* Make this checklist better if you learned something during the process

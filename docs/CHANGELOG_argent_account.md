@@ -1,3 +1,7 @@
+---
+icon: bullhorn
+---
+
 # Release Notes
 
 ## Argent Account Changelog
@@ -94,7 +98,7 @@ Make sure you read the [**Upgrades**](argent_account_upgrades.md) document, as i
     Backup guardians played a different role and couldn't for instance co-sign sessions. Now all guardians are the same
 *   **Concise signatures**
 
-    Concise signatures are discouraged as they don't support multiple owners or multiple guardians. See [Concise Signatures](./#concise-format)
+    Concise signatures are discouraged as they don't support multiple owners or multiple guardians. See [Concise Signatures](argent_account.md#concise-format)
 
     Concise signatures used to work only with the main guardian ignoring the backup guardian. Now they only work if there is 0 or 1 guardian
 *   **Signer management methods** were updated to support multiple owners and guardians

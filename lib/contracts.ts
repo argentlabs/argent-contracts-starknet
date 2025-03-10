@@ -11,8 +11,8 @@ import {
   json,
 } from "starknet";
 import { deployer } from "./accounts";
-import { WithDevnet } from "./devnet";
 import { populatePayloadWithClassHashes, removeFromCache } from "./cache";
+import { WithDevnet } from "./devnet";
 
 export const contractsFolder = "./target/release/argent_";
 export const fixturesFolder = "./tests-integration/fixtures/argent_";

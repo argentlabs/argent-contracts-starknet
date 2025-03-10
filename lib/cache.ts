@@ -24,7 +24,6 @@ try {
 }
 
 export function populatePayloadWithClassHashes(payload: DeclareContractPayload, contractName: string) {
-
   if (!cache[contractName]) {
     const { compiledClassHash, classHash } = extractContractHashes(payload);
     cache[contractName] = { compiledClassHash, classHash };

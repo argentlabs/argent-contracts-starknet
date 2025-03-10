@@ -9,11 +9,11 @@ dotenv.config({ override: true });
 config.update({ logLevel: "ERROR" });
 
 export * from "./accounts";
+export * from "./cache";
 export * from "./contracts";
 export * from "./devnet";
 export * from "./events";
 export * from "./expectations";
-export * from "./cache";
 export * from "./manager";
 export * from "./multisig";
 export * from "./openZeppelinAccount";

@@ -1,5 +1,5 @@
-import { existsSync, readFileSync, readdirSync, writeFileSync } from "fs";
-import { resolve } from "path";
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "fs";
+import { dirname, resolve } from "path";
 import {
   Abi,
   AccountInterface,
@@ -26,6 +26,7 @@ const cacheClassHash = "./dist/classHashCache.json";
 let cache: Record<string, { compiledClassHash: string | undefined; classHash: string }> = {};
 
 if (!existsSync(cacheClassHash)) {
+  mkdirSync(dirname(cacheClassHash), { recursive: true });
   writeFileSync(cacheClassHash, "{}");
 }
 

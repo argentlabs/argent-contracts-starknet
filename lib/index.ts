@@ -9,7 +9,6 @@ dotenv.config({ override: true });
 config.update({ logLevel: "ERROR" });
 
 export * from "./accounts";
-export * from "./cache";
 export * from "./contracts";
 export * from "./devnet";
 export * from "./events";

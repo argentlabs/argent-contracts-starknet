@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync } from "fs";
+import { existsSync, readFileSync, readdirSync, writeFileSync } from "fs";
 import { resolve } from "path";
 import {
   Abi,
@@ -8,15 +8,32 @@ import {
   DeclareContractPayload,
   ProviderInterface,
   UniversalDetails,
+  extractContractHashes,
   json,
 } from "starknet";
 import { deployer } from "./accounts";
-import { populatePayloadWithClassHashes, removeFromCache } from "./cache";
 import { WithDevnet } from "./devnet";
 
 export const contractsFolder = "./target/release/argent_";
 export const fixturesFolder = "./tests-integration/fixtures/argent_";
 const artifactsFolder = "./deployments/artifacts";
+const cacheClassHash = "./dist/classHashCache.json";
+
+// Caching ClassHash and CompiledClassHash
+// This avoids recomputing the class hash and compiled class hash for each contract
+// (approx 7s for compiledClassHash and 3s for classHash on my machine)
+// CompiledClassHash is for SIERRA, and ClassHash is for CASM
+let cache: Record<string, { compiledClassHash: string | undefined; classHash: string }> = {};
+
+if (!existsSync(cacheClassHash)) {
+  writeFileSync(cacheClassHash, "{}");
+}
+
+try {
+  cache = JSON.parse(readFileSync(cacheClassHash).toString("ascii"));
+} catch (e) {
+  console.log("Error reading cache", e);
+}
 
 export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) =>
   class extends Base {
@@ -62,7 +79,10 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
         return await this.declareIfNotAndCache(contractName, payload, details, wait);
       } catch (e: any) {
         if (e.toString().includes("the compiled class hash did not match the one supplied in the transaction")) {
-          removeFromCache(contractName);
+          // Remove from cache
+          delete cache[contractName];
+          // Update cache file
+          writeFileSync(cacheClassHash, JSON.stringify(cache, null, 2));
           return await this.declareIfNotAndCache(contractName, payload, details, wait);
         }
         throw e;
@@ -166,4 +186,15 @@ function getSubfolders(dirPath: string): string[] {
   } catch (err) {
     throw new Error(`Error reading the directory at ${dirPath}`);
   }
+}
+
+function populatePayloadWithClassHashes(payload: DeclareContractPayload, contractName: string) {
+  if (!cache[contractName]) {
+    const { compiledClassHash, classHash } = extractContractHashes(payload);
+    cache[contractName] = { compiledClassHash, classHash };
+    console.log(`Updating cache for ${contractName}`);
+    writeFileSync(cacheClassHash, JSON.stringify(cache, null, 2));
+  }
+  payload.compiledClassHash = cache[contractName].compiledClassHash;
+  payload.classHash = cache[contractName].classHash;
 }

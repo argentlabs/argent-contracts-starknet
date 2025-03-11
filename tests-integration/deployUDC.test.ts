@@ -1,6 +1,14 @@
 import { expect } from "chai";
 import { CallData, hash, num } from "starknet";
-import { StarknetKeyPair, deployContractUDC, deployer, expectEvent, manager, randomStarknetKeyPair, udcAddress } from "../lib";
+import {
+  StarknetKeyPair,
+  deployContractUDC,
+  deployer,
+  expectEvent,
+  manager,
+  randomStarknetKeyPair,
+  udcAddress,
+} from "../lib";
 
 describe("Deploy UDC", function () {
   let argentAccountClassHash: string;
@@ -25,7 +33,7 @@ describe("Deploy UDC", function () {
       salt,
       callData,
     );
-    
+
     await expectEvent(transactionHash, {
       from_address: udcAddress,
       eventName: "ContractDeployed",

@@ -7,7 +7,7 @@ export async function deployContractUDC(
   classHash: string,
   salt: string,
   constructorCalldata: RawCalldata,
-  ): Promise<{ contractAddress: string; transactionHash: string }> {
+): Promise<{ contractAddress: string; transactionHash: string }> {
   const udcPayload = {
     classHash,
     salt,

@@ -290,16 +290,7 @@ async function deployAccountInner(params: DeployAccountParams): Promise<ArgentWa
       };
       finalCalls.push(await getOutsideExecutionCall(outsideCall, contractAddress, signer, TypedDataRevision.ACTIVE));
     }
-    // if devnet, hardcode resource bounds
-    const details = manager.isDevnet
-      ? {
-          resourceBounds: {
-            l1_gas: { max_amount: "0x30000", max_price_per_unit: "0x300000000000" },
-            l2_gas: { max_amount: "0x0", max_price_per_unit: "0x0" },
-          },
-        }
-      : {};
-    const { transaction_hash } = await deployer.execute(finalCalls, undefined, details);
+    const { transaction_hash } = await deployer.execute(finalCalls);
     transactionHash = transaction_hash;
   }
 

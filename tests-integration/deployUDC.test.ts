@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { CallData, hash, num } from "starknet";
-import { StarknetKeyPair, deployContractUDC, manager, randomStarknetKeyPair } from "../lib";
+import { StarknetKeyPair, deployContractUDC, deployer, expectEvent, manager, randomStarknetKeyPair, udcAddress } from "../lib";
 
 describe("Deploy UDC", function () {
   let argentAccountClassHash: string;
@@ -20,10 +20,26 @@ describe("Deploy UDC", function () {
     });
     const salt = num.toHex(randomStarknetKeyPair().privateKey);
     const calculatedAddress = hash.calculateContractAddressFromHash(salt, argentAccountClassHash, callData, 0);
-    const udcDeploymentAddress = await deployContractUDC(argentAccountClassHash, salt, callData);
-    expect(calculatedAddress).to.equal(udcDeploymentAddress);
+    const { transactionHash, contractAddress: udcDeploymentAddress } = await deployContractUDC(
+      argentAccountClassHash,
+      salt,
+      callData,
+    );
+    
+    await expectEvent(transactionHash, {
+      from_address: udcAddress,
+      eventName: "ContractDeployed",
+      data: CallData.compile({
+        address: udcDeploymentAddress,
+        deployer: deployer.address,
+        unique: false,
+        classHash: argentAccountClassHash,
+        calldata: callData,
+        salt: salt,
+      }),
+    });
 
-    // TODO: We should make sure event correctly triggered?
+    expect(calculatedAddress).to.equal(udcDeploymentAddress);
     // note about self deployment: As the address we get from self deployment
     // is calculated using calculateContractAddressFromHash
     // there is no need to test that the self deployment address is the

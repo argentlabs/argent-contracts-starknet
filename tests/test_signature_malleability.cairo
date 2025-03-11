@@ -40,7 +40,7 @@ fn test_secp256k1_malleability(key: u256, message_hash: felt252) {
 #[test]
 #[should_panic(expected: ('argent/malleable-signature',))]
 fn test_secp256r1_malleability_error() {
-    let signature = Signature { r: 1, s: SECP_256_R1_HALF, y_parity: true };
+    let signature = Signature { r: 1, s: SECP_256_R1_HALF + 1, y_parity: true };
 
     let signer = Secp256r1Signer { pubkey: 1 };
     let signerSignature = SignerSignature::Secp256r1((signer, signature));

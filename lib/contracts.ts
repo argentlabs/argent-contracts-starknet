@@ -34,6 +34,7 @@ cacheClassHashes = JSON.parse(readFileSync(cacheClassHashFilepath).toString("asc
 
 export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) =>
   class extends Base {
+    // Cache of class hashes to avoid redeclaring the same contract
     protected classCache: Record<string, string> = {};
 
     removeFromClassCache(contractName: string) {
@@ -63,7 +64,6 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
       let details: UniversalDetails | undefined;
       // Setting resourceBounds skips estimate
       if (this.isDevnet) {
-        populatePayloadWithClassHashes(payload, contractName);
         details = {
           skipValidate: true,
           resourceBounds: {
@@ -78,8 +78,6 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
         if (e.toString().includes("the compiled class hash did not match the one supplied in the transaction")) {
           // Remove from cache
           delete cacheClassHashes[contractName];
-          // Update cache file
-          writeFileSync(cacheClassHashFilepath, JSON.stringify(cacheClassHashes, null, 2));
           return await this.declareIfNotAndCache(contractName, payload, details, wait);
         }
         throw e;
@@ -92,6 +90,7 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
       details?: UniversalDetails,
       wait = true,
     ) {
+      populatePayloadWithClassHashes(payload, contractName);
       const { class_hash, transaction_hash } = await deployer.declareIfNot(payload, details);
       if (wait && transaction_hash) {
         await this.waitForTransaction(transaction_hash);
@@ -99,6 +98,7 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
       }
       this.classCache[contractName] = class_hash;
       return class_hash;
+      
     }
 
     async declareFixtureContract(contractName: string, wait = true): Promise<string> {

@@ -17,7 +17,7 @@ import { WithDevnet } from "./devnet";
 export const contractsFolder = "./target/release/argent_";
 export const fixturesFolder = "./tests-integration/fixtures/argent_";
 const artifactsFolder = "./deployments/artifacts";
-const cacheClassHash = "./dist/classHashCache.json";
+const cacheClassHashFilepath = "./dist/classHashCache.json";
 
 // Caching ClassHash and CompiledClassHash
 // This avoids recomputing the class hash and compiled class hash for each contract
@@ -25,12 +25,12 @@ const cacheClassHash = "./dist/classHashCache.json";
 // CompiledClassHash is for SIERRA, and ClassHash is for CASM
 let cache: Record<string, { compiledClassHash: string | undefined; classHash: string }> = {};
 
-if (!existsSync(cacheClassHash)) {
-  mkdirSync(dirname(cacheClassHash), { recursive: true });
-  writeFileSync(cacheClassHash, "{}");
+if (!existsSync(cacheClassHashFilepath)) {
+  mkdirSync(dirname(cacheClassHashFilepath), { recursive: true });
+  writeFileSync(cacheClassHashFilepath, "{}");
 }
 
-cache = JSON.parse(readFileSync(cacheClassHash).toString("ascii"));
+cache = JSON.parse(readFileSync(cacheClassHashFilepath).toString("ascii"));
 
 export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) =>
   class extends Base {
@@ -79,7 +79,7 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
           // Remove from cache
           delete cache[contractName];
           // Update cache file
-          writeFileSync(cacheClassHash, JSON.stringify(cache, null, 2));
+          writeFileSync(cacheClassHashFilepath, JSON.stringify(cache, null, 2));
           return await this.declareIfNotAndCache(contractName, payload, details, wait);
         }
         throw e;
@@ -190,7 +190,7 @@ function populatePayloadWithClassHashes(payload: DeclareContractPayload, contrac
     const { compiledClassHash, classHash } = extractContractHashes(payload);
     cache[contractName] = { compiledClassHash, classHash };
     console.log(`Updating cache for ${contractName}`);
-    writeFileSync(cacheClassHash, JSON.stringify(cache, null, 2));
+    writeFileSync(cacheClassHashFilepath, JSON.stringify(cache, null, 2));
   }
   payload.compiledClassHash = cache[contractName].compiledClassHash;
   payload.classHash = cache[contractName].classHash;

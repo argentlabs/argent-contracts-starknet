@@ -19,23 +19,15 @@ export const fixturesFolder = "./tests-integration/fixtures/argent_";
 const artifactsFolder = "./deployments/artifacts";
 const cacheClassHashFilepath = "./dist/classHashCache.json";
 
-// Caching ClassHash and CompiledClassHash
-// This avoids recomputing the class hash and compiled class hash for each contract
-// (approx 7s for compiledClassHash and 3s for classHash on my machine)
-// CompiledClassHash is for SIERRA, and ClassHash is for CASM
-let cacheClassHashes: Record<string, { compiledClassHash: string | undefined; classHash: string }> = {};
-
-if (!existsSync(cacheClassHashFilepath)) {
-  mkdirSync(dirname(cacheClassHashFilepath), { recursive: true });
-  writeFileSync(cacheClassHashFilepath, "{}");
-}
-
-cacheClassHashes = JSON.parse(readFileSync(cacheClassHashFilepath).toString("ascii"));
-
 export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) =>
   class extends Base {
     // Cache of class hashes to avoid redeclaring the same contract
     protected classCache: Record<string, string> = {};
+    // Caching ClassHash and CompiledClassHash
+    // This avoids recomputing the class hash and compiled class hash for each contract
+    // (approx 7s for compiledClassHash and 3s for classHash on my machine)
+    // CompiledClassHash is for SIERRA, and ClassHash is for CASM
+    protected cacheClassHashes: Record<string, { compiledClassHash: string | undefined; classHash: string }> = {};
 
     removeFromClassCache(contractName: string) {
       delete this.classCache[contractName];
@@ -60,6 +52,16 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
       if (cachedClass) {
         return cachedClass;
       }
+
+      if (!this.cacheClassHashes) {
+        if (!existsSync(cacheClassHashFilepath)) {
+          mkdirSync(dirname(cacheClassHashFilepath), { recursive: true });
+          writeFileSync(cacheClassHashFilepath, "{}");
+        }
+
+        this.cacheClassHashes = JSON.parse(readFileSync(cacheClassHashFilepath).toString("ascii"));
+      }
+
       const payload = getDeclareContractPayload(contractName, folder);
       let details: UniversalDetails | undefined;
       // Setting resourceBounds skips estimate
@@ -77,7 +79,7 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
       } catch (e: any) {
         if (e.toString().includes("the compiled class hash did not match the one supplied in the transaction")) {
           // Remove from cache
-          delete cacheClassHashes[contractName];
+          delete this.cacheClassHashes[contractName];
           return await this.declareIfNotAndCache(contractName, payload, details, wait);
         }
         throw e;
@@ -90,7 +92,7 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
       details?: UniversalDetails,
       wait = true,
     ) {
-      populatePayloadWithClassHashes(payload, contractName);
+      this.populatePayloadWithClassHashes(payload, contractName);
       const { class_hash, transaction_hash } = await deployer.declareIfNot(payload, details);
       if (wait && transaction_hash) {
         await this.waitForTransaction(transaction_hash);
@@ -98,7 +100,6 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
       }
       this.classCache[contractName] = class_hash;
       return class_hash;
-      
     }
 
     async declareFixtureContract(contractName: string, wait = true): Promise<string> {
@@ -136,6 +137,17 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
       const { contract_address } = await deployer.deployContract({ classHash });
 
       return await this.loadContract(contract_address, classHash);
+    }
+
+    populatePayloadWithClassHashes(payload: DeclareContractPayload, contractName: string) {
+      if (!this.cacheClassHashes[contractName]) {
+        const { compiledClassHash, classHash } = extractContractHashes(payload);
+        this.cacheClassHashes[contractName] = { compiledClassHash, classHash };
+        console.log(`Updating cache for ${contractName}`);
+        writeFileSync(cacheClassHashFilepath, JSON.stringify(this.cacheClassHashes, null, 2));
+      }
+      payload.compiledClassHash = this.cacheClassHashes[contractName].compiledClassHash;
+      payload.classHash = this.cacheClassHashes[contractName].classHash;
     }
   };
 
@@ -183,15 +195,4 @@ function getSubfolders(dirPath: string): string[] {
   } catch (err) {
     throw new Error(`Error reading the directory at ${dirPath}`);
   }
-}
-
-function populatePayloadWithClassHashes(payload: DeclareContractPayload, contractName: string) {
-  if (!cacheClassHashes[contractName]) {
-    const { compiledClassHash, classHash } = extractContractHashes(payload);
-    cacheClassHashes[contractName] = { compiledClassHash, classHash };
-    console.log(`Updating cache for ${contractName}`);
-    writeFileSync(cacheClassHashFilepath, JSON.stringify(cacheClassHashes, null, 2));
-  }
-  payload.compiledClassHash = cacheClassHashes[contractName].compiledClassHash;
-  payload.classHash = cacheClassHashes[contractName].classHash;
 }

@@ -1,3 +1,7 @@
+---
+icon: weight-scale
+---
+
 # Accurate Estimates
 
 When sending a transaction to the network, the sender needs to provide gas limits. These limits are typically calculated by simulating the transaction first and adding some overhead to account for gas price fluctuations and resource usage variations.
@@ -7,11 +11,10 @@ When sending a transaction to the network, the sender needs to provide gas limit
 There are two common approaches to transaction simulation, each with drawbacks:
 
 1. **Skip Validation**: Using the `SKIP_VALIDATE` flag allows to simulate without signatures by skipping the validation phase. This results in low estimates and it can lead to failed transactions if the overhead is not enough to cover the validation work. The error can happen frequently when the resources used for validations are higher, for instance to validate WebAuthn Signers, or multisigs with a high threshold.
-
 2. **Real Signatures**: While more accurate, using real signatures for estimation is problematic because:
-   - It might require user interaction (WebAuthn, hardware wallets)
-   - Signatures may need to be requested from multiple parties
-   - Signing transactions not meant for submission poses security risks
+   * It might require user interaction (WebAuthn, hardware wallets)
+   * Signatures may need to be requested from multiple parties
+   * Signing transactions not meant for submission poses security risks
 
 ## The Solution
 
@@ -19,5 +22,5 @@ Therefore, the argent accounts implement a solution to provide an accurate estim
 
 There are some examples that can serve as reference here:
 
-- [accountEstimates.test.ts](../tests-integration/account/accountEstimates.test.ts)
-- [sessionAccount.test.ts](../tests-integration/session/sessionAccount.test.ts)
+* [accountEstimates.test.ts](../tests-integration/account/accountEstimates.test.ts)
+* [sessionAccount.test.ts](../tests-integration/session/sessionAccount.test.ts)

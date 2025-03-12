@@ -49,7 +49,7 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
         return cachedClass;
       }
 
-      if (!this.cacheClassHashes) {
+      if (Object.keys(this.cacheClassHashes).length === 0) {
         if (!existsSync(cacheClassHashFilepath)) {
           mkdirSync(dirname(cacheClassHashFilepath), { recursive: true });
           writeFileSync(cacheClassHashFilepath, "{}");

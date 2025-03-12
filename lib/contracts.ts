@@ -29,10 +29,6 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
     // CompiledClassHash is for SIERRA, and ClassHash is for CASM
     protected cacheClassHashes: Record<string, { compiledClassHash: string | undefined; classHash: string }> = {};
 
-    removeFromClassCache(contractName: string) {
-      delete this.classCache[contractName];
-    }
-
     clearClassCache() {
       for (const contractName of Object.keys(this.classCache)) {
         delete this.classCache[contractName];

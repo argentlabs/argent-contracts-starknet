@@ -30,11 +30,7 @@ if (!existsSync(cacheClassHash)) {
   writeFileSync(cacheClassHash, "{}");
 }
 
-try {
-  cache = JSON.parse(readFileSync(cacheClassHash).toString("ascii"));
-} catch (e) {
-  console.log("Error reading cache", e);
-}
+cache = JSON.parse(readFileSync(cacheClassHash).toString("ascii"));
 
 export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) =>
   class extends Base {

@@ -23,14 +23,14 @@ const cacheClassHashFilepath = "./dist/classHashCache.json";
 // This avoids recomputing the class hash and compiled class hash for each contract
 // (approx 7s for compiledClassHash and 3s for classHash on my machine)
 // CompiledClassHash is for SIERRA, and ClassHash is for CASM
-let cache: Record<string, { compiledClassHash: string | undefined; classHash: string }> = {};
+let cacheClassHashes: Record<string, { compiledClassHash: string | undefined; classHash: string }> = {};
 
 if (!existsSync(cacheClassHashFilepath)) {
   mkdirSync(dirname(cacheClassHashFilepath), { recursive: true });
   writeFileSync(cacheClassHashFilepath, "{}");
 }
 
-cache = JSON.parse(readFileSync(cacheClassHashFilepath).toString("ascii"));
+cacheClassHashes = JSON.parse(readFileSync(cacheClassHashFilepath).toString("ascii"));
 
 export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) =>
   class extends Base {
@@ -77,9 +77,9 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
       } catch (e: any) {
         if (e.toString().includes("the compiled class hash did not match the one supplied in the transaction")) {
           // Remove from cache
-          delete cache[contractName];
+          delete cacheClassHashes[contractName];
           // Update cache file
-          writeFileSync(cacheClassHashFilepath, JSON.stringify(cache, null, 2));
+          writeFileSync(cacheClassHashFilepath, JSON.stringify(cacheClassHashes, null, 2));
           return await this.declareIfNotAndCache(contractName, payload, details, wait);
         }
         throw e;
@@ -186,12 +186,12 @@ function getSubfolders(dirPath: string): string[] {
 }
 
 function populatePayloadWithClassHashes(payload: DeclareContractPayload, contractName: string) {
-  if (!cache[contractName]) {
+  if (!cacheClassHashes[contractName]) {
     const { compiledClassHash, classHash } = extractContractHashes(payload);
-    cache[contractName] = { compiledClassHash, classHash };
+    cacheClassHashes[contractName] = { compiledClassHash, classHash };
     console.log(`Updating cache for ${contractName}`);
-    writeFileSync(cacheClassHashFilepath, JSON.stringify(cache, null, 2));
+    writeFileSync(cacheClassHashFilepath, JSON.stringify(cacheClassHashes, null, 2));
   }
-  payload.compiledClassHash = cache[contractName].compiledClassHash;
-  payload.classHash = cache[contractName].classHash;
+  payload.compiledClassHash = cacheClassHashes[contractName].compiledClassHash;
+  payload.classHash = cacheClassHashes[contractName].classHash;
 }

@@ -218,16 +218,11 @@ describe("ArgentAccount: escape mechanism", function () {
     });
 
     it("Cancel escape when upgrading", async function () {
-      const { account, owner, guardian } = await deployOldAccountWithProxy();
+      const { account, accountContract, owner, guardian } = await deployOldAccountWithProxy();
       account.signer = new LegacyMultisigSigner([guardian]);
 
       await manager.setTime(randomTime);
-      await manager.waitForTx(
-        account.execute({
-          contractAddress: account.address,
-          entrypoint: "triggerEscapeSigner",
-        }),
-      );
+      await manager.waitForTx(accountContract.triggerEscapeSigner());
 
       account.signer = new LegacyMultisigSigner([owner, guardian]);
       const upgradeReceipt = await upgradeAccount(account, argentAccountClassHash, ["0"]);
@@ -240,16 +235,11 @@ describe("ArgentAccount: escape mechanism", function () {
     });
 
     it("Clear expired escape when upgrading", async function () {
-      const { account, owner, guardian } = await deployOldAccountWithProxy();
+      const { account, accountContract, owner, guardian } = await deployOldAccountWithProxy();
       account.signer = new LegacyMultisigSigner([guardian]);
 
       await manager.setTime(randomTime);
-      await manager.waitForTx(
-        account.execute({
-          contractAddress: account.address,
-          entrypoint: "triggerEscapeSigner",
-        }),
-      );
+      await manager.waitForTx(accountContract.triggerEscapeSigner());
 
       await manager.setTime(randomTime + ESCAPE_EXPIRY_PERIOD + 1n);
 

@@ -1,3 +1,7 @@
+---
+icon: person-running-fast
+---
+
 # Sessions
 
 Sessions allow dapps to submit transactions on behalf of the user without requiring any user interaction, as long as the transaction to execute follows some restrictions defined when the session is created. This will allow for a better UX in areas such as gaming
@@ -12,22 +16,21 @@ In order to **create a session** a dapp must generate a key pair (dapp key), and
 
 ![Sessions creation](session_creation.png)
 
-To **use a session** the dapp will need to trigger a transaction using the session signed in the previous step. Also a guardian and a dapp key signature will need to sign again for every transaction. They will sign over the following hash: `poseidon(transaction_hash, session_hash, cache_owner_guid)`
-Note that the user is not involved in the process.
+To **use a session** the dapp will need to trigger a transaction using the session signed in the previous step. Also a guardian and a dapp key signature will need to sign again for every transaction. They will sign over the following hash: `poseidon(transaction_hash, session_hash, cache_owner_guid)` Note that the user is not involved in the process.
 
 ![Sessions usage](session_usage.png)
 
 ### Onchain checks by the account:
 
-- Methods allowed to be called (contract address and selector)
-- Guardian and dapp signatures for every transaction (Guardian must be the same as the one used in the session authorization)
-- Check if session is revoked (see [Session Revocation ](#session-revocation))
-- Session expiration. It can only be done with some level precision during validation because of starknet restrictions to timestamps during validation, but the check will be also performed on execution with a more accurate timestamp. This could allow the dapp to perform some gas griefing but it is mitigated by the fact that a guardian is also performing the check offchain
+* Methods allowed to be called (contract address and selector)
+* Guardian and dapp signatures for every transaction (Guardian must be the same as the one used in the session authorization)
+* Check if session is revoked (see [Session Revocation ](sessions.md#session-revocation))
+* Session expiration. It can only be done with some level precision during validation because of starknet restrictions to timestamps during validation, but the check will be also performed on execution with a more accurate timestamp. This could allow the dapp to perform some gas griefing but it is mitigated by the fact that a guardian is also performing the check offchain
 
 ### Offchain checks by guardian:
 
-- Session expiration (with higher accuracy than the onchain check performed on validation)
-- Anything included in the `Metadata` field (it could include checks to make sure the dapp is not spending too much on gas fees)
+* Session expiration (with higher accuracy than the onchain check performed on validation)
+* Anything included in the `Metadata` field (it could include checks to make sure the dapp is not spending too much on gas fees)
 
 ### Sessions and multiple guardians
 
@@ -62,7 +65,7 @@ There is also a view method `is_session_authorization_cached` which returns a bo
 
 Even if the authorization is cached, the account will **stop accepting a cached authorization if the owner or the guardian who signed it are not longer valid** in the account. That way the behavior is the same wether caching is used or not.
 
-See the notes about the breaking changes in version 0.5.0 [here](#history)
+See the notes about the breaking changes in version 0.5.0 [here](sessions.md#history)
 
 ### Signature format
 
@@ -146,7 +149,7 @@ struct SessionToken {
 
 ### Sessions and Outside Execution
 
-Session can also be used in conjunction with [Outside Execution](./outside_execution.md). This can for instance allow subsidized sessions transactions or fee payment in other tokens.
+Session can also be used in conjunction with [Outside Execution](outside_execution.md). This can for instance allow subsidized sessions transactions or fee payment in other tokens.
 
 ### Examples
 
@@ -158,13 +161,11 @@ Sessions were introduced in version 0.4.0 of the Argent Account.
 
 There are some changes in version 0.5.0
 
-- **Caching**:
+*   **Caching**:
 
-  The `SessionToken`field `cache_authorization: bool` was replaced by `cache_owner_guid: felt252` in version 0.5.0.
-  Cache is still disabled if `cache_owner_guid` is set to 0, but passing `0x1` (true) won't work starting from version 0.5.0. Instead, the SessionToken should include the GUID if the owner who signed the session authorization.
+    The `SessionToken`field `cache_authorization: bool` was replaced by `cache_owner_guid: felt252` in version 0.5.0. Cache is still disabled if `cache_owner_guid` is set to 0, but passing `0x1` (true) won't work starting from version 0.5.0. Instead, the SessionToken should include the GUID if the owner who signed the session authorization.
 
-  Note this also means that both dapp and guardian will now sign every transaction over: `poseidon(transaction_hash, session_hash, cache_owner_guid)` where they used to use the cached_authorization bool instead
+    Note this also means that both dapp and guardian will now sign every transaction over: `poseidon(transaction_hash, session_hash, cache_owner_guid)` where they used to use the cached\_authorization bool instead
 
-  The `is_session_authorization_cached(...)` method now needs to be called with the owner and the guardian GUIDs
-
-- Sessions can now be used with **ANY guardian**. In the previous versions sessions were restricted to the MAIN guardian. The account checks that the Session Token is signed by the same guardian used in the authorization, but a second guardian can also sign the authorization. So the wallet or the user can't enforce that a specific guardian is used for a session.
+    The `is_session_authorization_cached(...)` method now needs to be called with the owner and the guardian GUIDs
+* Sessions can now be used with **ANY guardian**. In the previous versions sessions were restricted to the MAIN guardian. The account checks that the Session Token is signed by the same guardian used in the authorization, but a second guardian can also sign the authorization. So the wallet or the user can't enforce that a specific guardian is used for a session.

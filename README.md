@@ -16,6 +16,6 @@ See deployed class hashes can be found here for the [Argent Account](./deploymen
 
 Other deployment artifacts are located in [/deployments/](./deployments/)
 
-## Development
+## Full documentation
 
-See [Development](./docs/development.md)
+We have documentation about many other topis in the [Full documentation](./docs/SUMMARY.md)

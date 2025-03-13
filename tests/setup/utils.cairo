@@ -12,7 +12,7 @@ fn to_starknet_signer_signatures(arr: Array<felt252>) -> Array<felt252> {
         let r = *arr.pop_front().unwrap();
         let s = *arr.pop_front().unwrap();
         signatures.append(SignerSignature::Starknet((pubkey, StarknetSignature { r, s })));
-    }
+    };
     serialize(@signatures)
 }
 
@@ -23,7 +23,7 @@ fn to_starknet_signatures(arr: Array<KeyAndSig>) -> Array<felt252> {
         let pubkey = (*item.pubkey).try_into().expect('argent/zero-pubkey');
         let StarknetSignature { r, s } = *item.sig;
         signatures.append(SignerSignature::Starknet((pubkey, StarknetSignature { r, s })));
-    }
+    };
     serialize(@signatures)
 }
 

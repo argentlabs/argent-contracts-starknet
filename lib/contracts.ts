@@ -86,7 +86,17 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
       details?: UniversalDetails,
       wait = true,
     ) {
-      this.populatePayloadWithClassHashes(payload, contractName);
+      // If the contract is not in the cache, extract the class hash and add it to the cache
+      if (!this.cacheClassHashes[contractName]) {
+        const { compiledClassHash, classHash } = extractContractHashes(payload);
+        this.cacheClassHashes[contractName] = { compiledClassHash, classHash };
+        console.log(`Updating cache for ${contractName}`);
+        writeFileSync(cacheClassHashFilepath, JSON.stringify(this.cacheClassHashes, null, 2));
+      }
+      // Populate the payload with the class hash
+      payload.compiledClassHash = this.cacheClassHashes[contractName].compiledClassHash;
+      payload.classHash = this.cacheClassHashes[contractName].classHash;
+
       const { class_hash, transaction_hash } = await deployer.declareIfNot(payload, details);
       if (wait && transaction_hash) {
         await this.waitForTransaction(transaction_hash);
@@ -131,17 +141,6 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
       const { contract_address } = await deployer.deployContract({ classHash });
 
       return await this.loadContract(contract_address, classHash);
-    }
-
-    populatePayloadWithClassHashes(payload: DeclareContractPayload, contractName: string) {
-      if (!this.cacheClassHashes[contractName]) {
-        const { compiledClassHash, classHash } = extractContractHashes(payload);
-        this.cacheClassHashes[contractName] = { compiledClassHash, classHash };
-        console.log(`Updating cache for ${contractName}`);
-        writeFileSync(cacheClassHashFilepath, JSON.stringify(this.cacheClassHashes, null, 2));
-      }
-      payload.compiledClassHash = this.cacheClassHashes[contractName].compiledClassHash;
-      payload.classHash = this.cacheClassHashes[contractName].classHash;
     }
   };
 

@@ -47,15 +47,6 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
         return cachedClass;
       }
 
-      if (Object.keys(this.cacheClassHashes).length === 0) {
-        if (!existsSync(cacheClassHashFilepath)) {
-          mkdirSync(dirname(cacheClassHashFilepath), { recursive: true });
-          writeFileSync(cacheClassHashFilepath, "{}");
-        }
-
-        this.cacheClassHashes = JSON.parse(readFileSync(cacheClassHashFilepath).toString("ascii"));
-      }
-
       const payload = getDeclareContractPayload(contractName, folder);
       let details: UniversalDetails | undefined;
       // Setting resourceBounds skips estimate
@@ -86,6 +77,16 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
       details?: UniversalDetails,
       wait = true,
     ) {
+      // If cache isn't initialized, initialize it
+      if (Object.keys(this.cacheClassHashes).length === 0) {
+        if (!existsSync(cacheClassHashFilepath)) {
+          mkdirSync(dirname(cacheClassHashFilepath), { recursive: true });
+          writeFileSync(cacheClassHashFilepath, "{}");
+        }
+
+        this.cacheClassHashes = JSON.parse(readFileSync(cacheClassHashFilepath).toString("ascii"));
+      }
+
       // If the contract is not in the cache, extract the class hash and add it to the cache
       if (!this.cacheClassHashes[contractName]) {
         const { compiledClassHash, classHash } = extractContractHashes(payload);
@@ -140,6 +141,7 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
       const classHash = await this.declareLocalContract(contractName, true, contractsFolder);
       const { contract_address } = await deployer.deployContract({ classHash });
 
+      // TODO could avoid network request and just create the contract using the ABI
       return await this.loadContract(contract_address, classHash);
     }
   };

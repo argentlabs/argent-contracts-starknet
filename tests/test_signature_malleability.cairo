@@ -12,10 +12,15 @@ use starknet::secp256r1::Secp256r1Point;
 
 #[test]
 #[fuzzer(runs: 100)]
-fn test_secp256r1_malleability(key: u256, message_hash: felt252) {
+fn test_secp256r1_malleability(key: u256, message_hash: felt252, y_parity_random: u8) {
     let keypair = Secp256r1CurveKeyPairImpl::from_secret_key(key);
     let (r, s) = keypair.sign(message_hash.into()).unwrap();
-    let signature = Signature { r, s: s % SECP_256_R1_HALF, y_parity: true };
+    let y_parity = if y_parity_random % 2 == 0 {
+        true
+    } else {
+        false
+    };
+    let signature = Signature { r, s: s % SECP_256_R1_HALF, y_parity };
     let recovered = recover_public_key::<Secp256r1Point>(message_hash.into(), signature).unwrap();
     let (pubkey, _) = recovered.get_coordinates().unwrap();
     let pubkey = pubkey.try_into().unwrap();
@@ -26,10 +31,15 @@ fn test_secp256r1_malleability(key: u256, message_hash: felt252) {
 
 #[test]
 #[fuzzer(runs: 100)]
-fn test_secp256k1_malleability(key: u256, message_hash: felt252) {
+fn test_secp256k1_malleability(key: u256, message_hash: felt252, y_parity_random: u8) {
     let keypair = Secp256k1CurveKeyPairImpl::from_secret_key(key);
     let (r, s) = keypair.sign(message_hash.into()).unwrap();
-    let signature = Signature { r, s: s % SECP_256_K1_HALF, y_parity: false };
+    let y_parity = if y_parity_random % 2 == 0 {
+        true
+    } else {
+        false
+    };
+    let signature = Signature { r, s: s % SECP_256_K1_HALF, y_parity };
     let public_key_point = recover_public_key::<Secp256k1Point>(message_hash.into(), signature).unwrap();
     let calculated_eth_address = public_key_point_to_eth_address::<Secp256k1Point>(:public_key_point);
     let signer = Secp256k1Signer { pubkey_hash: calculated_eth_address };

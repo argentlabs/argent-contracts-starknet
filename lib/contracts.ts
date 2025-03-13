@@ -22,7 +22,7 @@ const cacheClassHashFilepath = "./dist/classHashCache.json";
 export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) =>
   class extends Base {
     // Maps a contract name to its class hash to avoid redeclaring the same contract
-    protected declaredContracts: Record<string,string> = {};
+    protected declaredContracts: Record<string, string> = {};
     // Holds the latest know class hashes for a given contract
     // It doesn't guarantee that the class hash is up to date, or that the contacts is declared
     protected cacheClassHashes: Record<string, { compiledClassHash: string | undefined; classHash: string }> = {};

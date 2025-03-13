@@ -22,10 +22,12 @@ const cacheClassHashFilepath = "./dist/classHashCache.json";
 export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) =>
   class extends Base {
     // Maps a contract name to its class hash to avoid redeclaring the same contract
-    protected declaredContracts: Record<string, string> = {};
+    protected declaredContracts: Record<string,string> = {};
     // Holds the latest know class hashes for a given contract
     // It doesn't guarantee that the class hash is up to date, or that the contacts is declared
     protected cacheClassHashes: Record<string, { compiledClassHash: string | undefined; classHash: string }> = {};
+
+    protected abiCache: Record<string, Abi> = {};
 
     clearClassCache() {
       for (const contractName of Object.keys(this.declaredContracts)) {
@@ -104,6 +106,7 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
         console.log(`\t${contractName} declared`);
       }
       this.declaredContracts[contractName] = class_hash;
+      this.abiCache[class_hash] = (payload as any).abi;
       return class_hash;
     }
 
@@ -132,8 +135,12 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
     }
 
     async loadContract(contractAddress: string, classHash?: string): Promise<ContractWithClass> {
-      const { abi } = await this.getClassAt(contractAddress);
-      classHash ??= await this.getClassHashAt(contractAddress);
+      classHash = await this.getClassHashAt(contractAddress);
+      let abi = this.abiCache[classHash];
+      if (!abi) {
+        abi = (await this.getClassAt(contractAddress)).abi;
+        this.abiCache[classHash] = abi;
+      }
       return new ContractWithClass(abi, contractAddress, this, classHash);
     }
 
@@ -141,7 +148,6 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
       const classHash = await this.declareLocalContract(contractName, true, contractsFolder);
       const { contract_address } = await deployer.deployContract({ classHash });
 
-      // TODO could avoid network request and just create the contract using the ABI
       return await this.loadContract(contract_address, classHash);
     }
   };

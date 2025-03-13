@@ -12,8 +12,8 @@ use starknet::secp256r1::Secp256r1Point;
 
 #[test]
 #[fuzzer(runs: 100)]
-fn test_secp256r1_malleability(key: u256, message_hash: felt252, y_parity_random: u8) {
-    let keypair = Secp256r1CurveKeyPairImpl::from_secret_key(key);
+fn test_secp256r1_malleability(message_hash: felt252, y_parity_random: u8) {
+    let keypair = Secp256r1CurveKeyPairImpl::generate();
     let (r, s) = keypair.sign(message_hash.into()).unwrap();
     let y_parity = if y_parity_random % 2 == 0 {
         true
@@ -31,8 +31,8 @@ fn test_secp256r1_malleability(key: u256, message_hash: felt252, y_parity_random
 
 #[test]
 #[fuzzer(runs: 100)]
-fn test_secp256k1_malleability(key: u256, message_hash: felt252, y_parity_random: u8) {
-    let keypair = Secp256k1CurveKeyPairImpl::from_secret_key(key);
+fn test_secp256k1_malleability(message_hash: felt252, y_parity_random: u8) {
+    let keypair = Secp256k1CurveKeyPairImpl::generate();
     let (r, s) = keypair.sign(message_hash.into()).unwrap();
     let y_parity = if y_parity_random % 2 == 0 {
         true

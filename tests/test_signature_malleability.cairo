@@ -21,7 +21,7 @@ fn test_secp256r1_malleability(message_hash: felt252) {
 
 #[test]
 #[fuzzer(runs: 100)]
-fn test_secp256k1_malleability(message_hash: felt252, y_parity_random: u8) {
+fn test_secp256k1_malleability(message_hash: felt252) {
     let keypair = Secp256k1CurveKeyPairImpl::generate();
     let calculated_eth_address = public_key_point_to_eth_address::<Secp256k1Point>(keypair.public_key);
     let signer = Secp256k1Signer { pubkey_hash: calculated_eth_address };

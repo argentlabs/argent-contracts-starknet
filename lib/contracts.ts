@@ -21,17 +21,15 @@ const cacheClassHashFilepath = "./dist/classHashCache.json";
 
 export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) =>
   class extends Base {
-    // Cache of class hashes to avoid redeclaring the same contract
-    protected classCache: Record<string, string> = {};
-    // Caching ClassHash and CompiledClassHash
-    // This avoids recomputing the class hash and compiled class hash for each contract
-    // (approx 7s for compiledClassHash and 3s for classHash on my machine)
-    // CompiledClassHash is for SIERRA, and ClassHash is for CASM
+    // Maps a contract name to its class hash to avoid redeclaring the same contract
+    protected declaredContracts: Record<string, string> = {};
+    // Holds the latest know class hashes for a given contract
+    // It doesn't guarantee that the class hash is up to date, or that the contacts is declared
     protected cacheClassHashes: Record<string, { compiledClassHash: string | undefined; classHash: string }> = {};
 
     clearClassCache() {
-      for (const contractName of Object.keys(this.classCache)) {
-        delete this.classCache[contractName];
+      for (const contractName of Object.keys(this.declaredContracts)) {
+        delete this.declaredContracts[contractName];
       }
     }
 
@@ -44,7 +42,7 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
 
     // Could extends Account to add our specific fn but that's too early.
     async declareLocalContract(contractName: string, wait = true, folder = contractsFolder): Promise<string> {
-      const cachedClass = this.classCache[contractName];
+      const cachedClass = this.declaredContracts[contractName];
       if (cachedClass) {
         return cachedClass;
       }
@@ -94,7 +92,7 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
         await this.waitForTransaction(transaction_hash);
         console.log(`\t${contractName} declared`);
       }
-      this.classCache[contractName] = class_hash;
+      this.declaredContracts[contractName] = class_hash;
       return class_hash;
     }
 

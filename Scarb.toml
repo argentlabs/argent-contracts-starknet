@@ -1,7 +1,7 @@
 [package]
 name = "argent"
 version = "0.1.0"
-cairo-version = "2.6.3"
+cairo-version = "2.11.1"
 
 [[target.lib]]
 
@@ -9,16 +9,18 @@ cairo-version = "2.6.3"
 sierra = true
 casm = true
 allowed-libfuncs-list.name = "audited"
-build-external-contracts = ["openzeppelin::presets::account::AccountUpgradeable"]
+build-external-contracts = [
+    "openzeppelin::presets::account::AccountUpgradeable",
+]
 
 [dependencies]
-starknet = "2.7.0"
-alexandria_math = { git = "https://github.com/piniom/quaireaux.git", rev = "b51ccc3" }
-alexandria_encoding = { git = "https://github.com/piniom/quaireaux.git", rev = "b51ccc3" }
-alexandria_merkle_tree = { git = "https://github.com/piniom/quaireaux.git", rev = "b51ccc3" }
-alexandria_data_structures = { git = "https://github.com/piniom/quaireaux.git", rev = "b51ccc3" }
-snforge_std = { git = "https://github.com/foundry-rs/starknet-foundry.git", tag = "v0.27.0" }
-openzeppelin = { git = "https://github.com/OpenZeppelin/cairo-contracts.git", rev = "a13bae3" }
+starknet = "2.11.1"
+alexandria_math = "0.5.0"
+alexandria_encoding = "0.5.0"
+alexandria_merkle_tree = "0.5.0"
+alexandria_data_structures = "0.5.0"
+snforge_std = "0.38.3"
+openzeppelin = "1.0.0"
 
 [tool.fmt]
 max-line-length = 120

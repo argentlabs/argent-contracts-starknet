@@ -1,17 +1,16 @@
 use argent::presets::argent_account::ArgentAccount;
 use argent::signer::signer_signature::{
-    Signer, SignerSignature, SignerSignatureTrait, StarknetSignature, SignerTrait, StarknetSigner,
+    Signer, SignerSignature, SignerSignatureTrait, SignerTrait, StarknetSignature, StarknetSigner,
     starknet_signer_from_pubkey,
 };
-use snforge_std::{start_prank, CheatTarget};
-use starknet::contract_address_const;
-use super::setup::{
-    account_test_setup::{
-        ITestArgentAccountDispatcherTrait, initialize_account_with, initialize_account,
-        initialize_account_without_guardian
-    },
-    utils::{set_tx_version_foundry, felt252TryIntoStarknetSigner}, constants::{OWNER, NEW_OWNER, WRONG_OWNER}
+use core::traits::TryInto;
+use snforge_std::{CheatSpan, cheat_block_timestamp, cheat_caller_address};
+use starknet::ContractAddress;
+use super::setup::account_test_setup::{
+    ITestArgentAccountDispatcherTrait, initialize_account, initialize_account_with, initialize_account_without_guardian,
 };
+use super::setup::utils::{felt252TryIntoStarknetSigner, set_tx_version_foundry};
+use super::setup::constants::{NEW_OWNER, OWNER, WRONG_OWNER};
 
 #[test]
 fn initialize() {
@@ -25,7 +24,8 @@ fn initialize() {
 #[should_panic(expected: ('argent/invalid-tx-version',))]
 fn check_transaction_version_on_execute() {
     let account = initialize_account();
-    start_prank(CheatTarget::One(account.contract_address), contract_address_const::<0>());
+    let zero_address: ContractAddress = 0.try_into().unwrap();
+    cheat_caller_address(account.contract_address, zero_address, CheatSpan::Indefinite(()));
     set_tx_version_foundry(32, account.contract_address);
     account.__execute__(array![]);
 }
@@ -34,7 +34,8 @@ fn check_transaction_version_on_execute() {
 #[should_panic(expected: ('argent/invalid-tx-version',))]
 fn check_transaction_version_on_validate() {
     let account = initialize_account();
-    start_prank(CheatTarget::One(account.contract_address), contract_address_const::<0>());
+    let zero_address: ContractAddress = 0.try_into().unwrap();
+    cheat_caller_address(account.contract_address, zero_address, CheatSpan::Indefinite(()));
     set_tx_version_foundry(32, account.contract_address);
     account.__validate__(array![]);
 }
@@ -64,8 +65,8 @@ fn erc165_supported_interfaces() {
     assert!(account.supports_interface(0x3943f10f), "IACCOUNT_OLD_2");
 
     assert!(
-        account.supports_interface(0x68cfd18b92d1907b8ba3cc324900277f5a3622099431ea85dd8089255e4181),
-        "OUTSIDE_EXECUTION"
+        account.supports_interface(0x11807fbf461e989e437c2a77b6683f3e5d886f83ba27dade7b341aeb5b1def1),
+        "OUTSIDE_EXECUTION",
     );
 }
 
@@ -73,7 +74,7 @@ fn erc165_supported_interfaces() {
 fn change_owner() {
     let account = initialize_account();
     assert_eq!(
-        account.get_owner_guid(), starknet_signer_from_pubkey(OWNER().pubkey).into_guid(), "owner not correctly set"
+        account.get_owner_guid(), starknet_signer_from_pubkey(OWNER().pubkey).into_guid(), "owner not correctly set",
     );
     let (signer, signature) = NEW_OWNER();
     let signer_signature = SignerSignature::Starknet((signer, signature));
@@ -85,7 +86,8 @@ fn change_owner() {
 #[should_panic(expected: ('argent/only-self',))]
 fn change_owner_only_self() {
     let account = initialize_account();
-    start_prank(CheatTarget::One(account.contract_address), contract_address_const::<42>());
+    let address: ContractAddress = 42.try_into().unwrap();
+    cheat_caller_address(account.contract_address, address, CheatSpan::Indefinite(()));
     let (signer, signature) = NEW_OWNER();
     let signer_signature = SignerSignature::Starknet((signer, signature));
     account.change_owner(signer_signature);
@@ -97,7 +99,7 @@ fn change_owner_invalid_message() {
     let account = initialize_account();
     let (signer, _) = NEW_OWNER();
     let signer_signature = SignerSignature::Starknet(
-        (signer, StarknetSignature { r: WRONG_OWNER().sig.r, s: WRONG_OWNER().sig.s })
+        (signer, StarknetSignature { r: WRONG_OWNER().sig.r, s: WRONG_OWNER().sig.s }),
     );
     account.change_owner(signer_signature);
 }
@@ -124,7 +126,8 @@ fn change_guardian() {
 fn change_guardian_only_self() {
     let account = initialize_account();
     let guardian = Option::Some(starknet_signer_from_pubkey(22));
-    start_prank(CheatTarget::One(account.contract_address), contract_address_const::<42>());
+    let address: ContractAddress = 42.try_into().unwrap();
+    cheat_caller_address(account.contract_address, address, CheatSpan::Indefinite(()));
     account.change_guardian(guardian);
 }
 
@@ -160,7 +163,8 @@ fn change_guardian_backup() {
 fn change_guardian_backup_only_self() {
     let account = initialize_account();
     let guardian_backup = Option::Some(starknet_signer_from_pubkey(42));
-    start_prank(CheatTarget::One(account.contract_address), contract_address_const::<42>());
+    let address: ContractAddress = 42.try_into().unwrap();
+    cheat_caller_address(account.contract_address, address, CheatSpan::Indefinite(()));
     account.change_guardian_backup(guardian_backup);
 }
 
@@ -222,7 +226,7 @@ fn supportsInterface() {
 #[should_panic(expected: ('argent/non-null-caller',))]
 fn cant_call_validate() {
     let account = initialize_account();
-    start_prank(CheatTarget::One(account.contract_address), contract_address_const::<42>());
+    let address: ContractAddress = 42.try_into().unwrap();
+    cheat_caller_address(account.contract_address, address, CheatSpan::Indefinite(()));
     account.__validate__(array![]);
 }
-

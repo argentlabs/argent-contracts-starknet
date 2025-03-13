@@ -1,10 +1,12 @@
 use argent::account::interface::Version;
 use argent::presets::argent_account::ArgentAccount;
-use argent::recovery::interface::{LegacyEscape, EscapeStatus};
-use argent::signer::signer_signature::{Signer, StarknetSigner, SignerSignature, starknet_signer_from_pubkey};
-use snforge_std::{declare, ContractClassTrait, ContractClass, RevertedTransaction, start_prank, CheatTarget};
-use starknet::{contract_address_const, account::Call};
-use super::constants::{OWNER, GUARDIAN, ARGENT_ACCOUNT_ADDRESS};
+use argent::recovery::interface::{EscapeStatus, LegacyEscape};
+use argent::signer::signer_signature::{Signer, SignerSignature, StarknetSigner, starknet_signer_from_pubkey};
+use core::traits::TryInto;
+use snforge_std::{CheatSpan, ContractClass, ContractClassTrait, DeclareResult, cheat_caller_address, declare};
+use starknet::ContractAddress;
+use starknet::account::Call;
+use super::constants::{ARGENT_ACCOUNT_ADDRESS, GUARDIAN, OWNER};
 
 #[starknet::interface]
 trait ITestArgentAccount<TContractState> {
@@ -20,7 +22,7 @@ trait ITestArgentAccount<TContractState> {
         class_hash: felt252,
         contract_address_salt: felt252,
         owner: Signer,
-        guardian: Option<Signer>
+        guardian: Option<Signer>,
     ) -> felt252;
     // External
     fn change_owner(ref self: TContractState, signer_signature: SignerSignature);
@@ -74,12 +76,20 @@ fn initialize_account_with(owner: felt252, guardian: felt252) -> ITestArgentAcco
     };
     guardian_signer.serialize(ref calldata);
 
-    let contract = declare("ArgentAccount");
-    let contract_address = contract
+    let declare_result = declare("ArgentAccount");
+    let contract_class = match declare_result {
+        Result::Ok(declare_result) => match declare_result {
+            DeclareResult::Success(contract_class) => contract_class,
+            DeclareResult::AlreadyDeclared(contract_class) => contract_class,
+        },
+        Result::Err(_) => panic_with_felt252('err declaring ArgentAccount'),
+    };
+
+    let (contract_address, _) = contract_class
         .deploy_at(@calldata, ARGENT_ACCOUNT_ADDRESS.try_into().unwrap())
         .expect('Failed to deploy ArgentAccount');
 
     // This will set the caller for subsequent calls (avoid 'argent/only-self')
-    start_prank(CheatTarget::One(contract_address), contract_address);
+    cheat_caller_address(contract_address, contract_address, CheatSpan::Indefinite(()));
     ITestArgentAccountDispatcher { contract_address }
 }

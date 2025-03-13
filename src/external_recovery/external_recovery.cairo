@@ -33,7 +33,7 @@ mod external_recovery_component {
     const MIN_ESCAPE_PERIOD: u64 = 60 * 10; // 10 minutes;
     
     /// Zero address constant
-    const ZERO_ADDRESS: felt252 = 0;
+    const ZERO_ADDRESS: ContractAddress = 0.try_into().unwrap();
 
     #[storage]
     struct Storage {
@@ -147,19 +147,18 @@ mod external_recovery_component {
             if is_enabled {
                 assert(security_period >= MIN_ESCAPE_PERIOD, 'argent/invalid-security-period');
                 assert(expiry_period >= MIN_ESCAPE_PERIOD, 'argent/invalid-expiry-period');
-                assert(guardian.into() != ZERO_ADDRESS, 'argent/invalid-zero-guardian');
+                assert(guardian != ZERO_ADDRESS, 'argent/invalid-zero-guardian');
                 assert(guardian != get_contract_address(), 'argent/invalid-guardian');
                 self.escape_enabled.write(EscapeEnabled { is_enabled: true, security_period, expiry_period });
                 self.guardian.write(guardian);
             } else {
                 assert(escape_config.is_enabled, 'argent/escape-disabled');
                 assert(
-                    security_period == 0 && expiry_period == 0 && guardian.into() == ZERO_ADDRESS,
+                    security_period == 0 && expiry_period == 0 && guardian.is_zero(),
                     'argent/invalid-escape-params'
                 );
                 self.escape_enabled.write(EscapeEnabled { is_enabled: false, security_period, expiry_period });
-                let zero_address: ContractAddress = ZERO_ADDRESS.try_into().unwrap();
-                self.guardian.write(zero_address);
+                self.guardian.write(ZERO_ADDRESS);
             }
         }
 

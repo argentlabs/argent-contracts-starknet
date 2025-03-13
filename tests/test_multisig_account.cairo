@@ -1,14 +1,16 @@
-use argent::multisig::multisig::{multisig_component};
+use argent::multisig::multisig::multisig_component;
 use argent::presets::multisig_account::ArgentMultisigAccount;
 use argent::signer::signer_signature::{
-    Signer, StarknetSigner, SignerSignature, SignerTrait, starknet_signer_from_pubkey
+    Signer, SignerSignature, SignerTrait, StarknetSigner, starknet_signer_from_pubkey,
 };
-use argent::signer_storage::signer_list::{signer_list_component};
-use snforge_std::{ContractClassTrait, spy_events, SpyOn, EventSpy, EventFetcher, EventAssertions};
-use super::setup::constants::{MULTISIG_OWNER};
+use argent::signer_storage::signer_list::signer_list_component;
+use snforge_std::{
+    ContractClassTrait, EventAssertions, EventFetcher, EventSpy, EventSpyAssertionsTrait, SpyOn, spy_events,
+};
+use super::setup::constants::MULTISIG_OWNER;
 use super::setup::multisig_test_setup::{
-    initialize_multisig, ITestArgentMultisigDispatcherTrait, initialize_multisig_with,
-    initialize_multisig_with_one_signer, declare_multisig
+    ITestArgentMultisigDispatcherTrait, declare_multisig, initialize_multisig, initialize_multisig_with,
+    initialize_multisig_with_one_signer,
 };
 
 #[test]

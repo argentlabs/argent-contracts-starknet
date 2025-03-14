@@ -3,9 +3,9 @@ version = 1
 
 [[package]]
 name = "alexandria_bytes"
-version = "0.5.0"
+version = "0.3.0"
 source = "registry+https://scarbs.xyz/"
-checksum = "sha256:eacb9157ec4f76a4347000a38549d0254f1181620bef15e25f5aa8d838e98de9"
+checksum = "sha256:be5d95de2b9b05a029b2539aa8bb39560374705652ee0a69e01397f6ef1a7d1a"
 dependencies = [
  "alexandria_data_structures",
  "alexandria_math",
@@ -13,15 +13,15 @@ dependencies = [
 
 [[package]]
 name = "alexandria_data_structures"
-version = "0.5.0"
+version = "0.3.0"
 source = "registry+https://scarbs.xyz/"
-checksum = "sha256:ead928134d8ba7207a3523ab20d865a4d121a8a6a496e1628c438fb8b264d9dc"
+checksum = "sha256:fca0cd0349fabef5d62e7b02d09332679c531058bf53f9be165bf0e832c62765"
 
 [[package]]
 name = "alexandria_encoding"
-version = "0.5.0"
+version = "0.3.0"
 source = "registry+https://scarbs.xyz/"
-checksum = "sha256:aee60de9405e89e9dc0fc6a6d984a05123c9367cea220b0f3d2b017636674d87"
+checksum = "sha256:c1b3b123d74116233a0f28077c4ddd51c5c89f19a3dfba0c32dcdce2dc24c4c9"
 dependencies = [
  "alexandria_bytes",
  "alexandria_data_structures",
@@ -31,24 +31,24 @@ dependencies = [
 
 [[package]]
 name = "alexandria_math"
-version = "0.5.0"
+version = "0.3.0"
 source = "registry+https://scarbs.xyz/"
-checksum = "sha256:cfa321a7258aa4ff659d962755833e69ad11330799ad426252c76d1e2b25c95c"
+checksum = "sha256:9659d9bbe0f0713366abb479c3a0d182dc560d15355bfca1ac4ef25076b2d8b4"
 
 [[package]]
 name = "alexandria_merkle_tree"
-version = "0.5.0"
+version = "0.3.0"
 source = "registry+https://scarbs.xyz/"
-checksum = "sha256:a2c678c6007401909d0401b2931182385afa9e9421450902ef42c1b3e7188a61"
+checksum = "sha256:78c4fb80a740f8ea0c4146d2132e70a1842c341c0341634389a24e775c8c488b"
 dependencies = [
  "alexandria_math",
 ]
 
 [[package]]
 name = "alexandria_numeric"
-version = "0.5.0"
+version = "0.3.0"
 source = "registry+https://scarbs.xyz/"
-checksum = "sha256:96d8e55878a7a88caa01a9b2b1b5e4ff87fd8af446fa28bd4461d076071e9d81"
+checksum = "sha256:35764658e0f3731d6b59afeead7aac5fd9c73ffe6a7bf9be2443d59e8f300445"
 dependencies = [
  "alexandria_math",
  "alexandria_searching",
@@ -56,9 +56,9 @@ dependencies = [
 
 [[package]]
 name = "alexandria_searching"
-version = "0.5.0"
+version = "0.3.0"
 source = "registry+https://scarbs.xyz/"
-checksum = "sha256:63a5aa4df3fb7474bd9c64541789a6413c698a982e19048ce6b865d91c70822c"
+checksum = "sha256:ce4ae15a5d9ac7d334f3bba50d90b9a3d33167f3692c2059c4eb26f54f7b15f6"
 dependencies = [
  "alexandria_data_structures",
 ]

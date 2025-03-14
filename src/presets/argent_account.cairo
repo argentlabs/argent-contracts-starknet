@@ -1223,7 +1223,7 @@ mod ArgentAccount {
                 if *bound.resource == 'L2_GAS' {
                     max_tip += tx_info.tip * max_resource_amount;
                 }
-            }
+            };
             max_fee += max_tip;
             assert(max_tip <= MAX_ESCAPE_TIP_STRK, 'argent/tip-too-high');
             assert(max_fee <= MAX_ESCAPE_MAX_FEE_STRK, 'argent/max-fee-too-high');

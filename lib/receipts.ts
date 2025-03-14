@@ -20,8 +20,8 @@ export const WithReceipts = <T extends Constructor<RpcProvider>>(Base: T) =>
       if (typeof execute === "string") {
         transactionHash = execute;
       } else {
-        const executionResult = await execute;
-        transactionHash = executionResult["transaction_hash"];
+        const { transaction_hash } = await execute;
+        transactionHash = transaction_hash;
       }
       return this.waitForTransaction(transactionHash, { ...options });
     }
@@ -34,7 +34,7 @@ export const WithReceipts = <T extends Constructor<RpcProvider>>(Base: T) =>
       expect(tx.execution_status, `Transaction failed: ${JSON.stringify(tx)}`).to.equal(
         TransactionExecutionStatus.SUCCEEDED,
       );
-      return tx as TransactionReceipt;
+      return tx;
     }
 
     async ensureAccepted(

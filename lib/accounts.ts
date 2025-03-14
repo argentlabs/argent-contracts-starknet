@@ -25,7 +25,6 @@ import {
   UniversalDetails,
   hash,
   num,
-  shortString,
   uint256,
 } from "starknet";
 import { manager } from "./manager";
@@ -33,8 +32,6 @@ import { getOutsideExecutionCall } from "./outsideExecution";
 import { LegacyArgentSigner, LegacyKeyPair, LegacyMultisigSigner, LegacyStarknetKeyPair } from "./signers/legacy";
 import { ArgentSigner, KeyPair, RawSigner, randomStarknetKeyPair } from "./signers/signers";
 import { ethAddress, strkAddress } from "./tokens";
-
-export const VALID = BigInt(shortString.encodeShortString("VALID"));
 
 export class ArgentAccount extends Account {
   constructor(
@@ -68,7 +65,7 @@ export class ArgentAccount extends Account {
   }
 }
 
-export class ArgentWallet implements ArgentWallet {
+class ArgentWallet implements ArgentWallet {
   constructor(
     public readonly account: ArgentAccount,
     public readonly classHash: string,
@@ -125,12 +122,12 @@ export const deployer = (() => {
   if (manager.isDevnet) {
     const devnetAddress = "0x64b48806902a367c8598f4f95c305e8c1a1acba5f082d294a43793113115691";
     const devnetPrivateKey = "0x71d7bb07b9a64f6f78ac4c816aff4da9";
-    return new Account(manager, devnetAddress, devnetPrivateKey, undefined, RPC.ETransactionVersion.V3);
+    return new Account(manager, devnetAddress, devnetPrivateKey, "1", RPC.ETransactionVersion.V3);
   }
   const address = process.env.ADDRESS;
   const privateKey = process.env.PRIVATE_KEY;
   if (address && privateKey) {
-    return new Account(manager, address, privateKey, undefined, RPC.ETransactionVersion.V3);
+    return new Account(manager, address, privateKey, "1", RPC.ETransactionVersion.V3);
   }
   throw new Error("Missing deployer address or private key, please set ADDRESS and PRIVATE_KEY env variables.");
 })();
@@ -304,7 +301,7 @@ async function deployAccountInner(params: DeployAccountParams): Promise<ArgentWa
   return await ArgentWallet.create({ ...finalParams, account, transactionHash });
 }
 
-export type DeployAccountParams = {
+type DeployAccountParams = {
   useTxV3?: boolean;
   classHash?: string;
   owners?: KeyPair[];

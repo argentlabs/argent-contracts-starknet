@@ -15,7 +15,7 @@ import {
   sortByGuid,
 } from ".";
 
-export interface MultisigWallet {
+interface MultisigWallet {
   account: Account;
   accountContract: Contract;
   keys: KeyPair[];
@@ -23,7 +23,7 @@ export interface MultisigWallet {
   receipt: GetTransactionReceiptResponse;
 }
 
-export type DeployMultisigParams = {
+type DeployMultisigParams = {
   threshold: number;
   signersLength?: number;
   keys?: KeyPair[];

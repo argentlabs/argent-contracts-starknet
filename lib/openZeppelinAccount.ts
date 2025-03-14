@@ -5,14 +5,14 @@ import { manager } from "./manager";
 import { LegacyMultisigSigner, LegacyStarknetKeyPair } from "./signers/legacy";
 import { randomStarknetKeyPair } from "./signers/signers";
 
-export type DeployOzAccountParams = {
+type DeployOzAccountParams = {
   useTxV3?: boolean;
   owner?: LegacyStarknetKeyPair;
   salt?: string;
   fundingAmount?: number | bigint;
 };
 
-export type DeployOzAccountResult = {
+type DeployOzAccountResult = {
   account: Account;
   accountContract: ContractWithClass;
   deployTxHash: string;

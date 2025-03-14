@@ -18,13 +18,10 @@ const activeRevision = TypedDataRevision.ACTIVE;
 
 const initialTime = 1713139200;
 describe("ArgentMultisig: outside execution", function () {
-  // Avoid timeout
-  this.timeout(320000);
-
   let mockDapp: Contract;
 
   before(async () => {
-    mockDapp = await manager.deployContract("MockDapp");
+    mockDapp = await manager.declareAndDeployContract("MockDapp");
   });
 
   it("Correct message hash", async function () {

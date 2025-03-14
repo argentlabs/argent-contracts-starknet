@@ -14,7 +14,7 @@ describe("ArgentMultisig: Execute", function () {
   let mockDappContract: Contract;
 
   before(async () => {
-    mockDappContract = await manager.deployContract("MockDapp");
+    mockDappContract = await manager.declareAndDeployContract("MockDapp");
   });
 
   for (const useTxV3 of [false, true]) {

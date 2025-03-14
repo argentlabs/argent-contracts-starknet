@@ -1,11 +1,10 @@
-import { CairoOption, CairoOptionVariant, CallData, Contract, num } from "starknet";
+import { CairoOption, CairoOptionVariant, CallData, Contract } from "starknet";
 import {
   AllowedMethod,
   EstimateStarknetKeyPair,
   SignerType,
   StarknetKeyPair,
   deployAccount,
-  deployer,
   estimateWithCustomSig,
   executeWithCustomSig,
   expectRevertWithErrorMessage,
@@ -23,13 +22,7 @@ describe("ArgentAccount: session basics", function () {
 
   before(async () => {
     sessionAccountClassHash = await manager.declareLocalContract("ArgentAccount");
-
-    const mockDappClassHash = await manager.declareLocalContract("MockDapp");
-    const deployedMockDapp = await deployer.deployContract({
-      classHash: mockDappClassHash,
-      salt: num.toHex(randomStarknetKeyPair().privateKey),
-    });
-    mockDappContract = await manager.loadContract(deployedMockDapp.contract_address);
+    mockDappContract = await manager.declareAndDeployContract("MockDapp");
   });
 
   beforeEach(async function () {

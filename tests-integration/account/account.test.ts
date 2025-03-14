@@ -102,7 +102,7 @@ describe("ArgentAccount", function () {
     });
 
     it("Should not require a signature if owner is still valid", async function () {
-      const { accountContract, account, owners } = await deployAccount({
+      const { accountContract, owners } = await deployAccount({
         owners: Array.from({ length: 2 }, () => randomStarknetKeyPair()),
       });
       const [owner, newOwner] = owners;

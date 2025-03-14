@@ -1,24 +1,17 @@
 import { Contract, TypedDataRevision } from "starknet";
-import { StarknetKeyPair, deployAccount, deployer, manager, setupSession } from "../../lib";
+import { StarknetKeyPair, deployAccount, manager, setupSession } from "../../lib";
 import { singleMethodAllowList } from "./sessionTestHelpers";
 
 const initialTime = 1713139200n;
 const legacyRevision = TypedDataRevision.LEGACY;
 const activeRevision = TypedDataRevision.ACTIVE;
 describe("ArgentAccount: session outside execution", function () {
-  // Avoid timeout
-  this.timeout(320000);
-
   let argentSessionAccountClassHash: string;
   let mockDapp: Contract;
 
   before(async () => {
     argentSessionAccountClassHash = await manager.declareLocalContract("ArgentAccount");
-    const mockDappClassHash = await manager.declareLocalContract("MockDapp");
-    const { contract_address } = await deployer.deployContract({
-      classHash: mockDappClassHash,
-    });
-    mockDapp = await manager.loadContract(contract_address);
+    mockDapp = await manager.declareAndDeployContract("MockDapp");
   });
 
   it("Basics: Revision 0", async function () {

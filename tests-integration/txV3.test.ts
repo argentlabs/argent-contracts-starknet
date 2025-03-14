@@ -6,7 +6,7 @@ for (const accountType of ["individual", "multisig"]) {
     let mockDapp: Contract;
 
     before(async () => {
-      mockDapp = await manager.deployContract("MockDapp");
+      mockDapp = await manager.declareAndDeployContract("MockDapp");
     });
 
     async function deployAccountType() {

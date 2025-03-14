@@ -59,7 +59,7 @@ describe("ArgentMultisig: upgrade", function () {
         deployMultisig({ classHash: classHashV020, threshold, signersLength: threshold }),
       getGuidsSelector: "get_signer_guids",
     });
-    mockDapp = await manager.deployContract("MockDapp");
+    mockDapp = await manager.declareAndDeployContract("MockDapp");
   });
 
   it("Upgrade from current version to FutureVersionMultisig", async function () {

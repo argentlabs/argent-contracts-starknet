@@ -4,8 +4,6 @@ import { ArgentSigner, deployAccount, expectExecutionRevert, manager, randomStar
 const gasPriceInStrk = 35000000000000n;
 
 describe("Gas griefing", function () {
-  this.timeout(320000);
-
   // run test with both TxV1 and TxV3
   for (const useTxV3 of [false, true]) {
     it(`Block guardian attempts (TxV3:${useTxV3})`, async function () {

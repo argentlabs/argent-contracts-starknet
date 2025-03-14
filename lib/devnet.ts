@@ -1,7 +1,7 @@
 import { RawArgs, RpcProvider } from "starknet";
 import { Constructor } from ".";
 
-export const dumpFolderPath = "./dump";
+const dumpFolderPath = "./dump";
 export const devnetBaseUrl = "http://127.0.0.1:5050";
 
 export const WithDevnet = <T extends Constructor<RpcProvider>>(Base: T) =>
@@ -12,7 +12,7 @@ export const WithDevnet = <T extends Constructor<RpcProvider>>(Base: T) =>
 
     // Polls quickly for a local network
     waitForTransaction(transactionHash: string, options = {}) {
-      const retryInterval = this.isDevnet ? 250 : 1000;
+      const retryInterval = this.isDevnet ? 100 : 1000;
       return super.waitForTransaction(transactionHash, { retryInterval, ...options });
     }
 

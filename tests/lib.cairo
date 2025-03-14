@@ -8,6 +8,7 @@ mod test_linked_set_with_head;
 mod test_offchain_hashing;
 mod test_secp256k1;
 mod test_secp256r1;
+mod test_signature_malleability;
 mod test_transaction_version;
 mod test_version;
 

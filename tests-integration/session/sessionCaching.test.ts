@@ -1,11 +1,10 @@
 import { expect } from "chai";
-import { CairoOption, CairoOptionVariant, CallData, Contract, num } from "starknet";
+import { CairoOption, CairoOptionVariant, CallData, Contract } from "starknet";
 import {
   ArgentSigner,
   SignerType,
   StarknetKeyPair,
   deployAccount,
-  deployer,
   executeWithCustomSig,
   expectRevertWithErrorMessage,
   manager,
@@ -23,13 +22,7 @@ describe("Session Account: execute caching", function () {
 
   before(async () => {
     argentAccountClassHash = await manager.declareLocalContract("ArgentAccount");
-
-    const mockDappClassHash = await manager.declareLocalContract("MockDapp");
-    const deployedMockDapp = await deployer.deployContract({
-      classHash: mockDappClassHash,
-      salt: num.toHex(randomStarknetKeyPair().privateKey),
-    });
-    mockDappContract = await manager.loadContract(deployedMockDapp.contract_address);
+    mockDappContract = await manager.declareAndDeployContract("MockDapp");
   });
 
   beforeEach(async function () {

@@ -5,7 +5,6 @@ use argent::utils::bytes::{
     SpanU8TryIntoU256, SpanU8TryIntoFelt252, u32s_to_u256, u32s_typed_to_u256, u32s_to_u8s,
     u256_to_u8s, ArrayU8Ext, u256_to_byte_array, u32s_to_byte_array
 };
-use argent::utils::hashing::{sha256_cairo0};
 use starknet::secp256_trait::Signature;
 use core::sha256::compute_sha256_byte_array;
 

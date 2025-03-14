@@ -13,9 +13,8 @@ mod outside_execution_component {
     use pedersen::PedersenTrait;
     use starknet::{
         get_caller_address, get_contract_address, get_block_timestamp, get_tx_info, account::Call,
-        storage::Map
+        storage::Map, StorePacking
     };
-    use core::starknet::storage_access::StorePacking;
     use core::integer::bitwise;
 
     #[storage]

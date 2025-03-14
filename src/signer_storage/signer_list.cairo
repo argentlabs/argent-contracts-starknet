@@ -32,7 +32,7 @@ mod signer_list_component {
     }
 
     /// @notice Emitted when a signer is added to link its details with its GUID
-    /// @param signer_guid The signer's GUID 
+    /// @param signer_guid The signer's GUID
     /// @param signer The signer struct
     #[derive(Drop, starknet::Event)]
     struct SignerLinked {
@@ -68,22 +68,19 @@ mod signer_list_component {
         }
 
         fn add_signers(
-            ref self: ComponentState<TContractState>, mut signers_to_add: Span<felt252>, last_signer: felt252
+            ref self: ComponentState<TContractState>, mut signers_to_add: Span<felt252>, last_signer: felt252,
         ) {
-            match signers_to_add.pop_front() {
-                Option::Some(signer_ref) => {
-                    let signer = *signer_ref;
-                    self.add_signer(signer_to_add: signer, last_signer: last_signer);
-                    self.add_signers(signers_to_add, last_signer: signer);
-                },
-                Option::None => (),
+            if let Option::Some(signer_ref) = signers_to_add.pop_front() {
+                let signer = *signer_ref;
+                self.add_signer(signer_to_add: signer, last_signer: last_signer);
+                self.add_signers(signers_to_add, last_signer: signer);
             }
         }
 
         // Returns the last signer of the list after the removal. This is needed to efficiently remove multiple signers.
         #[inline(always)]
         fn remove_signer(
-            ref self: ComponentState<TContractState>, signer_to_remove: felt252, last_signer: felt252
+            ref self: ComponentState<TContractState>, signer_to_remove: felt252, last_signer: felt252,
         ) -> felt252 {
             let is_signer = self.is_signer_using_last(signer_to_remove, last_signer);
             assert(is_signer, 'argent/not-a-signer');
@@ -104,13 +101,10 @@ mod signer_list_component {
         }
 
         fn remove_signers(
-            ref self: ComponentState<TContractState>, mut signers_to_remove: Span<felt252>, mut last_signer: felt252
+            ref self: ComponentState<TContractState>, mut signers_to_remove: Span<felt252>, mut last_signer: felt252,
         ) {
-            loop {
-                let signer = match signers_to_remove.pop_front() {
-                    Option::Some(signer) => *signer,
-                    Option::None => { break; }
-                };
+            for signer_ref in signers_to_remove {
+                let signer = *signer_ref;
                 last_signer = self.remove_signer(signer_to_remove: signer, last_signer: last_signer);
             }
         }
@@ -120,7 +114,7 @@ mod signer_list_component {
             ref self: ComponentState<TContractState>,
             signer_to_remove: felt252,
             signer_to_add: felt252,
-            last_signer: felt252
+            last_signer: felt252,
         ) {
             assert(signer_to_add != 0, 'argent/invalid-zero-signer');
 
@@ -141,8 +135,8 @@ mod signer_list_component {
             self.signer_list.write(signer_to_add, next_signer);
         }
 
-        // Returns the number of signers and the last signer (or zero if the list is empty). Cost increases with the list size
-        // returns (signers_len, last_signer)
+        // Returns the number of signers and the last signer (or zero if the list is empty). Cost increases with the
+        // list size returns (signers_len, last_signer)
         fn load(self: @ComponentState<TContractState>) -> (usize, felt252) {
             let mut current_signer = 0;
             let mut size = 0;
@@ -160,32 +154,26 @@ mod signer_list_component {
         fn get_signers_len(self: @ComponentState<TContractState>) -> usize {
             let mut current_signer = self.signer_list.read(0);
             let mut size = 0;
-            loop {
-                if current_signer == 0 {
-                    break size;
-                }
+            while current_signer.is_non_zero() {
                 current_signer = self.signer_list.read(current_signer);
                 size += 1;
             }
+            size
         }
 
         fn get_signers(self: @ComponentState<TContractState>) -> Array<felt252> {
             let mut current_signer = self.signer_list.read(0);
             let mut signers = array![];
-            loop {
-                if current_signer == 0 {
-                    // Can't break signers atm because "variable was previously moved"
-                    break;
-                }
+            while current_signer.is_non_zero() {
                 signers.append(current_signer);
                 current_signer = self.signer_list.read(current_signer);
-            };
+            }
             signers
         }
 
         // Returns true if `first_signer` is before `second_signer` in the signer list.
         fn is_signer_before(
-            self: @ComponentState<TContractState>, first_signer: felt252, second_signer: felt252
+            self: @ComponentState<TContractState>, first_signer: felt252, second_signer: felt252,
         ) -> bool {
             let mut is_before: bool = false;
             let mut current_signer = first_signer;
@@ -199,7 +187,7 @@ mod signer_list_component {
                     break;
                 }
                 current_signer = next_signer;
-            };
+            }
             return is_before;
         }
     }
@@ -233,7 +221,7 @@ mod signer_list_component {
             }
         }
 
-        // Returns the signer before `signer_after` or 0 if the signer is the first one. 
+        // Returns the signer before `signer_after` or 0 if the signer is the first one.
         // Reverts if `signer_after` is not found
         // Cost increases with the list size
         fn find_signer_before(self: @ComponentState<TContractState>, signer_after: felt252) -> felt252 {

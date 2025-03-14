@@ -1,14 +1,14 @@
-use argent::multisig::multisig::{multisig_component};
+use argent::multisig::multisig::multisig_component;
 use argent::presets::multisig_account::ArgentMultisigAccount;
 use argent::signer::signer_signature::{
-    Signer, StarknetSigner, SignerSignature, SignerTrait, starknet_signer_from_pubkey
+    Signer, SignerSignature, SignerTrait, StarknetSigner, starknet_signer_from_pubkey,
 };
-use argent::signer_storage::signer_list::{signer_list_component};
-use snforge_std::{ContractClassTrait, spy_events, SpyOn, EventSpy, EventFetcher, EventAssertions};
-use super::setup::constants::{MULTISIG_OWNER};
+use argent::signer_storage::signer_list::signer_list_component;
+use snforge_std::{ContractClassTrait, EventAssertions, EventFetcher, EventSpy, SpyOn, spy_events};
+use super::setup::constants::MULTISIG_OWNER;
 use super::setup::multisig_test_setup::{
-    initialize_multisig, ITestArgentMultisigDispatcherTrait, initialize_multisig_with,
-    initialize_multisig_with_one_signer, declare_multisig
+    ITestArgentMultisigDispatcherTrait, declare_multisig, initialize_multisig, initialize_multisig_with,
+    initialize_multisig_with_one_signer,
 };
 
 #[test]
@@ -21,7 +21,7 @@ fn add_signers() {
     let signer_1 = starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey);
     multisig.add_signers(2, array![signer_1]);
 
-    // check 
+    // check
     let signers = multisig.get_signer_guids();
     assert_eq!(signers.len(), 2, "invalid signers length");
     assert_eq!(multisig.get_threshold(), 2, "new threshold not set");
@@ -32,15 +32,15 @@ fn add_signers() {
         (
             multisig.contract_address,
             signer_list_component::Event::OwnerAddedGuid(
-                signer_list_component::OwnerAddedGuid { new_owner_guid: signer_1.into_guid() }
-            )
+                signer_list_component::OwnerAddedGuid { new_owner_guid: signer_1.into_guid() },
+            ),
         ),
         (
             multisig.contract_address,
             signer_list_component::Event::SignerLinked(
-                signer_list_component::SignerLinked { signer_guid: signer_1.into_guid(), signer: signer_1 }
-            )
-        )
+                signer_list_component::SignerLinked { signer_guid: signer_1.into_guid(), signer: signer_1 },
+            ),
+        ),
     ];
     spy.assert_emitted(@events);
 

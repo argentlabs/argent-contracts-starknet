@@ -2,44 +2,45 @@
 mod ArgentAccount {
     use argent::account::interface::{IAccount, IArgentAccount, IArgentUserAccount, IDeprecatedArgentAccount, Version};
     use argent::introspection::src5::src5_component;
-    use argent::outside_execution::{
-        outside_execution::outside_execution_component, interface::{IOutsideExecutionCallback}
+    use argent::outside_execution::interface::IOutsideExecutionCallback;
+    use argent::outside_execution::outside_execution::outside_execution_component;
+    use argent::recovery::interface::{EscapeStatus, LegacyEscape, LegacyEscapeType};
+    use argent::session::interface::{ISessionCallback, SessionToken};
+    use argent::session::session::session_component;
+    use argent::session::session::session_component::{Internal, InternalTrait};
+    use argent::signer::signer_signature::{
+        Signer, SignerSignature, SignerSignatureTrait, SignerStorageTrait, SignerStorageValue, SignerTrait, SignerType,
+        StarknetSignature, StarknetSigner, starknet_signer_from_pubkey,
     };
-    use argent::recovery::interface::{LegacyEscape, LegacyEscapeType, EscapeStatus};
-    use argent::session::{
-        interface::{SessionToken, ISessionCallback},
-        session::{session_component::{Internal, InternalTrait}, session_component,}
-    };
-    use argent::signer::{
-        signer_signature::{
-            Signer, SignerStorageValue, SignerType, StarknetSigner, StarknetSignature, SignerTrait, SignerStorageTrait,
-            SignerSignature, SignerSignatureTrait, starknet_signer_from_pubkey
-        }
-    };
-    use argent::upgrade::{upgrade::upgrade_component, interface::{IUpgradableCallback, IUpgradableCallbackOld}};
-    use argent::utils::{
-        asserts::{assert_no_self_call, assert_only_self, assert_only_protocol}, calls::execute_multicall,
-        serialization::full_deserialize,
-        transaction_version::{
-            TX_V1, TX_V1_ESTIMATE, TX_V3, TX_V3_ESTIMATE, assert_correct_invoke_version, assert_correct_declare_version,
-            assert_correct_deploy_account_version, DA_MODE_L1, is_estimate_transaction
-        }
+    use argent::upgrade::interface::{IUpgradableCallback, IUpgradableCallbackOld};
+    use argent::upgrade::upgrade::upgrade_component;
+    use argent::utils::asserts::{assert_no_self_call, assert_only_protocol, assert_only_self};
+    use argent::utils::calls::execute_multicall;
+    use argent::utils::serialization::full_deserialize;
+    use argent::utils::transaction_version::{
+        DA_MODE_L1, TX_V1, TX_V1_ESTIMATE, TX_V3, TX_V3_ESTIMATE, assert_correct_declare_version,
+        assert_correct_deploy_account_version, assert_correct_invoke_version, is_estimate_transaction,
     };
     use hash::HashStateTrait;
     use openzeppelin::security::reentrancyguard::ReentrancyGuardComponent;
     use pedersen::PedersenTrait;
+    use starknet::account::Call;
+    use starknet::storage::Map;
+    use starknet::storage_access::{
+        storage_address_from_base_and_offset, storage_base_address_from_felt252, storage_write_syscall,
+    };
+    use starknet::syscalls::storage_read_syscall;
     use starknet::{
-        ContractAddress, ClassHash, get_block_timestamp, get_contract_address, VALIDATED, replace_class_syscall,
-        account::Call, SyscallResultTrait, get_tx_info, get_execution_info, syscalls::storage_read_syscall,
-        storage_access::{storage_address_from_base_and_offset, storage_base_address_from_felt252, storage_write_syscall},
-        storage::Map
+        ClassHash, ContractAddress, SyscallResultTrait, VALIDATED, get_block_timestamp, get_contract_address,
+        get_execution_info, get_tx_info, replace_class_syscall,
     };
 
     const NAME: felt252 = 'ArgentAccount';
     const VERSION: Version = Version { major: 0, minor: 4, patch: 0 };
     const VERSION_COMPAT: felt252 = '0.4.0';
 
-    /// Time it takes for the escape to become ready after being triggered. Also the escape will be ready and can be completed for this duration
+    /// Time it takes for the escape to become ready after being triggered. Also the escape will be ready and can be
+    /// completed for this duration
     const DEFAULT_ESCAPE_SECURITY_PERIOD: u64 = 7 * 24 * 60 * 60; // 7 days
 
     /// Limit to one escape every X hours
@@ -53,7 +54,7 @@ mod ArgentAccount {
     /// Minimum time for the escape security period
     const MIN_ESCAPE_SECURITY_PERIOD: u64 = 60 * 10; // 10 minutes;
 
-    // session 
+    // session
     component!(path: session_component, storage: session, event: SessionableEvents);
     #[abi(embed_v0)]
     impl Sessionable = session_component::SessionImpl<ContractState>;
@@ -99,8 +100,9 @@ mod ArgentAccount {
         /// The ongoing escape, if any
         _escape: LegacyEscape,
         /// The following 4 fields are used to limit the number of escapes the account will pay for
-        /// Values are Rounded down to the hour: https://community.starknet.io/t/starknet-v0-13-1-pre-release-notes/113664 
-        /// Values are resets when an escape is completed or canceled
+        /// Values are Rounded down to the hour:
+        /// https://community.starknet.io/t/starknet-v0-13-1-pre-release-notes/113664 Values are resets when an escape
+        /// is completed or canceled
         last_guardian_trigger_escape_attempt: u64,
         last_owner_trigger_escape_attempt: u64,
         last_guardian_escape_attempt: u64,
@@ -147,10 +149,10 @@ mod ArgentAccount {
     struct AccountCreated {
         #[key]
         owner: felt252,
-        guardian: felt252
+        guardian: felt252,
     }
 
-    /// @notice Emitted on initialization with the guids of the owner and the guardian (or 0 if none) 
+    /// @notice Emitted on initialization with the guids of the owner and the guardian (or 0 if none)
     /// @dev Emitted exactly once when the account is initialized
     /// @param owner The owner guid
     /// @param guardian The guardian guid or 0 if there's no guardian
@@ -158,7 +160,7 @@ mod ArgentAccount {
     struct AccountCreatedGuid {
         #[key]
         owner_guid: felt252,
-        guardian_guid: felt252
+        guardian_guid: felt252,
     }
 
     /// @notice Emitted when the account executes a transaction
@@ -168,7 +170,7 @@ mod ArgentAccount {
     struct TransactionExecuted {
         #[key]
         hash: felt252,
-        response: Span<Span<felt252>>
+        response: Span<Span<felt252>>,
     }
 
     /// @notice Owner escape was triggered by the guardian
@@ -177,7 +179,7 @@ mod ArgentAccount {
     #[derive(Drop, starknet::Event)]
     struct EscapeOwnerTriggeredGuid {
         ready_at: u64,
-        new_owner_guid: felt252
+        new_owner_guid: felt252,
     }
 
     /// @notice Guardian escape was triggered by the owner
@@ -186,21 +188,21 @@ mod ArgentAccount {
     #[derive(Drop, starknet::Event)]
     struct EscapeGuardianTriggeredGuid {
         ready_at: u64,
-        new_guardian_guid: felt252
+        new_guardian_guid: felt252,
     }
 
     /// @notice Owner escape was completed and there is a new account owner
     /// @param new_owner_guid new owner guid
     #[derive(Drop, starknet::Event)]
     struct OwnerEscapedGuid {
-        new_owner_guid: felt252
+        new_owner_guid: felt252,
     }
 
     /// @notice Guardian escape was completed and there is a new account guardian
     /// @param new_guardian_guid guid of the new guardian or 0 if it was removed
     #[derive(Drop, starknet::Event)]
     struct GuardianEscapedGuid {
-        new_guardian_guid: felt252
+        new_guardian_guid: felt252,
     }
 
     /// @notice An ongoing escape was canceled
@@ -212,14 +214,14 @@ mod ArgentAccount {
     /// @param new_owner new owner address
     #[derive(Drop, starknet::Event)]
     struct OwnerChanged {
-        new_owner: felt252
+        new_owner: felt252,
     }
 
     /// @notice The account owner was changed
     /// @param new_owner_guid new owner guid
     #[derive(Drop, starknet::Event)]
     struct OwnerChangedGuid {
-        new_owner_guid: felt252
+        new_owner_guid: felt252,
     }
 
     /// @notice Deprecated from v0.4.0. This is only emitted if the new guardian is empty or a starknet key
@@ -227,14 +229,14 @@ mod ArgentAccount {
     /// @param new_guardian address of the new guardian or 0 if it was removed
     #[derive(Drop, starknet::Event)]
     struct GuardianChanged {
-        new_guardian: felt252
+        new_guardian: felt252,
     }
 
     /// @notice The account guardian was changed or removed
     /// @param new_guardian_guid address of the new guardian or 0 if it was removed
     #[derive(Drop, starknet::Event)]
     struct GuardianChangedGuid {
-        new_guardian_guid: felt252
+        new_guardian_guid: felt252,
     }
 
     /// @notice Deprecated from v0.4.0. This is only emitted if the new guardian backup is empty or a starknet key
@@ -242,20 +244,20 @@ mod ArgentAccount {
     /// @param new_guardian_backup address of the backup guardian or 0 if it was removed
     #[derive(Drop, starknet::Event)]
     struct GuardianBackupChanged {
-        new_guardian_backup: felt252
+        new_guardian_backup: felt252,
     }
 
     /// @notice The account backup guardian was changed or removed
     /// @param new_guardian_backup_guid guid of the backup guardian or 0 if it was removed
     #[derive(Drop, starknet::Event)]
     struct GuardianBackupChangedGuid {
-        new_guardian_backup_guid: felt252
+        new_guardian_backup_guid: felt252,
     }
 
-    /// @notice A new signer was linked 
+    /// @notice A new signer was linked
     /// @dev This is the only way to get the signer struct knowing a only guid
     /// @param signer_guid the guid of the signer derived from the signer
-    /// @param signer the signer being added 
+    /// @param signer the signer being added
     #[derive(Drop, starknet::Event)]
     struct SignerLinked {
         #[key]
@@ -287,15 +289,15 @@ mod ArgentAccount {
                 self
                     .emit(
                         AccountCreated {
-                            owner: owner_storage_value.stored_value, guardian: guardian_storage_value.stored_value
-                        }
+                            owner: owner_storage_value.stored_value, guardian: guardian_storage_value.stored_value,
+                        },
                     );
-            };
+            }
             guardian_guid
         } else {
             if owner_storage_value.signer_type == SignerType::Starknet {
                 self.emit(AccountCreated { owner: owner_storage_value.stored_value, guardian: 0 });
-            };
+            }
             0
         };
 
@@ -311,7 +313,7 @@ mod ArgentAccount {
             assert_correct_invoke_version(tx_info.version);
             assert(tx_info.paymaster_data.is_empty(), 'argent/unsupported-paymaster');
             if self.session.is_session(tx_info.signature) {
-                self.session.assert_valid_session(calls.span(), tx_info.transaction_hash, tx_info.signature,);
+                self.session.assert_valid_session(calls.span(), tx_info.transaction_hash, tx_info.signature);
             } else {
                 self
                     .assert_valid_calls_and_signature(
@@ -334,7 +336,7 @@ mod ArgentAccount {
             let signature = tx_info.signature;
             if self.session.is_session(signature) {
                 let session_timestamp = *signature[1];
-                // can call unwrap safely as the session has already been deserialized 
+                // can call unwrap safely as the session has already been deserialized
                 let session_timestamp_u64 = session_timestamp.try_into().unwrap();
                 assert(session_timestamp_u64 >= exec_info.block_info.unbox().block_timestamp, 'session/expired');
             }
@@ -452,7 +454,7 @@ mod ArgentAccount {
                         outside_execution_hash,
                         signature,
                         is_from_outside: true,
-                        account_address: get_contract_address()
+                        account_address: get_contract_address(),
                     );
             }
             let retdata = execute_multicall(calls);
@@ -464,12 +466,12 @@ mod ArgentAccount {
 
     impl SessionCallbackImpl of ISessionCallback<ContractState> {
         fn parse_and_verify_authorization(
-            self: @ContractState, session_hash: felt252, authorization_signature: Span<felt252>
+            self: @ContractState, session_hash: felt252, authorization_signature: Span<felt252>,
         ) -> Array<SignerSignature> {
             let parsed_session_authorization = self.parse_signature_array(authorization_signature);
             assert(
                 self.is_valid_span_signature(session_hash, parsed_session_authorization.span()),
-                'session/invalid-account-sig'
+                'session/invalid-account-sig',
             );
             return parsed_session_authorization;
         }
@@ -484,7 +486,7 @@ mod ArgentAccount {
             assert(tx_info.paymaster_data.is_empty(), 'argent/unsupported-paymaster');
             self
                 .assert_valid_span_signature(
-                    tx_info.transaction_hash, self.parse_signature_array(tx_info.signature).span()
+                    tx_info.transaction_hash, self.parse_signature_array(tx_info.signature).span(),
                 );
             VALIDATED
         }
@@ -494,14 +496,14 @@ mod ArgentAccount {
             class_hash: felt252,
             contract_address_salt: felt252,
             owner: Signer,
-            guardian: Option<Signer>
+            guardian: Option<Signer>,
         ) -> felt252 {
             let tx_info = get_tx_info().unbox();
             assert_correct_deploy_account_version(tx_info.version);
             assert(tx_info.paymaster_data.is_empty(), 'argent/unsupported-paymaster');
             self
                 .assert_valid_span_signature(
-                    tx_info.transaction_hash, self.parse_signature_array(tx_info.signature).span()
+                    tx_info.transaction_hash, self.parse_signature_array(tx_info.signature).span(),
                 );
             VALIDATED
         }
@@ -542,7 +544,7 @@ mod ArgentAccount {
 
             if let Option::Some(new_owner_pubkey) = new_owner_storage_value.starknet_pubkey_or_none() {
                 self.emit(OwnerChanged { new_owner: new_owner_pubkey });
-            };
+            }
             let new_owner_guid = new_owner_storage_value.into_guid();
             self.emit(OwnerChangedGuid { new_owner_guid });
             self.emit(SignerLinked { signer_guid: new_owner_guid, signer: new_owner });
@@ -583,13 +585,13 @@ mod ArgentAccount {
                 self.emit(SignerLinked { signer_guid: new_guardian_guid, signer: guardian });
                 if let Option::Some(guardian_pubkey) = guardian_storage_value.starknet_pubkey_or_none() {
                     self.emit(GuardianBackupChanged { new_guardian_backup: guardian_pubkey });
-                };
+                }
                 self.emit(GuardianBackupChangedGuid { new_guardian_backup_guid: new_guardian_guid });
             } else {
                 self.write_guardian_backup(Option::None);
                 self.emit(GuardianBackupChanged { new_guardian_backup: 0 });
                 self.emit(GuardianBackupChangedGuid { new_guardian_backup_guid: 0 });
-            };
+            }
 
             self.reset_escape();
             self.reset_escape_timestamps();
@@ -603,7 +605,7 @@ mod ArgentAccount {
             if current_escape.escape_type == LegacyEscapeType::Guardian {
                 assert(
                     self.get_escape_status(current_escape.ready_at) == EscapeStatus::Expired,
-                    'argent/cannot-override-escape'
+                    'argent/cannot-override-escape',
                 );
             }
 
@@ -912,8 +914,8 @@ mod ArgentAccount {
             let owner_signature = SignerSignature::Starknet(
                 (
                     StarknetSigner { pubkey: self._signer.read().try_into().expect('argent/zero-pubkey') },
-                    StarknetSignature { r: *signatures.pop_front().unwrap(), s: *signatures.pop_front().unwrap() }
-                )
+                    StarknetSignature { r: *signatures.pop_front().unwrap(), s: *signatures.pop_front().unwrap() },
+                ),
             );
             if signatures.is_empty() {
                 return array![owner_signature];
@@ -922,8 +924,8 @@ mod ArgentAccount {
             let guardian_signature = SignerSignature::Starknet(
                 (
                     StarknetSigner { pubkey: self._guardian.read().try_into().expect('argent/zero-pubkey') },
-                    StarknetSignature { r: *signatures.pop_front().unwrap(), s: *signatures.pop_front().unwrap() }
-                )
+                    StarknetSignature { r: *signatures.pop_front().unwrap(), s: *signatures.pop_front().unwrap() },
+                ),
             );
             return array![owner_signature, guardian_signature];
         }
@@ -939,8 +941,8 @@ mod ArgentAccount {
             return SignerSignature::Starknet(
                 (
                     StarknetSigner { pubkey: self._guardian.read().try_into().expect('argent/guardian-not-set') },
-                    StarknetSignature { r: *signatures.pop_front().unwrap(), s: *signatures.pop_front().unwrap() }
-                )
+                    StarknetSignature { r: *signatures.pop_front().unwrap(), s: *signatures.pop_front().unwrap() },
+                ),
             );
         }
 
@@ -955,14 +957,14 @@ mod ArgentAccount {
             return SignerSignature::Starknet(
                 (
                     StarknetSigner { pubkey: self._signer.read().try_into().expect('argent/zero-pubkey') },
-                    StarknetSignature { r: *signatures.pop_front().unwrap(), s: *signatures.pop_front().unwrap() }
-                )
+                    StarknetSignature { r: *signatures.pop_front().unwrap(), s: *signatures.pop_front().unwrap() },
+                ),
             );
         }
 
         #[must_use]
         fn is_valid_span_signature(
-            self: @ContractState, hash: felt252, signer_signatures: Span<SignerSignature>
+            self: @ContractState, hash: felt252, signer_signatures: Span<SignerSignature>,
         ) -> bool {
             if self.has_guardian() {
                 assert(signer_signatures.len() == 2, 'argent/invalid-signature-length');
@@ -1006,11 +1008,13 @@ mod ArgentAccount {
         /// The signature is the result of signing the message hash with the new owner private key
         /// The message hash is the result of hashing the array:
         /// [change_owner selector, chainid, contract address, old_owner_guid]
-        /// as specified here: https://docs.starknet.io/documentation/architecture_and_concepts/Hashing/hash-functions/#array_hashing
+        /// as specified here:
+        /// https://docs.starknet.io/documentation/architecture_and_concepts/Hashing/hash-functions/#array_hashing
         fn assert_valid_new_owner_signature(self: @ContractState, signer_signature: SignerSignature) {
             let chain_id = get_tx_info().unbox().chain_id;
             let owner_guid = self.read_owner().into_guid();
-            // We now need to hash message_hash with the size of the array: (change_owner selector, chain id, contract address, old_owner_guid)
+            // We now need to hash message_hash with the size of the array: (change_owner selector, chain id, contract
+            // address, old_owner_guid)
             // https://github.com/starkware-libs/cairo-lang/blob/b614d1867c64f3fb2cf4a4879348cfcf87c3a5a7/src/starkware/cairo/common/hash_state.py#L6
             let message_hash = PedersenTrait::new(0)
                 .update(selector!("change_owner"))
@@ -1128,7 +1132,7 @@ mod ArgentAccount {
                 Option::None
             } else {
                 Option::Some(
-                    SignerStorageValue { stored_value: guardian_stored_value, signer_type: SignerType::Starknet }
+                    SignerStorageValue { stored_value: guardian_stored_value, signer_type: SignerType::Starknet },
                 )
             }
         }
@@ -1143,7 +1147,7 @@ mod ArgentAccount {
         fn is_valid_guardian(self: @ContractState, guardian: SignerStorageValue) -> bool {
             match guardian.signer_type {
                 SignerType::Starknet => (self._guardian.read() == guardian.stored_value),
-                _ => false
+                _ => false,
             }
         }
 
@@ -1154,7 +1158,7 @@ mod ArgentAccount {
                     SignerType::Starknet => self._guardian_backup.write(0),
                     _ => self._guardian_backup_non_stark.write(old_guardian_backup.signer_type.into(), 0),
                 }
-            };
+            }
             // write storage
             if let Option::Some(guardian_backup) = guardian_backup {
                 match guardian_backup.signer_type {
@@ -1179,7 +1183,7 @@ mod ArgentAccount {
                 };
                 if guardian_backup_guid != 0 {
                     break Option::Some(
-                        SignerStorageValue { stored_value: guardian_backup_guid.try_into().unwrap(), signer_type }
+                        SignerStorageValue { stored_value: guardian_backup_guid.try_into().unwrap(), signer_type },
                     );
                 }
             }
@@ -1193,7 +1197,7 @@ mod ArgentAccount {
                     ._guardian_backup_non_stark
                     .read(guardian_backup.signer_type.into()) == guardian_backup
                     .stored_value
-                    .into())
+                    .into()),
             }
         }
     }
@@ -1204,7 +1208,7 @@ mod ArgentAccount {
             // No need for modes other than L1 while escaping
             assert(
                 tx_info.nonce_data_availability_mode == DA_MODE_L1 && tx_info.fee_data_availability_mode == DA_MODE_L1,
-                'argent/invalid-da-mode'
+                'argent/invalid-da-mode',
             );
 
             // No need to allow self deployment and escaping in one transaction
@@ -1213,18 +1217,13 @@ mod ArgentAccount {
             // Limit the maximum tip and maximum total fee while escaping
             let mut max_fee: u128 = 0;
             let mut max_tip: u128 = 0;
-            loop {
-                match tx_info.resource_bounds.pop_front() {
-                    Option::Some(bound) => {
-                        let max_resource_amount: u128 = (*bound.max_amount).into();
-                        max_fee += *bound.max_price_per_unit * max_resource_amount;
-                        if *bound.resource == 'L2_GAS' {
-                            max_tip += tx_info.tip * max_resource_amount;
-                        }
-                    },
-                    Option::None => { break; }
-                };
-            };
+            for bound in tx_info.resource_bounds {
+                let max_resource_amount: u128 = (*bound.max_amount).into();
+                max_fee += *bound.max_price_per_unit * max_resource_amount;
+                if *bound.resource == 'L2_GAS' {
+                    max_tip += tx_info.tip * max_resource_amount;
+                }
+            }
             max_fee += max_tip;
             assert(max_tip <= MAX_ESCAPE_TIP_STRK, 'argent/tip-too-high');
             assert(max_fee <= MAX_ESCAPE_MAX_FEE_STRK, 'argent/max-fee-too-high');
@@ -1240,14 +1239,22 @@ mod ArgentAccount {
 
     fn owner_ordered_types() -> Span<SignerType> {
         array![
-            SignerType::Starknet, SignerType::Eip191, SignerType::Webauthn, SignerType::Secp256r1, SignerType::Secp256k1
+            SignerType::Starknet,
+            SignerType::Eip191,
+            SignerType::Webauthn,
+            SignerType::Secp256r1,
+            SignerType::Secp256k1,
         ]
             .span()
     }
 
     fn guardian_ordered_types() -> Span<SignerType> {
         array![
-            SignerType::Starknet, SignerType::Eip191, SignerType::Webauthn, SignerType::Secp256r1, SignerType::Secp256k1
+            SignerType::Starknet,
+            SignerType::Eip191,
+            SignerType::Webauthn,
+            SignerType::Secp256r1,
+            SignerType::Secp256k1,
         ]
             .span()
     }

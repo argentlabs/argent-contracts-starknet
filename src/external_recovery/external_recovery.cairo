@@ -26,12 +26,14 @@ mod external_recovery_component {
     use openzeppelin::security::reentrancyguard::{ReentrancyGuardComponent, ReentrancyGuardComponent::InternalImpl};
     use starknet::{
         get_block_timestamp, get_contract_address, get_caller_address, ContractAddress, account::Call,
-        contract_address::contract_address_const
     };
     use super::{IExternalRecoveryCallback, get_escape_call_hash};
 
     /// Minimum time for the escape security period
     const MIN_ESCAPE_PERIOD: u64 = 60 * 10; // 10 minutes;
+    
+    /// Zero address constant
+    const ZERO_ADDRESS: ContractAddress = 0.try_into().unwrap();
 
     #[storage]
     struct Storage {
@@ -145,18 +147,18 @@ mod external_recovery_component {
             if is_enabled {
                 assert(security_period >= MIN_ESCAPE_PERIOD, 'argent/invalid-security-period');
                 assert(expiry_period >= MIN_ESCAPE_PERIOD, 'argent/invalid-expiry-period');
-                assert(guardian != contract_address_const::<0>(), 'argent/invalid-zero-guardian');
+                assert(guardian != ZERO_ADDRESS, 'argent/invalid-zero-guardian');
                 assert(guardian != get_contract_address(), 'argent/invalid-guardian');
                 self.escape_enabled.write(EscapeEnabled { is_enabled: true, security_period, expiry_period });
                 self.guardian.write(guardian);
             } else {
                 assert(escape_config.is_enabled, 'argent/escape-disabled');
                 assert(
-                    security_period == 0 && expiry_period == 0 && guardian == contract_address_const::<0>(),
+                    security_period == 0 && expiry_period == 0 && guardian.is_zero(),
                     'argent/invalid-escape-params'
                 );
                 self.escape_enabled.write(EscapeEnabled { is_enabled: false, security_period, expiry_period });
-                self.guardian.write(contract_address_const::<0>());
+                self.guardian.write(ZERO_ADDRESS);
             }
         }
 

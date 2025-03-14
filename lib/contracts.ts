@@ -135,7 +135,7 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
     }
 
     async loadContract(contractAddress: string, classHash?: string): Promise<ContractWithClass> {
-      classHash = await this.getClassHashAt(contractAddress);
+      classHash ??= await this.getClassHashAt(contractAddress);
       let abi = this.abiCache[classHash];
       if (!abi) {
         abi = (await this.getClassAt(contractAddress)).abi;

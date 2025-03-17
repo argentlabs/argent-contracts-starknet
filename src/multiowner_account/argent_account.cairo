@@ -678,12 +678,13 @@ pub mod ArgentAccount {
         }
 
         fn parse_account_signature(self: @ContractState, mut raw_signature: Span<felt252>) -> AccountSignature {
-            // Check if it's a legacy signature array, this only supports legacy signature if there is exactly 1 only
-            // and a maximum of 1 guardian Legacy signatures are always 2 or 4 items long
-            // Shortest signature in modern format is at least 5 items
-            //  [array_len, signer_type, signer_pubkey, r, s]
+            // Check if it's a concise signature.
+            // The account only support concise signatures if: There is only one owner and it's a StarknetSigner and
+            // there is no guardian or there's only one guardian and it's a StarknetSigner
+            // Concise signatures are always 2 or 4 items long but shortest signature in the regular
+            // format is at least 5 items: [array_len, signature_type, signer_pubkey, r, s]
             if raw_signature.len() != 2 && raw_signature.len() != 4 {
-                // manual inlining instead of calling full_deserialize for performance
+                // Parse regular signature. Manual inlining instead of calling full_deserialize for performance
                 let signature_count = *raw_signature.pop_front().expect('argent/invalid-signature-format');
                 if signature_count == 1 {
                     let owner_signature: SignerSignature = Serde::deserialize(ref raw_signature)

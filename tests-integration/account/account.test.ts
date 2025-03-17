@@ -79,7 +79,7 @@ describe("ArgentAccount", function () {
   });
 
   describe("change_owners(...)", function () {
-    it.only("Should be possible to change_owners", async function () {
+    it("Should be possible to change_owners", async function () {
       const { accountContract, owner } = await deployAccount();
       const newOwner = randomStarknetKeyPair();
 

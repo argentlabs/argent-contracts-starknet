@@ -66,7 +66,7 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
       } catch (e: any) {
         const { compiledClassHash, classHash } = extractContractHashes(payload);
         const cachedClassHashes = this.cacheClassHashes[contractName];
-        if (cachedClassHashes.compiledClassHash != compiledClassHash || cachedClassHashes.classHash != classHash) {
+        if (cachedClassHashes.compiledClassHash !== compiledClassHash || cachedClassHashes.classHash !== classHash) {
           console.log(`Updating cache for ${contractName}`);
           this.cacheClassHashes[contractName] = { compiledClassHash, classHash };
           writeFileSync(cacheClassHashFilepath, JSON.stringify(this.cacheClassHashes, null, 2));

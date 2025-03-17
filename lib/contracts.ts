@@ -67,6 +67,7 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
         if (e.toString().includes("the compiled class hash did not match the one supplied in the transaction")) {
           // Remove from cache
           delete this.cacheClassHashes[contractName];
+          writeFileSync(cacheClassHashFilepath, JSON.stringify(this.cacheClassHashes, null, 2));
           return await this.declareIfNotAndCache(contractName, payload, details, wait);
         }
         throw e;
@@ -96,17 +97,21 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
         console.log(`Updating cache for ${contractName}`);
         writeFileSync(cacheClassHashFilepath, JSON.stringify(this.cacheClassHashes, null, 2));
       }
-      // Populate the payload with the class hash
-      payload.compiledClassHash = this.cacheClassHashes[contractName].compiledClassHash;
-      payload.classHash = this.cacheClassHashes[contractName].classHash;
 
-      const { class_hash, transaction_hash } = await deployer.declareIfNot(payload, details);
+      // Populate the payload with the class hash
+      const actualPayload = {
+        ...payload,
+        compiledClassHash: this.cacheClassHashes[contractName].compiledClassHash,
+        classHash: this.cacheClassHashes[contractName].classHash,
+      };
+
+      const { class_hash, transaction_hash } = await deployer.declareIfNot(actualPayload, details);
       if (wait && transaction_hash) {
         await this.waitForTransaction(transaction_hash);
         console.log(`\t${contractName} declared`);
       }
       this.declaredContracts[contractName] = class_hash;
-      this.abiCache[class_hash] = (payload as any).abi;
+      this.abiCache[class_hash] = (actualPayload as any).abi;
       return class_hash;
     }
 

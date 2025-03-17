@@ -22,7 +22,7 @@ Guardians and the escape process can protect against lost owner keys and against
 An escape can be **triggered** by one role (owner or guardian), requesting to modify the other role (`trigger_escape_guardian` or `trigger_escape_owner`). This kicks off a security period where many things can happen:
 
 * Both roles agree on a transaction to resolve the situation. Calling methods that will **cancel the escape**. For instance: `cancel_escape`, `change_guardians`, `change_owners`, `upgrade`.
-* The other role can trigger a **new escape** to prevent the escape: For instance, a malicious guardian requested to change the owners. The owner can trigger a new escape to remove the guardian.
+* The other role can trigger a **new escape** to prevent the escape: For instance, if a malicious guardian requested to change the owners. An owner can trigger a new escape to remove the guardian.
 * The **security period elapses** with no further actions. The escape is then active.
   * When the escape is active, the same role that triggered it can **complete the escape** by calling `escape_guardian` or `escape_owner`. The account **owners or guardians will be replaced** by the new owners or guardians requested when the escape was triggered.
   * The escape can also be **cancelled** by both roles **or overridden** by a new escape.

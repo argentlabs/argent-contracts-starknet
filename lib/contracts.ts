@@ -64,9 +64,11 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
       try {
         return await this.declareIfNotAndCache(contractName, payload, details, wait);
       } catch (e: any) {
-        if (e.toString().includes("the compiled class hash did not match the one supplied in the transaction")) {
-          // Remove from cache
-          delete this.cacheClassHashes[contractName];
+        const { compiledClassHash, classHash } = extractContractHashes(payload);
+        const cachedClassHashes = this.cacheClassHashes[contractName];
+        if (cachedClassHashes.compiledClassHash != compiledClassHash || cachedClassHashes.classHash != classHash) {
+          console.log(`Updating cache for ${contractName}`);
+          this.cacheClassHashes[contractName] = { compiledClassHash, classHash };
           writeFileSync(cacheClassHashFilepath, JSON.stringify(this.cacheClassHashes, null, 2));
           return await this.declareIfNotAndCache(contractName, payload, details, wait);
         }
@@ -101,6 +103,7 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
       // Populate the payload with the class hash
       const actualPayload = {
         ...payload,
+        // If you don't restart devnet, and provide a wrong compiledClassHash, it will work
         compiledClassHash: this.cacheClassHashes[contractName].compiledClassHash,
         classHash: this.cacheClassHashes[contractName].classHash,
       };

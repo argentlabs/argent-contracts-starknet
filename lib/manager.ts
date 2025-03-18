@@ -1,8 +1,11 @@
+import dotenv from "dotenv";
 import { RpcProvider } from "starknet";
 import { WithContracts } from "./contracts";
 import { WithDevnet, devnetBaseUrl } from "./devnet";
 import { WithReceipts } from "./receipts";
 import { TokenManager } from "./tokens";
+// This needs to be done here where we are actually using the env. Do not move this without testing
+dotenv.config({ override: true });
 
 export class Manager extends WithReceipts(WithContracts(WithDevnet(RpcProvider))) {
   tokens: TokenManager;

@@ -15,10 +15,10 @@ build-external-contracts = [
 
 [dependencies]
 starknet = "2.9.4"
-alexandria_math = "0.3.0"
-alexandria_encoding = "0.3.0"
-alexandria_merkle_tree = "0.3.0"
-alexandria_data_structures = "0.3.0"
+alexandria_math = { git = "https://github.com/cartridge-gg/alexandria", rev = "79eeca8b8ae90bd4cb5129e5f5c6bfe9f773a814" }
+alexandria_encoding = { git = "https://github.com/cartridge-gg/alexandria", rev = "79eeca8b8ae90bd4cb5129e5f5c6bfe9f773a814" }
+alexandria_merkle_tree = { git = "https://github.com/cartridge-gg/alexandria", rev = "79eeca8b8ae90bd4cb5129e5f5c6bfe9f773a814" }
+alexandria_data_structures = { git = "https://github.com/cartridge-gg/alexandria", rev = "79eeca8b8ae90bd4cb5129e5f5c6bfe9f773a814" }
 openzeppelin = "1.0.0"
 
 [dev-dependencies]

@@ -60,8 +60,7 @@ enum SignerSignature {
 /// This avoids issues with 3-element tuples in enums
 #[derive(Drop, Copy, Serde)]
 struct SIWSSignature {
-    domain: felt252,
-    statement: Span<u8>,
+    domain: Span<u8>,
     signature: Ed25519Signature,
 }
 
@@ -330,7 +329,7 @@ impl SignerSignatureImpl of SignerSignatureTrait {
             )) => is_valid_webauthn_signature(hash, signer, signature),
             SignerSignature::Ed25519((
                 signer, signature,
-            )) => is_valid_ed25519_signature(hash, signer, signature),
+            )) => is_valid_ed25519_signature(hash.into(), signer, signature),
             SignerSignature::SIWS((
                 signer, signature,
             )) => is_valid_siws_signature(hash, signer, signature),
@@ -436,9 +435,9 @@ fn is_valid_webauthn_signature(
 /// @return True if the signature is valid, false otherwise
 #[inline(always)]
 fn is_valid_ed25519_signature(
-    hash: felt252, signer: Ed25519Signer, signature: Ed25519Signature,
+    hash: u256, signer: Ed25519Signer, signature: Ed25519Signature,
 ) -> bool {
-    let hash_bytes = u256_to_u8s(hash.into());
+    let hash_bytes = u256_to_u8s(hash);
     let pubkey: u256 = signer.pubkey.into();
     let signature = array![signature.r, signature.s];
     alexandria_math::ed25519::verify_signature(hash_bytes.span(), signature.span(), pubkey)

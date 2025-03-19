@@ -67,32 +67,7 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
           },
         };
       }
-      try {
-        return await this.declareIfNotAndCache(contractName, payload, details, wait, folder);
-      } catch (e: any) {
-        const { compiledClassHash, classHash } = extractContractHashes(payload);
-        const cachedClassHashes = this.cacheClassHashes[contractName];
-        if (
-          !cachedClassHashes ||
-          cachedClassHashes.compiledClassHash !== compiledClassHash ||
-          cachedClassHashes.classHash !== classHash
-        ) {
-          console.log(`Updating cache for ${contractName}`);
-          this.cacheClassHashes[contractName] = { fileHash: "TODO", compiledClassHash, classHash };
-          writeFileSync(cacheClassHashFilepath, JSON.stringify(this.cacheClassHashes, null, 2));
-          return await this.declareIfNotAndCache(contractName, payload, details, wait, folder);
-        }
-        throw e;
-      }
-    }
 
-    async declareIfNotAndCache(
-      contractName: string,
-      payload: DeclareContractPayload,
-      details?: UniversalDetails,
-      wait = true,
-      folder = contractsFolder,
-    ) {
       // If cache isn't initialized, initialize it
       if (Object.keys(this.cacheClassHashes).length === 0) {
         if (!existsSync(cacheClassHashFilepath)) {
@@ -116,20 +91,16 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
       }
 
       // Populate the payload with the class hash
-      const actualPayload = {
-        ...payload,
-        // If you don't restart devnet, and provide a wrong compiledClassHash, it will work
-        compiledClassHash: this.cacheClassHashes[contractName].compiledClassHash,
-        classHash: this.cacheClassHashes[contractName].classHash,
-      };
+      payload.compiledClassHash = this.cacheClassHashes[contractName].compiledClassHash;
+      payload.classHash = this.cacheClassHashes[contractName].classHash;
 
-      const { class_hash, transaction_hash } = await deployer.declareIfNot(actualPayload, details);
+      const { class_hash, transaction_hash } = await deployer.declareIfNot(payload, details);
       if (wait && transaction_hash) {
         await this.waitForTransaction(transaction_hash);
         console.log(`\t${contractName} declared`);
       }
       this.declaredContracts[contractName] = class_hash;
-      this.abiCache[class_hash] = (actualPayload as any).abi;
+      this.abiCache[class_hash] = (payload as any).abi;
       return class_hash;
     }
 

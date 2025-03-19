@@ -27,11 +27,8 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
     protected declaredContracts: Record<string, string> = {};
     // Holds the latest know class hashes for a given contract
     // It doesn't guarantee that the class hash is up to date, or that the contact is declared
-    // fileHash is there to invalidate the cache if the file changed
-    protected cacheClassHashes: Record<
-      string,
-      { fileHash: string; compiledClassHash: string | undefined; classHash: string }
-    > = {};
+    // They key is the fileHash of the contract class file
+    protected cacheClassHashes: Record<string, { compiledClassHash: string | undefined; classHash: string }> = {};
 
     protected abiCache: Record<string, Abi> = {};
 
@@ -82,18 +79,17 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
 
       // If the contract is not in the cache, extract the class hash and add it to the cache
       // Or if the file hash has changed, update the cache
-      if (!this.cacheClassHashes[contractName] || this.cacheClassHashes[contractName].fileHash !== fileHash) {
-        // Time before
-        console.log(`Updating cache for ${contractName}`);
+      if (!this.cacheClassHashes[fileHash]) {
+        console.log(`Updating cache for ${contractName} (${fileHash})`);
         const { compiledClassHash, classHash } = extractContractHashes(payload);
-        this.cacheClassHashes[contractName] = { fileHash, compiledClassHash, classHash };
+        this.cacheClassHashes[fileHash] = { compiledClassHash, classHash };
         writeFileSync(cacheClassHashFilepath, JSON.stringify(this.cacheClassHashes, null, 2));
       }
 
       // Populate the payload with the class hash
       // If you don't restart devnet, and provide a wrong compiledClassHash, it will work
-      payload.compiledClassHash = this.cacheClassHashes[contractName].compiledClassHash;
-      payload.classHash = this.cacheClassHashes[contractName].classHash;
+      payload.compiledClassHash = this.cacheClassHashes[fileHash].compiledClassHash;
+      payload.classHash = this.cacheClassHashes[fileHash].classHash;
 
       const { class_hash, transaction_hash } = await deployer.declareIfNot(payload, details);
       if (wait && transaction_hash) {

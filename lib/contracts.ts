@@ -91,6 +91,7 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
       }
 
       // Populate the payload with the class hash
+      // If you don't restart devnet, and provide a wrong compiledClassHash, it will work
       payload.compiledClassHash = this.cacheClassHashes[contractName].compiledClassHash;
       payload.classHash = this.cacheClassHashes[contractName].classHash;
 

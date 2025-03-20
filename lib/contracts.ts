@@ -78,7 +78,6 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
       const fileHash = await hashFileFast(`${folder}${contractName}.contract_class.json`);
 
       // If the contract is not in the cache, extract the class hash and add it to the cache
-      // Or if the file hash has changed, update the cache
       if (!this.cacheClassHashes[fileHash]) {
         console.log(`Updating cache for ${contractName} (${fileHash})`);
         const { compiledClassHash, classHash } = extractContractHashes(payload);

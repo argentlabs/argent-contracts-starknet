@@ -1,3 +1,5 @@
+import * as crypto from "crypto";
+import * as fs from "fs";
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "fs";
 import { dirname, resolve } from "path";
 import {
@@ -24,7 +26,8 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
     // Maps a contract name to its class hash to avoid redeclaring the same contract
     protected declaredContracts: Record<string, string> = {};
     // Holds the latest know class hashes for a given contract
-    // It doesn't guarantee that the class hash is up to date, or that the contacts is declared
+    // It doesn't guarantee that the class hash is up to date, or that the contact is declared
+    // They key is the fileHash of the contract class file
     protected cacheClassHashes: Record<string, { compiledClassHash: string | undefined; classHash: string }> = {};
 
     protected abiCache: Record<string, Abi> = {};
@@ -61,27 +64,7 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
           },
         };
       }
-      try {
-        return await this.declareIfNotAndCache(contractName, payload, details, wait);
-      } catch (e: any) {
-        const { compiledClassHash, classHash } = extractContractHashes(payload);
-        const cachedClassHashes = this.cacheClassHashes[contractName];
-        if (cachedClassHashes.compiledClassHash !== compiledClassHash || cachedClassHashes.classHash !== classHash) {
-          console.log(`Updating cache for ${contractName}`);
-          this.cacheClassHashes[contractName] = { compiledClassHash, classHash };
-          writeFileSync(cacheClassHashFilepath, JSON.stringify(this.cacheClassHashes, null, 2));
-          return await this.declareIfNotAndCache(contractName, payload, details, wait);
-        }
-        throw e;
-      }
-    }
 
-    async declareIfNotAndCache(
-      contractName: string,
-      payload: DeclareContractPayload,
-      details?: UniversalDetails,
-      wait = true,
-    ) {
       // If cache isn't initialized, initialize it
       if (Object.keys(this.cacheClassHashes).length === 0) {
         if (!existsSync(cacheClassHashFilepath)) {
@@ -92,29 +75,28 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
         this.cacheClassHashes = JSON.parse(readFileSync(cacheClassHashFilepath).toString("ascii"));
       }
 
+      const fileHash = await hashFileFast(`${folder}${contractName}.contract_class.json`);
+
       // If the contract is not in the cache, extract the class hash and add it to the cache
-      if (!this.cacheClassHashes[contractName]) {
+      if (!this.cacheClassHashes[fileHash]) {
+        console.log(`Updating cache for ${contractName} (${fileHash})`);
         const { compiledClassHash, classHash } = extractContractHashes(payload);
-        this.cacheClassHashes[contractName] = { compiledClassHash, classHash };
-        console.log(`Updating cache for ${contractName}`);
+        this.cacheClassHashes[fileHash] = { compiledClassHash, classHash };
         writeFileSync(cacheClassHashFilepath, JSON.stringify(this.cacheClassHashes, null, 2));
       }
 
       // Populate the payload with the class hash
-      const actualPayload = {
-        ...payload,
-        // If you don't restart devnet, and provide a wrong compiledClassHash, it will work
-        compiledClassHash: this.cacheClassHashes[contractName].compiledClassHash,
-        classHash: this.cacheClassHashes[contractName].classHash,
-      };
+      // If you don't restart devnet, and provide a wrong compiledClassHash, it will work
+      payload.compiledClassHash = this.cacheClassHashes[fileHash].compiledClassHash;
+      payload.classHash = this.cacheClassHashes[fileHash].classHash;
 
-      const { class_hash, transaction_hash } = await deployer.declareIfNot(actualPayload, details);
+      const { class_hash, transaction_hash } = await deployer.declareIfNot(payload, details);
       if (wait && transaction_hash) {
         await this.waitForTransaction(transaction_hash);
         console.log(`\t${contractName} declared`);
       }
       this.declaredContracts[contractName] = class_hash;
-      this.abiCache[class_hash] = (actualPayload as any).abi;
+      this.abiCache[class_hash] = (payload as any).abi;
       return class_hash;
     }
 
@@ -204,4 +186,16 @@ function getSubfolders(dirPath: string): string[] {
   } catch (err) {
     throw new Error(`Error reading the directory at ${dirPath}`);
   }
+}
+
+// This has to be fast. We don't care much about collisions
+async function hashFileFast(filePath: string): Promise<string> {
+  const hash = crypto.createHash("md5");
+  const stream = fs.createReadStream(filePath);
+
+  for await (const chunk of stream) {
+    hash.update(chunk);
+  }
+
+  return hash.digest("hex");
 }

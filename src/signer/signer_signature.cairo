@@ -19,7 +19,8 @@ const WEBAUTHN_SIGNER_TYPE: felt252 = 'Webauthn Signer';
 
 pub const SECP_256_R1_HALF: u256 = 0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551 / 2;
 pub const SECP_256_K1_HALF: u256 = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141 / 2;
-
+// from core::ec::stark_curve::ORDER
+const STARK_CURVE_ORDER_U256: u256 = 0x800000000000010ffffffffffffffffb781126dcae7b2321e66a241adc64d2f;
 /// @notice Supported signer types for account authentication
 /// @dev Each type has its own signature validation scheme
 #[derive(Drop, Copy, PartialEq, Serde, Default, starknet::Store, Debug)]
@@ -329,6 +330,8 @@ impl U256TryIntoSignerType of TryInto<u256, SignerType> {
 #[inline(always)]
 #[must_use]
 fn is_valid_starknet_signature(hash: felt252, signer: StarknetSigner, signature: StarknetSignature) -> bool {
+    assert(signature.r.into() < STARK_CURVE_ORDER_U256, 'argent/invalid-r-value');
+    assert(signature.s.into() < STARK_CURVE_ORDER_U256, 'argent/invalid-s-value');
     check_ecdsa_signature(hash, signer.pubkey.into(), signature.r, signature.s)
 }
 

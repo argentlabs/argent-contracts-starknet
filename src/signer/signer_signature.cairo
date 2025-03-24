@@ -5,6 +5,7 @@ use argent::utils::hashing::poseidon_2;
 use argent::utils::bytes::u256_to_u8s;
 use core::traits::TryInto;
 use ecdsa::check_ecdsa_signature;
+use garaga::{signatures::ecdsa::{ECDSASignatureWithHint}};
 use hash::{HashStateExTrait, HashStateTrait};
 use poseidon::{hades_permutation, PoseidonTrait};
 use starknet::SyscallResultTrait;
@@ -61,7 +62,7 @@ enum SignerSignature {
 #[derive(Drop, Copy, Serde)]
 struct SIWSSignature {
     domain: Span<u8>,
-    signature: Ed25519Signature,
+    signature: ECDSASignatureWithHint,
 }
 
 /// @notice The starknet signature using the stark-curve

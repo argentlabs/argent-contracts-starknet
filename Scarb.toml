@@ -10,7 +10,7 @@ sierra = true
 casm = true
 allowed-libfuncs-list.name = "audited"
 build-external-contracts = [
-    "openzeppelin::presets::account::AccountUpgradeable",
+	"openzeppelin::presets::account::AccountUpgradeable",
 ]
 
 [dependencies]
@@ -20,6 +20,7 @@ alexandria_encoding = { git = "https://github.com/cartridge-gg/alexandria", rev 
 alexandria_merkle_tree = { git = "https://github.com/cartridge-gg/alexandria", rev = "79eeca8b8ae90bd4cb5129e5f5c6bfe9f773a814" }
 alexandria_data_structures = { git = "https://github.com/cartridge-gg/alexandria", rev = "79eeca8b8ae90bd4cb5129e5f5c6bfe9f773a814" }
 openzeppelin = "1.0.0"
+garaga = { git = "https://github.com/edisontim/garaga", branch = "feat/copy-ecdsa-structs" }
 
 [dev-dependencies]
 snforge_std = "0.38.3"

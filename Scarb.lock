@@ -64,9 +64,15 @@ dependencies = [
  "alexandria_encoding",
  "alexandria_math",
  "alexandria_merkle_tree",
+ "garaga",
  "openzeppelin",
  "snforge_std",
 ]
+
+[[package]]
+name = "garaga"
+version = "0.15.5"
+source = "git+https://github.com/edisontim/garaga?branch=feat%2Fcopy-ecdsa-structs#3c2097def6afe9bdd5ba7f4e090abb230c66111d"
 
 [[package]]
 name = "openzeppelin"

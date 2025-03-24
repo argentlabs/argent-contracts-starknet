@@ -11,6 +11,9 @@ use core::hash::{HashStateTrait, HashStateExTrait};
 use core::byte_array::{ByteArrayTrait, ByteArray};
 use core::sha256::compute_sha256_byte_array;
 use starknet::secp256_trait::{is_signature_entry_valid};
+use garaga::{signatures::ecdsa::{ECDSASignatureWithHint}};
+
+const ED25519_CURVE_ID: usize = 4;
 
 /// @notice Verifies a Sign In With Solana signature
 /// @param hash The hash/challenge to verify
@@ -37,9 +40,5 @@ fn is_valid_siws_signature(hash: felt252, signer: Ed25519Signer, signature: SIWS
     );
 
     // Verify the signature using the Ed25519 verification
-    let pubkey: u256 = signer.pubkey.into();
-    let signature = array![signature.signature.r, signature.signature.s];
-    alexandria_math::ed25519::verify_signature(
-        message.into_bytes().span(), signature.span(), pubkey,
-    )
+    garaga::signatures::ecdsa::is_valid_ecdsa_signature(signature.signature, ED25519_CURVE_ID)
 }

@@ -31,7 +31,7 @@ async function fetchAllEvents(
     continuation_token: continuationToken,
   });
 
-  let events = response.events;
+  const events = response.events;
   if (events.length > 0) {
     console.log(`Got ${events.length} events`);
   }
@@ -73,7 +73,7 @@ for (const key of tokenAndSpenders) {
 }
 console.log(tokenAndSpendersWithApprovals.size);
 
-const revokeMulticall = new Array();
+const revokeMulticall = [];
 for (const key of tokenAndSpendersWithApprovals) {
   const [token, spender] = key.split("-");
   revokeMulticall.push({

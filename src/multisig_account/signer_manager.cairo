@@ -187,11 +187,11 @@ pub mod signer_manager_component {
 
         fn replace_signer(ref self: ComponentState<TContractState>, signer_to_remove: Signer, signer_to_add: Signer) {
             assert_only_self();
-            // Adding before removing guarantees that we are not replacing an owner with itself
-            let signer_to_add_guid = self.signer_list.insert(signer_to_add.into_guid());
 
             let signer_to_remove_guid = signer_to_remove.into_guid();
             self.signer_list.remove(signer_to_remove_guid);
+            let signer_to_add_guid = self.signer_list.insert(signer_to_add.into_guid());
+            assert(signer_to_remove_guid != signer_to_add_guid, 'argent/replace-same-signer');
 
             self.emit(OwnerRemovedGuid { removed_owner_guid: signer_to_remove_guid });
             self.emit(OwnerAddedGuid { new_owner_guid: signer_to_add_guid });

@@ -105,34 +105,35 @@ fn replace_signer_end() {
 
 #[test]
 #[should_panic(expected: ('linked-set/item-not-found',))]
-fn replace_invalid_signer() {
-    // init
-    let multisig = initialize_multisig_with(threshold: 1, signers: array![SIGNER_1(), SIGNER_2(), SIGNER_3()].span());
-
-    // replace signer
-
-    let signer_to_add = starknet_signer_from_pubkey(5);
-    let not_a_signer = starknet_signer_from_pubkey(10);
-    multisig.replace_signer(not_a_signer, signer_to_add);
+fn replace_invalid_signer_with_existing_one() {
+    let multisig = initialize_multisig_with(threshold: 1, signers: array![SIGNER_1()].span());
+    multisig.replace_signer(starknet_signer_from_pubkey(10), SIGNER_1());
 }
 
 #[test]
-#[should_panic(expected: ('linked-set/already-in-set',))]
-fn replace_already_signer() {
-    // init
-    let multisig = initialize_multisig_with(threshold: 1, signers: array![SIGNER_1(), SIGNER_2(), SIGNER_3()].span());
-
-    // replace signer
-    multisig.replace_signer(SIGNER_3(), SIGNER_1());
+#[should_panic(expected: ('linked-set/item-not-found',))]
+fn replace_invalid_signer_with_valid_one() {
+    let multisig = initialize_multisig_with(threshold: 1, signers: array![SIGNER_1()].span());
+    multisig.replace_signer(starknet_signer_from_pubkey(10), starknet_signer_from_pubkey(5));
 }
 
 #[test]
-#[should_panic(expected: ('linked-set/already-in-set',))]
-fn replace_already_same_signer() {
-    // init
-    let multisig = initialize_multisig_with(threshold: 1, signers: array![SIGNER_1(), SIGNER_2(), SIGNER_3()].span());
+#[should_panic(expected: ('linked-set/item-not-found',))]
+fn replace_invalid_signer_with_the_same_signer() {
+    let multisig = initialize_multisig_with(threshold: 1, signers: array![SIGNER_1()].span());
+    multisig.replace_signer(SIGNER_2(), SIGNER_2());
+}
 
-    // replace signer
+#[test]
+#[should_panic(expected: ('argent/replace-same-signer',))]
+fn replace_valid_signer_with_same() {
+    let multisig = initialize_multisig_with(threshold: 1, signers: array![SIGNER_1()].span());
     multisig.replace_signer(SIGNER_1(), SIGNER_1());
 }
 
+#[test]
+#[should_panic(expected: ('linked-set/already-in-set',))]
+fn replace_valid_signer_with_existing_one() {
+    let multisig = initialize_multisig_with(threshold: 1, signers: array![SIGNER_1(), SIGNER_2()].span());
+    multisig.replace_signer(SIGNER_1(), SIGNER_2());
+}

@@ -1,8 +1,7 @@
-import "dotenv/config";
 import { hash, num } from "starknet";
 import { manager } from "../lib";
 
-const address = "0x21935fa030b741808c639445d7c76027d9e38cedfd02fca188b4a8f1956cd6d";
+const holderAddress = "0x21935fa030b741808c639445d7c76027d9e38cedfd02fca188b4a8f1956cd6d";
 
 // TODO NFTs
 // TODO approvals without indexed fields
@@ -10,7 +9,7 @@ const address = "0x21935fa030b741808c639445d7c76027d9e38cedfd02fca188b4a8f1956cd
 const CHUNK_SIZE = 100;
 const SLEEP_TIME = 1000;
 const lastBlock = (await manager.getBlock("latest")).block_number;
-const keys = [[num.toHex(hash.starknetKeccak("Approval"))], [address]];
+const keys = [[num.toHex(hash.starknetKeccak("Approval"))], [holderAddress]];
 
 async function fetchAllEvents(
   minBlock: number,
@@ -61,7 +60,7 @@ for (const key of tokenAndSpenders) {
     const allowance = await manager.callContract({
       contractAddress: token,
       entrypoint: "allowance",
-      calldata: [address, spender],
+      calldata: [holderAddress, spender],
     });
 
     if (num.toBigInt(allowance[0]) !== 0n || num.toBigInt(allowance[0]) !== 0n) {
@@ -69,6 +68,7 @@ for (const key of tokenAndSpenders) {
     }
   } catch (error) {
     console.error(`Failed to check allowance for token ${token} spender ${spender}`);
+    throw error;
   }
 }
 console.log(tokenAndSpendersWithApprovals.size);

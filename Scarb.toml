@@ -2,7 +2,7 @@
 name = "argent"
 version = "0.5.0"
 cairo-version = "2.10.1"
-edition="2024_07"
+edition = "2024_07"
 
 [[target.starknet-contract]]
 sierra = true
@@ -16,7 +16,7 @@ starknet = "2.10.1"
 assert_macros = "2.10.1"
 snforge_std = "0.38.0"
 alexandria_encoding = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "162bed1" }
-alexandria_merkle_tree = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev="162bed1" }
+alexandria_merkle_tree = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "162bed1" }
 openzeppelin_security = "0.20.0"
 openzeppelin_presets = "0.20.0"
 
@@ -42,6 +42,7 @@ deploy-multisig = "scarb --profile release build && node --loader ts-node/esm sc
 generate-signature = "node --loader ts-node/esm ./scripts/generate-signature.ts"
 update-webauthn-dapp = "scarb --profile release build && cp target/release/*_ArgentAccount* examples/webauthn/src/lib && scarb run format"
 print-contract-size = "scarb --profile release build && node --loader ts-node/esm ./scripts/print-contract-size.ts"
+print-snip-12-encodedTypes = "node --loader ts-node/esm ./scripts/print-snip-12-encodeTypes.ts"
 
 # Allows to use the repository as dependency in other projects
 [lib]

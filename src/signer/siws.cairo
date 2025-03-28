@@ -15,7 +15,7 @@ use starknet::secp256_trait::is_signature_entry_valid;
 /// @notice Verifies a Sign In With Solana signature
 /// @param hash The hash/challenge to verify
 /// @param signer The Ed25519 signer with the public key
-/// @param signature The SIWS signature containing domain, statement and Ed25519 signature
+/// @param signature The SIWS signature containing domain and Ed25519 signature with hint
 /// @return True if the signature is valid, false otherwise
 #[inline(always)]
 fn is_valid_siws_signature(hash: felt252, signer: Ed25519Signer, mut siws_signature: SIWSSignature) -> bool {

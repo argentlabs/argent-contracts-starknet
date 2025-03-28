@@ -5,7 +5,7 @@ use argent::utils::hashing::poseidon_2;
 use argent::utils::bytes::u256_to_u8s;
 use core::traits::TryInto;
 use ecdsa::check_ecdsa_signature;
-use garaga::{signatures::ecdsa::{ECDSASignatureWithHint}};
+use garaga::signatures::eddsa_25519::{EdDSASignatureWithHint};
 use hash::{HashStateExTrait, HashStateTrait};
 use poseidon::{hades_permutation, PoseidonTrait};
 use starknet::SyscallResultTrait;
@@ -54,15 +54,7 @@ enum SignerSignature {
     Eip191: (Eip191Signer, Secp256Signature),
     Webauthn: (WebauthnSigner, WebauthnSignature),
     Ed25519: (Ed25519Signer, Ed25519Signature),
-    SIWS: (Ed25519Signer, SIWSSignature),
-}
-
-/// @notice A struct to hold the SIWS signer and signatures
-/// This avoids issues with 3-element tuples in enums
-#[derive(Drop, Copy, Serde)]
-struct SIWSSignature {
-    domain: Span<u8>,
-    signature: ECDSASignatureWithHint,
+    SIWS: (Ed25519Signer, EdDSASignatureWithHint),
 }
 
 /// @notice The starknet signature using the stark-curve

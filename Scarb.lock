@@ -72,7 +72,7 @@ dependencies = [
 [[package]]
 name = "garaga"
 version = "0.15.5"
-source = "git+https://github.com/edisontim/garaga?branch=feat%2Feddsa-copy-trait#e1f385a64227751807f9f77c0a3cc710e6e158f6"
+source = "git+https://github.com/keep-starknet-strange/garaga?branch=eddsa#c1e65ac6b847927ca84e96a251b400c640d61aaa"
 
 [[package]]
 name = "openzeppelin"

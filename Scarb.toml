@@ -20,7 +20,7 @@ alexandria_encoding = { git = "https://github.com/keep-starknet-strange/alexandr
 alexandria_merkle_tree = { git = "https://github.com/keep-starknet-strange/alexandria", rev = "a0163821eab6d5d42e3dc63b10ec96e4d7a622e0" }
 alexandria_data_structures = { git = "https://github.com/keep-starknet-strange/alexandria", rev = "a0163821eab6d5d42e3dc63b10ec96e4d7a622e0" }
 openzeppelin = "1.0.0"
-garaga = { git = "https://github.com/edisontim/garaga", branch = "feat/eddsa-copy-trait" }
+garaga = { git = "https://github.com/keep-starknet-strange/garaga", branch = "eddsa" }
 
 [dev-dependencies]
 snforge_std = "0.38.3"

@@ -1,4 +1,4 @@
-use argent::signer::signer_signature::{Ed25519Signature, Ed25519Signer, SIWSSignature, SignerSignature};
+use argent::signer::signer_signature::{Ed25519Signer, SIWSSignature, SignerSignature};
 use argent::signer::siws::is_valid_siws_signature;
 use core::traits::TryInto;
 use garaga::ec_ops::{DerivePointFromXHint, G1Point, G1PointTrait, MSMHint, ec_safe_add, msm_g1};
@@ -8,16 +8,34 @@ use garaga::signatures::eddsa_25519::{EdDSASignature, EdDSASignatureWithHint};
 fn test_siws_signature_validation() {
     let pubkey: u256 = 0x76e70af44d520a839a44156248699346911e4a87efd153df694ef4a188a60c5b;
     let domain: Span<u8> = array![
-        'h', 't', 't', 'p', 's', ':', '/', '/', 'c', 'a', 'r', 't', 'r', 'i', 'd', 'g', 'e', '.', 'g', 'g',
+        'h',
+        't',
+        't',
+        'p',
+        's',
+        ':',
+        '/',
+        '/',
+        'c',
+        'a',
+        'r',
+        't',
+        'r',
+        'i',
+        'd',
+        'g',
+        'e',
+        '.',
+        'g',
+        'g',
     ]
         .span();
     let hash: felt252 = 0x3d12d63bd7c309c264802ea127085b8ccd0b25e256311352c9b975c6e9977f3;
     let signer = Ed25519Signer { pubkey: pubkey.try_into().expect('ed25519 zero') };
     let mut signature_hint = get_signature_hint();
-    let signature_with_hint = Serde::<EdDSASignatureWithHint>::deserialize(ref signature_hint).expect('deserialize failed');
-    let signature = SIWSSignature {
-        domain, signature_with_hint,
-    };
+    let signature_with_hint = Serde::<EdDSASignatureWithHint>::deserialize(ref signature_hint)
+        .expect('deserialize failed');
+    let signature = SIWSSignature { domain, signature_with_hint };
 
     assert(is_valid_siws_signature(hash, signer, signature), 'Statement validation failed');
 }
@@ -31,7 +49,8 @@ fn test_siws_signature_validation() {
 // https://cartridge.gg wants you to sign in with your Solana account:
 // 919Sjn6pmyPavuzXHidYWxuh6xKTHYyEUXuVcYnsrCp2
 
-// Authorize Controller session with hash: 0x3d12d63bd7c309c264802ea127085b8ccd0b25e256311352c9b975c6e9977f3
+// Authorize Controller session with hash:
+// 0x3d12d63bd7c309c264802ea127085b8ccd0b25e256311352c9b975c6e9977f3
 
 // Signature (Base58):
 // 5xFDgX19fmWMPK8R7pLPR5WtPUPuarYKPxLbZdU4TUZ8KVSvgDX5aDwEy1EySHN1ipDNf2xTQc69cs6tWXc7mFJM
@@ -407,5 +426,6 @@ fn get_signature_hint() -> Span<felt252> {
         0x7ff16bddc95ac33eba05195687ac53e,
         0xa55e57950e221f0786036884d69d31c,
         0x3a2956d4df074c07827d7a2b95ac1135,
-    ].span()
+    ]
+        .span()
 }

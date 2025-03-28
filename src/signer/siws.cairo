@@ -1,8 +1,9 @@
 use alexandria_encoding::base58::Base58Encoder;
-use argent::signer::signer_signature::{Ed25519Signer, SIWSSignature};
+use argent::signer::signer_signature::{SIWSSignature, Ed25519Signer};
 use argent::utils::array_ext::ArrayExtTrait;
 use argent::utils::bytes::{
-    ArrayU8Ext, ByteArrayExt, u256_to_byte_array, u256_to_u8s, u32s_to_byte_array, u32s_typed_to_u256,
+    ArrayU8Ext, ByteArrayExt, u256_to_byte_array, u256_to_u8s, u32s_to_byte_array,
+    u32s_typed_to_u256,
 };
 use argent::utils::hashing::poseidon_2;
 use core::byte_array::{ByteArray, ByteArrayTrait};
@@ -14,11 +15,13 @@ use starknet::secp256_trait::is_signature_entry_valid;
 
 /// @notice Verifies a Sign In With Solana signature
 /// @param hash The hash/challenge to verify
-/// @param signer The Ed25519 signer with the public key
+/// @param signer The Ed25519Signer (EdDSA - Ed25519 curve) signer with the public key
 /// @param signature The SIWS signature containing domain and Ed25519 signature with hint
 /// @return True if the signature is valid, false otherwise
 #[inline(always)]
-fn is_valid_siws_signature(hash: felt252, signer: Ed25519Signer, mut siws_signature: SIWSSignature) -> bool {
+fn is_valid_siws_signature(
+    hash: felt252, signer: Ed25519Signer, mut siws_signature: SIWSSignature,
+) -> bool {
     let address_bytes = u256_to_u8s(signer.pubkey.into());
     let address_b58 = Base58Encoder::encode(address_bytes.span());
     let address_b58_bytes = address_b58.span().into_byte_array();

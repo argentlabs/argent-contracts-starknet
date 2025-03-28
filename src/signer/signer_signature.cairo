@@ -1,19 +1,20 @@
 use argent::signer::eip191::is_valid_eip191_signature;
-use argent::signer::webauthn::{WebauthnSignature, get_webauthn_hash, verify_authenticator_flags};
 use argent::signer::siws::is_valid_siws_signature;
-use argent::utils::hashing::poseidon_2;
+use argent::signer::webauthn::{WebauthnSignature, get_webauthn_hash, verify_authenticator_flags};
 use argent::utils::bytes::u256_to_u8s;
+use argent::utils::hashing::poseidon_2;
 use core::traits::TryInto;
 use ecdsa::check_ecdsa_signature;
+use garaga::signatures::eddsa_25519::EdDSASignatureWithHint;
 use hash::{HashStateExTrait, HashStateTrait};
-use poseidon::{hades_permutation, PoseidonTrait};
-use starknet::SyscallResultTrait;
+use poseidon::{PoseidonTrait, hades_permutation};
+use starknet::eth_signature::is_eth_signature_valid;
 use starknet::secp256_trait::{
-    Secp256PointTrait, Signature as Secp256Signature, recover_public_key, is_signature_entry_valid,
+    Secp256PointTrait, Signature as Secp256Signature, is_signature_entry_valid, recover_public_key,
 };
 use starknet::secp256k1::Secp256k1Point;
 use starknet::secp256r1::Secp256r1Point;
-use starknet::{EthAddress, eth_signature::is_eth_signature_valid};
+use starknet::{EthAddress, SyscallResultTrait};
 
 /// All signer type magic values. Used to derive their guid
 const STARKNET_SIGNER_TYPE: felt252 = 'Starknet Signer';
@@ -24,10 +25,8 @@ const WEBAUTHN_SIGNER_TYPE: felt252 = 'Webauthn Signer';
 const ED25519_SIGNER_TYPE: felt252 = 'Ed25519 Signer';
 const SIWS_SIGNER_TYPE: felt252 = 'SIWS Signer';
 
-const SECP_256_R1_HALF: u256 = 0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551
-    / 2;
-const SECP_256_K1_HALF: u256 = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141
-    / 2;
+const SECP_256_R1_HALF: u256 = 0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551 / 2;
+const SECP_256_K1_HALF: u256 = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141 / 2;
 
 
 /// @notice The type of the signer that this version of the accounts supports
@@ -61,7 +60,7 @@ enum SignerSignature {
 #[derive(Drop, Copy, Serde)]
 struct SIWSSignature {
     domain: Span<u8>,
-    signature: Ed25519Signature,
+    signature_with_hint: EdDSASignatureWithHint,
 }
 
 /// @notice The starknet signature using the stark-curve

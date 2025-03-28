@@ -3,8 +3,8 @@ version = 1
 
 [[package]]
 name = "alexandria_bytes"
-version = "0.3.0"
-source = "git+https://github.com/cartridge-gg/alexandria?rev=79eeca8b8ae90bd4cb5129e5f5c6bfe9f773a814#79eeca8b8ae90bd4cb5129e5f5c6bfe9f773a814"
+version = "0.5.0"
+source = "git+https://github.com/keep-starknet-strange/alexandria?rev=a0163821eab6d5d42e3dc63b10ec96e4d7a622e0#a0163821eab6d5d42e3dc63b10ec96e4d7a622e0"
 dependencies = [
  "alexandria_data_structures",
  "alexandria_math",
@@ -12,13 +12,13 @@ dependencies = [
 
 [[package]]
 name = "alexandria_data_structures"
-version = "0.3.0"
-source = "git+https://github.com/cartridge-gg/alexandria?rev=79eeca8b8ae90bd4cb5129e5f5c6bfe9f773a814#79eeca8b8ae90bd4cb5129e5f5c6bfe9f773a814"
+version = "0.5.0"
+source = "git+https://github.com/keep-starknet-strange/alexandria?rev=a0163821eab6d5d42e3dc63b10ec96e4d7a622e0#a0163821eab6d5d42e3dc63b10ec96e4d7a622e0"
 
 [[package]]
 name = "alexandria_encoding"
-version = "0.3.0"
-source = "git+https://github.com/cartridge-gg/alexandria?rev=79eeca8b8ae90bd4cb5129e5f5c6bfe9f773a814#79eeca8b8ae90bd4cb5129e5f5c6bfe9f773a814"
+version = "0.5.0"
+source = "git+https://github.com/keep-starknet-strange/alexandria?rev=a0163821eab6d5d42e3dc63b10ec96e4d7a622e0#a0163821eab6d5d42e3dc63b10ec96e4d7a622e0"
 dependencies = [
  "alexandria_bytes",
  "alexandria_data_structures",
@@ -28,21 +28,21 @@ dependencies = [
 
 [[package]]
 name = "alexandria_math"
-version = "0.3.0"
-source = "git+https://github.com/cartridge-gg/alexandria?rev=79eeca8b8ae90bd4cb5129e5f5c6bfe9f773a814#79eeca8b8ae90bd4cb5129e5f5c6bfe9f773a814"
+version = "0.5.0"
+source = "git+https://github.com/keep-starknet-strange/alexandria?rev=a0163821eab6d5d42e3dc63b10ec96e4d7a622e0#a0163821eab6d5d42e3dc63b10ec96e4d7a622e0"
 
 [[package]]
 name = "alexandria_merkle_tree"
-version = "0.3.0"
-source = "git+https://github.com/cartridge-gg/alexandria?rev=79eeca8b8ae90bd4cb5129e5f5c6bfe9f773a814#79eeca8b8ae90bd4cb5129e5f5c6bfe9f773a814"
+version = "0.5.0"
+source = "git+https://github.com/keep-starknet-strange/alexandria?rev=a0163821eab6d5d42e3dc63b10ec96e4d7a622e0#a0163821eab6d5d42e3dc63b10ec96e4d7a622e0"
 dependencies = [
  "alexandria_math",
 ]
 
 [[package]]
 name = "alexandria_numeric"
-version = "0.3.0"
-source = "git+https://github.com/cartridge-gg/alexandria?rev=79eeca8b8ae90bd4cb5129e5f5c6bfe9f773a814#79eeca8b8ae90bd4cb5129e5f5c6bfe9f773a814"
+version = "0.5.0"
+source = "git+https://github.com/keep-starknet-strange/alexandria?rev=a0163821eab6d5d42e3dc63b10ec96e4d7a622e0#a0163821eab6d5d42e3dc63b10ec96e4d7a622e0"
 dependencies = [
  "alexandria_math",
  "alexandria_searching",
@@ -50,8 +50,8 @@ dependencies = [
 
 [[package]]
 name = "alexandria_searching"
-version = "0.3.0"
-source = "git+https://github.com/cartridge-gg/alexandria?rev=79eeca8b8ae90bd4cb5129e5f5c6bfe9f773a814#79eeca8b8ae90bd4cb5129e5f5c6bfe9f773a814"
+version = "0.5.0"
+source = "git+https://github.com/keep-starknet-strange/alexandria?rev=a0163821eab6d5d42e3dc63b10ec96e4d7a622e0#a0163821eab6d5d42e3dc63b10ec96e4d7a622e0"
 dependencies = [
  "alexandria_data_structures",
 ]
@@ -64,9 +64,15 @@ dependencies = [
  "alexandria_encoding",
  "alexandria_math",
  "alexandria_merkle_tree",
+ "garaga",
  "openzeppelin",
  "snforge_std",
 ]
+
+[[package]]
+name = "garaga"
+version = "0.15.5"
+source = "git+https://github.com/keep-starknet-strange/garaga?branch=eddsa#c1e65ac6b847927ca84e96a251b400c640d61aaa"
 
 [[package]]
 name = "openzeppelin"

@@ -65,6 +65,8 @@ pub mod upgrade_migration_component {
         // Legacy escape attempt counters
         guardian_escape_attempts: felt252,
         owner_escape_attempts: felt252,
+        // Current nonce used up to 0.2.3.1
+        _current_nonce: felt252,
     }
 
     #[event]
@@ -157,6 +159,8 @@ pub mod upgrade_migration_component {
             // During an upgrade we changed the layout from being 3 fields to 3 fields packed onto 2 fields.
             // We need to restore that third field that could have been left behind.
             self._escape.new_signer.write(0);
+            // Reset the nonce to 0 to clean up the storage
+            self._current_nonce.write(0);
 
             let mut contract = self.get_contract_mut();
 

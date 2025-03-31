@@ -295,7 +295,7 @@ describe("ArgentAccount: escape mechanism", function () {
           owners: Array.from({ length: 4 }, () => randomStarknetKeyPair()),
         });
         account.signer = new ArgentSigner(guardian);
-        let ownerToKeep = owners[0];
+        const ownerToKeep = owners[0];
         await expectRevertWithErrorMessage(
           "argent/new-owner-is-owner",
           accountContract.trigger_escape_owner(ownerToKeep.compiledSigner),
@@ -580,7 +580,7 @@ describe("ArgentAccount: escape mechanism", function () {
       });
 
       account.signer = new ArgentSigner(owner);
-      let guardianToKeep = guardians[0];
+      const guardianToKeep = guardians[0];
       await expectRevertWithErrorMessage(
         "argent/new-guardian-is-guardian",
         accountContract.trigger_escape_guardian(guardianToKeep.compiledSignerAsOption),

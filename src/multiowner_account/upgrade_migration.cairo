@@ -232,10 +232,5 @@ pub mod upgrade_migration_component {
             let mut contract = self.get_contract_mut();
             contract.finalize_migration();
         }
-
-        fn migrate_owner(ref self: ComponentState<TContractState>, signer_storage_value: SignerStorageValue) {
-            let mut contract = self.get_contract_mut();
-            contract.migrate_owner(signer_storage_value);
-        }
     }
 }

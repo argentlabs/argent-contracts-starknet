@@ -189,6 +189,10 @@ pub mod upgrade_migration_component {
             };
 
             let guardian_backup_starknet_pubkey = self._guardian_backup.read();
+            assert(
+                !(guardian_starknet_pubkey == 0 && guardian_backup_starknet_pubkey != 0),
+                'argent/backup-should-be-null',
+            );
             if guardian_backup_starknet_pubkey != 0 {
                 guardians_to_migrate
                     .append(starknet_signer_from_pubkey(guardian_backup_starknet_pubkey).storage_value());

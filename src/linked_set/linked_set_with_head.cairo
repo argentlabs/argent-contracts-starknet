@@ -90,7 +90,6 @@ pub impl LinkedSetWithHeadReadImpl<
         self.first().is_none()
     }
 
-    #[inline(always)]
     fn contains(self: StorageBase<LinkedSetWithHead<T>>, item: T) -> bool {
         let first_item = if let Option::Some(value) = self.first() {
             value

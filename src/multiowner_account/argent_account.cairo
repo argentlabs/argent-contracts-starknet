@@ -592,7 +592,7 @@ pub mod ArgentAccount {
             ref self: ContractState,
             calls: Span<Call>,
             execution_hash: felt252,
-            mut raw_signature: Span<felt252>,
+            raw_signature: Span<felt252>,
             is_from_outside: bool,
             account_address: ContractAddress,
         ) {

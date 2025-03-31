@@ -290,7 +290,7 @@ describe("ArgentAccount: escape mechanism", function () {
         await accountContract.get_owners_guids().should.eventually.deep.equal([newKeyPair.guid]);
       });
 
-      it("Should not be able to escape multiple owners (keeping one owner)", async function () {
+      it("Should not be able to escape owners (keeping one owner)", async function () {
         const { account, accountContract, guardian, owners } = await deployAccount({
           owners: Array.from({ length: 4 }, () => randomStarknetKeyPair()),
         });
@@ -574,7 +574,7 @@ describe("ArgentAccount: escape mechanism", function () {
       await accountContract.get_guardians_guids().should.eventually.deep.equal([newKeyPair.guid]);
     });
 
-    it("Should be able to escape multiple guardians (keeping one guardian)", async function () {
+    it("Should be able to escape guardians (keeping one guardian)", async function () {
       const { account, accountContract, owner, guardians } = await deployAccount({
         guardians: Array.from({ length: 4 }, () => randomStarknetKeyPair()),
       });

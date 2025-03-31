@@ -46,7 +46,7 @@ fn test_webauthn_guid() {
 
 #[test]
 fn test_is_valid_webauthn_signature() {
-    let (transaction_hash, signer, mut signature) = valid_signer();
+    let (transaction_hash, signer, signature) = valid_signer();
     let is_valid = is_valid_webauthn_signature(transaction_hash, signer, signature);
     assert!(is_valid);
 }

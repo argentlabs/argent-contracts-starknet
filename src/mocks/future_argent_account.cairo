@@ -167,12 +167,12 @@ mod MockFutureArgentAccount {
     #[generate_trait]
     impl Private of PrivateTrait {
         fn assert_valid_calls_and_signature(
-            ref self: ContractState, calls: Span<Call>, execution_hash: felt252, mut signatures: Span<felt252>,
+            ref self: ContractState, calls: Span<Call>, execution_hash: felt252, signatures: Span<felt252>,
         ) {
             self.assert_valid_account_signature(execution_hash, self.parse_account_signature(signatures));
         }
 
-        fn parse_account_signature(self: @ContractState, mut raw_signature: Span<felt252>) -> AccountSignature {
+        fn parse_account_signature(self: @ContractState, raw_signature: Span<felt252>) -> AccountSignature {
             let sigs_as_array: Array<SignerSignature> = full_deserialize(raw_signature)
                 .expect('argent/invalid-signature-format');
             if sigs_as_array.len() == 1 {

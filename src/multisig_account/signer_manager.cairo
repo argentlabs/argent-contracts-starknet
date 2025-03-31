@@ -227,7 +227,7 @@ pub mod signer_manager_component {
     pub impl SignerManagerInternalImpl<
         TContractState, +HasComponent<TContractState>, +Drop<TContractState>,
     > of ISignerManagerInternal<TContractState> {
-        fn initialize(ref self: ComponentState<TContractState>, threshold: usize, mut signers: Array<Signer>) {
+        fn initialize(ref self: ComponentState<TContractState>, threshold: usize, signers: Array<Signer>) {
             assert(self.threshold.read() == 0, 'argent/already-initialized');
 
             let new_signers_count = signers.len();

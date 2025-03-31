@@ -214,14 +214,14 @@ pub impl LinkedSetWriteImpl<
         self.insert_opt(:item, last_item_hash: self.find_last_hash())
     }
 
-    fn insert_many(self: StorageBase<Mutable<LinkedSet<T>>>, mut items_to_add: Span<T>) {
+    fn insert_many(self: StorageBase<Mutable<LinkedSet<T>>>, items_to_add: Span<T>) {
         let mut last_item_hash: felt252 = self.find_last_hash();
         for item in items_to_add {
             last_item_hash = self.insert_opt(item: *item, :last_item_hash);
         };
     }
 
-    fn remove_many(self: StorageBase<Mutable<LinkedSet<T>>>, mut items_hashes_to_remove: Span<felt252>) {
+    fn remove_many(self: StorageBase<Mutable<LinkedSet<T>>>, items_hashes_to_remove: Span<felt252>) {
         for item_hash in items_hashes_to_remove {
             self.remove(item_hash: *item_hash);
         };

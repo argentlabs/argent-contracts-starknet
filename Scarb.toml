@@ -15,10 +15,10 @@ build-external-contracts = ["openzeppelin_presets::account::AccountUpgradeable"]
 starknet = "2.10.1"
 assert_macros = "2.10.1"
 snforge_std = "0.38.0"
-alexandria_encoding = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "162bed1" }
-alexandria_merkle_tree = { git = "https://github.com/keep-starknet-strange/alexandria.git", rev = "162bed1" }
-openzeppelin_security = "0.20.0"
-openzeppelin_presets = "0.20.0"
+alexandria_encoding = "0.4.0"
+alexandria_merkle_tree = "0.4.0"
+openzeppelin_security = "1.0.0"
+openzeppelin_presets = "1.0.0"
 
 [tool.fmt]
 max-line-length = 120

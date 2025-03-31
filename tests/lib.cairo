@@ -52,6 +52,12 @@ mod setup {
 }
 
 #[cfg(test)]
+mod signer {
+    #[cfg(test)]
+    mod test_siws;
+}
+
+#[cfg(test)]
 mod webauthn {
     #[cfg(test)]
     mod test_webauthn_bytes;

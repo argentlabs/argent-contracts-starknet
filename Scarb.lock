@@ -3,9 +3,8 @@ version = 1
 
 [[package]]
 name = "alexandria_bytes"
-version = "0.3.0"
-source = "registry+https://scarbs.xyz/"
-checksum = "sha256:be5d95de2b9b05a029b2539aa8bb39560374705652ee0a69e01397f6ef1a7d1a"
+version = "0.5.0"
+source = "git+https://github.com/keep-starknet-strange/alexandria?rev=a0163821eab6d5d42e3dc63b10ec96e4d7a622e0#a0163821eab6d5d42e3dc63b10ec96e4d7a622e0"
 dependencies = [
  "alexandria_data_structures",
  "alexandria_math",
@@ -13,15 +12,13 @@ dependencies = [
 
 [[package]]
 name = "alexandria_data_structures"
-version = "0.3.0"
-source = "registry+https://scarbs.xyz/"
-checksum = "sha256:fca0cd0349fabef5d62e7b02d09332679c531058bf53f9be165bf0e832c62765"
+version = "0.5.0"
+source = "git+https://github.com/keep-starknet-strange/alexandria?rev=a0163821eab6d5d42e3dc63b10ec96e4d7a622e0#a0163821eab6d5d42e3dc63b10ec96e4d7a622e0"
 
 [[package]]
 name = "alexandria_encoding"
-version = "0.3.0"
-source = "registry+https://scarbs.xyz/"
-checksum = "sha256:c1b3b123d74116233a0f28077c4ddd51c5c89f19a3dfba0c32dcdce2dc24c4c9"
+version = "0.5.0"
+source = "git+https://github.com/keep-starknet-strange/alexandria?rev=a0163821eab6d5d42e3dc63b10ec96e4d7a622e0#a0163821eab6d5d42e3dc63b10ec96e4d7a622e0"
 dependencies = [
  "alexandria_bytes",
  "alexandria_data_structures",
@@ -31,24 +28,21 @@ dependencies = [
 
 [[package]]
 name = "alexandria_math"
-version = "0.3.0"
-source = "registry+https://scarbs.xyz/"
-checksum = "sha256:9659d9bbe0f0713366abb479c3a0d182dc560d15355bfca1ac4ef25076b2d8b4"
+version = "0.5.0"
+source = "git+https://github.com/keep-starknet-strange/alexandria?rev=a0163821eab6d5d42e3dc63b10ec96e4d7a622e0#a0163821eab6d5d42e3dc63b10ec96e4d7a622e0"
 
 [[package]]
 name = "alexandria_merkle_tree"
-version = "0.3.0"
-source = "registry+https://scarbs.xyz/"
-checksum = "sha256:78c4fb80a740f8ea0c4146d2132e70a1842c341c0341634389a24e775c8c488b"
+version = "0.5.0"
+source = "git+https://github.com/keep-starknet-strange/alexandria?rev=a0163821eab6d5d42e3dc63b10ec96e4d7a622e0#a0163821eab6d5d42e3dc63b10ec96e4d7a622e0"
 dependencies = [
  "alexandria_math",
 ]
 
 [[package]]
 name = "alexandria_numeric"
-version = "0.3.0"
-source = "registry+https://scarbs.xyz/"
-checksum = "sha256:35764658e0f3731d6b59afeead7aac5fd9c73ffe6a7bf9be2443d59e8f300445"
+version = "0.5.0"
+source = "git+https://github.com/keep-starknet-strange/alexandria?rev=a0163821eab6d5d42e3dc63b10ec96e4d7a622e0#a0163821eab6d5d42e3dc63b10ec96e4d7a622e0"
 dependencies = [
  "alexandria_math",
  "alexandria_searching",
@@ -56,9 +50,8 @@ dependencies = [
 
 [[package]]
 name = "alexandria_searching"
-version = "0.3.0"
-source = "registry+https://scarbs.xyz/"
-checksum = "sha256:ce4ae15a5d9ac7d334f3bba50d90b9a3d33167f3692c2059c4eb26f54f7b15f6"
+version = "0.5.0"
+source = "git+https://github.com/keep-starknet-strange/alexandria?rev=a0163821eab6d5d42e3dc63b10ec96e4d7a622e0#a0163821eab6d5d42e3dc63b10ec96e4d7a622e0"
 dependencies = [
  "alexandria_data_structures",
 ]
@@ -71,9 +64,15 @@ dependencies = [
  "alexandria_encoding",
  "alexandria_math",
  "alexandria_merkle_tree",
+ "garaga",
  "openzeppelin",
  "snforge_std",
 ]
+
+[[package]]
+name = "garaga"
+version = "0.16.0"
+source = "git+https://github.com/keep-starknet-strange/garaga?rev=c3db6b78efc0a4b8eb6a8c06df7f053257728ea7#c3db6b78efc0a4b8eb6a8c06df7f053257728ea7"
 
 [[package]]
 name = "openzeppelin"

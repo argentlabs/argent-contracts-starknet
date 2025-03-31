@@ -1,7 +1,7 @@
 [package]
 name = "argent"
 version = "0.1.0"
-cairo-version = "2.9.4"
+cairo-version = "2.11.1"
 
 [[target.lib]]
 
@@ -10,20 +10,21 @@ sierra = true
 casm = true
 allowed-libfuncs-list.name = "audited"
 build-external-contracts = [
-    "openzeppelin::presets::account::AccountUpgradeable",
+	"openzeppelin::presets::account::AccountUpgradeable",
 ]
 
 [dependencies]
-starknet = "2.9.4"
-alexandria_math = "0.3.0"
-alexandria_encoding = "0.3.0"
-alexandria_merkle_tree = "0.3.0"
-alexandria_data_structures = "0.3.0"
+starknet = "2.11.1"
+alexandria_math = { git = "https://github.com/keep-starknet-strange/alexandria", rev = "a0163821eab6d5d42e3dc63b10ec96e4d7a622e0" }
+alexandria_encoding = { git = "https://github.com/keep-starknet-strange/alexandria", rev = "a0163821eab6d5d42e3dc63b10ec96e4d7a622e0" }
+alexandria_merkle_tree = { git = "https://github.com/keep-starknet-strange/alexandria", rev = "a0163821eab6d5d42e3dc63b10ec96e4d7a622e0" }
+alexandria_data_structures = { git = "https://github.com/keep-starknet-strange/alexandria", rev = "a0163821eab6d5d42e3dc63b10ec96e4d7a622e0" }
 openzeppelin = "1.0.0"
+garaga = { git = "https://github.com/keep-starknet-strange/garaga", rev = "c3db6b78efc0a4b8eb6a8c06df7f053257728ea7" }
 
 [dev-dependencies]
 snforge_std = "0.38.3"
-assert_macros = "2.9.4"
+assert_macros = "2.11.1"
 
 [tool.fmt]
 max-line-length = 120

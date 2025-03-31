@@ -1,4 +1,5 @@
-/// @dev Leading zeros are ignored and the input must be at most 32 bytes long (both [1] and [0, 1] will be casted to 1)
+/// @dev Leading zeros are ignored and the input must be at most 32 bytes long (both [1] and [0, 1]
+/// will be casted to 1)
 impl SpanU8TryIntoU256 of TryInto<Span<u8>, u256> {
     fn try_into(mut self: Span<u8>) -> Option<u256> {
         if self.len() < 32 {
@@ -14,16 +15,16 @@ impl SpanU8TryIntoU256 of TryInto<Span<u8>, u256> {
     }
 }
 
-/// @dev Leading zeros are ignored and the input must be at most 32 bytes long (both [1] and [0, 1] will be casted to 1)
+/// @dev Leading zeros are ignored and the input must be at most 32 bytes long (both [1] and [0, 1]
+/// will be casted to 1)
 impl SpanU8TryIntoFelt252 of TryInto<Span<u8>, felt252> {
     fn try_into(mut self: Span<u8>) -> Option<felt252> {
         if self.len() < 32 {
             let mut result = 0;
-            while let Option::Some(byte) = self
-                .pop_front() {
-                    let byte = (*byte).into();
-                    result = (0x100 * result) + byte;
-                };
+            while let Option::Some(byte) = self.pop_front() {
+                let byte = (*byte).into();
+                result = (0x100 * result) + byte;
+            };
             Option::Some(result)
         } else if self.len() == 32 {
             let result: u256 = self.try_into()?;
@@ -133,7 +134,7 @@ fn u256_to_byte_array(word: u256) -> ByteArray {
     let (rest, byte_3) = integer::u128_safe_divmod(rest, 0x100);
     let (byte_1, byte_2) = integer::u128_safe_divmod(rest, 0x100);
     let mut output: ByteArray = "";
-    
+
     output.append_byte(byte_1.try_into().unwrap());
     output.append_byte(byte_2.try_into().unwrap());
     output.append_byte(byte_3.try_into().unwrap());
@@ -166,7 +167,7 @@ fn u256_to_byte_array(word: u256) -> ByteArray {
     output.append_byte(byte_30.try_into().unwrap());
     output.append_byte(byte_31.try_into().unwrap());
     output.append_byte(byte_32.try_into().unwrap());
-    
+
     output
 }
 
@@ -232,45 +233,48 @@ fn u32s_typed_to_u256(arr: @[u32; 8]) -> u256 {
 // Accepts felt252 for efficiency as it's the type of retdata but all values are expected to fit u32
 fn u32s_to_u8s(mut words: Span<felt252>) -> Span<u8> {
     let mut output = array![];
-    while let Option::Some(word) = words
-        .pop_front() {
-            let word: u32 = (*word).try_into().unwrap();
-            let (rest, byte_4) = integer::u32_safe_divmod(word, 0x100);
-            let (rest, byte_3) = integer::u32_safe_divmod(rest, 0x100);
-            let (byte_1, byte_2) = integer::u32_safe_divmod(rest, 0x100);
-            output.append(byte_1.try_into().unwrap());
-            output.append(byte_2.try_into().unwrap());
-            output.append(byte_3.try_into().unwrap());
-            output.append(byte_4.try_into().unwrap());
-        };
+    while let Option::Some(word) = words.pop_front() {
+        let word: u32 = (*word).try_into().unwrap();
+        let (rest, byte_4) = integer::u32_safe_divmod(word, 0x100);
+        let (rest, byte_3) = integer::u32_safe_divmod(rest, 0x100);
+        let (byte_1, byte_2) = integer::u32_safe_divmod(rest, 0x100);
+        output.append(byte_1.try_into().unwrap());
+        output.append(byte_2.try_into().unwrap());
+        output.append(byte_3.try_into().unwrap());
+        output.append(byte_4.try_into().unwrap());
+    };
     output.span()
 }
 fn u32s_to_byte_array(mut words: Span<u32>) -> ByteArray {
     let mut output: ByteArray = "";
-    while let Option::Some(word) = words
-        .pop_front() {
-            let word: u32 = (*word).try_into().unwrap();
-            let (rest, byte_4) = integer::u32_safe_divmod(word, 0x100);
-            let (rest, byte_3) = integer::u32_safe_divmod(rest, 0x100);
-            let (byte_1, byte_2) = integer::u32_safe_divmod(rest, 0x100);
-            output.append_byte(byte_1.try_into().unwrap());
-            output.append_byte(byte_2.try_into().unwrap());
-            output.append_byte(byte_3.try_into().unwrap());
-            output.append_byte(byte_4.try_into().unwrap());
-        };
+    while let Option::Some(word) = words.pop_front() {
+        let word: u32 = (*word).try_into().unwrap();
+        let (rest, byte_4) = integer::u32_safe_divmod(word, 0x100);
+        let (rest, byte_3) = integer::u32_safe_divmod(rest, 0x100);
+        let (byte_1, byte_2) = integer::u32_safe_divmod(rest, 0x100);
+        output.append_byte(byte_1.try_into().unwrap());
+        output.append_byte(byte_2.try_into().unwrap());
+        output.append_byte(byte_3.try_into().unwrap());
+        output.append_byte(byte_4.try_into().unwrap());
+    };
     output
 }
 
 // Takes an array of u8s and returns an array of u32s, padding the end with 0s if necessary
 fn u8s_to_u32s_pad_end(mut bytes: Span<u8>) -> Array<u32> {
     let mut output = array![];
-    while let Option::Some(byte1) = bytes
-        .pop_front() {
-            let byte1 = *byte1;
-            let byte2 = *bytes.pop_front().unwrap_or_default();
-            let byte3 = *bytes.pop_front().unwrap_or_default();
-            let byte4 = *bytes.pop_front().unwrap_or_default();
-            output.append(0x100_00_00 * byte1.into() + 0x100_00 * byte2.into() + 0x100 * byte3.into() + byte4.into());
-        };
+    while let Option::Some(byte1) = bytes.pop_front() {
+        let byte1 = *byte1;
+        let byte2 = *bytes.pop_front().unwrap_or_default();
+        let byte3 = *bytes.pop_front().unwrap_or_default();
+        let byte4 = *bytes.pop_front().unwrap_or_default();
+        output
+            .append(
+                0x100_00_00 * byte1.into()
+                    + 0x100_00 * byte2.into()
+                    + 0x100 * byte3.into()
+                    + byte4.into(),
+            );
+    };
     output
 }

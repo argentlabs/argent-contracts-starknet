@@ -274,6 +274,38 @@ describe("ArgentAccount: escape mechanism", function () {
         });
       });
 
+      it("Should be able to escape multiple owners", async function () {
+        const { account, accountContract, guardian, owners } = await deployAccount({
+          owners: Array.from({ length: 4 }, () => randomStarknetKeyPair()),
+        });
+
+        account.signer = new ArgentSigner(guardian);
+
+        await manager.setTime(randomTime);
+        await accountContract.trigger_escape_owner(newKeyPair.compiledSigner);
+        await manager.setTime(randomTime + ESCAPE_SECURITY_PERIOD);
+
+        await accountContract.escape_owner();
+
+        await accountContract.get_owners_guids().should.eventually.deep.equal([newKeyPair.guid]);
+      });
+
+      it("Should be able to escape multiple owners (keeping one owner)", async function () {
+        const { account, accountContract, guardian, owners } = await deployAccount({
+          owners: Array.from({ length: 4 }, () => randomStarknetKeyPair()),
+        });
+
+        account.signer = new ArgentSigner(guardian);
+        let ownerToKeep = owners[0];
+        await manager.setTime(randomTime);
+        await accountContract.trigger_escape_owner(ownerToKeep.compiledSigner);
+        await manager.setTime(randomTime + ESCAPE_SECURITY_PERIOD);
+
+        await accountContract.escape_owner();
+
+        await accountContract.get_owners_guids().should.eventually.deep.equal([ownerToKeep.guid]);
+      });
+
       it("Should be possible to escape at max U64", async function () {
         const { account, accountContract, guardian } = await deployAccount();
         account.signer = new ArgentSigner(guardian);
@@ -528,6 +560,38 @@ describe("ArgentAccount: escape mechanism", function () {
       expect(escape.new_signer.isNone()).to.be.true;
       const newGuardian = await accountContract.get_guardian();
       expect(newGuardian).to.equal(newKeyPair.storedValue);
+    });
+
+    it("Should be able to escape multiple guardians", async function () {
+      const { account, accountContract, owner } = await deployAccount({
+        guardians: Array.from({ length: 4 }, () => randomStarknetKeyPair()),
+      });
+
+      account.signer = new ArgentSigner(owner);
+
+      await manager.setTime(randomTime);
+      await accountContract.trigger_escape_guardian(newKeyPair.compiledSignerAsOption);
+      await manager.setTime(randomTime + ESCAPE_SECURITY_PERIOD);
+
+      await accountContract.escape_guardian();
+
+      await accountContract.get_guardians_guids().should.eventually.deep.equal([newKeyPair.guid]);
+    });
+
+    it("Should be able to escape multiple guardians (keeping one guardian)", async function () {
+      const { account, accountContract, owner, guardians } = await deployAccount({
+        guardians: Array.from({ length: 4 }, () => randomStarknetKeyPair()),
+      });
+
+      account.signer = new ArgentSigner(owner);
+      let guardianToKeep = guardians[0];
+      await manager.setTime(randomTime);
+      await accountContract.trigger_escape_guardian(guardianToKeep.compiledSigner);
+      await manager.setTime(randomTime + ESCAPE_SECURITY_PERIOD);
+
+      await accountContract.escape_guardian();
+
+      await accountContract.get_guardians_guids().should.eventually.deep.equal([guardianToKeep.guid]);
     });
 
     it("Expect 'argent/only-self' when called from another account", async function () {

@@ -194,12 +194,20 @@ pub mod guardian_manager_component {
             if let Option::Some(new_guardian) = new_guardian {
                 let new_guardian_guid = new_guardian.into_guid();
                 let mut guardian_guids_to_remove = array![];
+                let mut add_new_guardian = true;
                 for guardian_to_remove_guid in self.guardians_storage.get_all_hashes() {
                     if guardian_to_remove_guid != new_guardian_guid {
                         guardian_guids_to_remove.append(guardian_to_remove_guid);
+                    } else {
+                        add_new_guardian = false;
                     };
                 };
-                self.change_guardians_using_storage(:guardian_guids_to_remove, guardians_to_add: array![new_guardian]);
+                let guardians_to_add = if add_new_guardian {
+                    array![new_guardian]
+                } else {
+                    array![]
+                };
+                self.change_guardians_using_storage(:guardian_guids_to_remove, :guardians_to_add);
             } else {
                 self
                     .change_guardians_using_storage(

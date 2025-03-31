@@ -22,11 +22,12 @@ const SECP256K1_SIGNER_TYPE: felt252 = 'Secp256k1 Signer';
 const SECP256R1_SIGNER_TYPE: felt252 = 'Secp256r1 Signer';
 const EIP191_SIGNER_TYPE: felt252 = 'Eip191 Signer';
 const WEBAUTHN_SIGNER_TYPE: felt252 = 'Webauthn Signer';
-const ED25519_SIGNER_TYPE: felt252 = 'Ed25519 Signer';
 const SIWS_SIGNER_TYPE: felt252 = 'SIWS Signer';
 
-const SECP_256_R1_HALF: u256 = 0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551 / 2;
-const SECP_256_K1_HALF: u256 = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141 / 2;
+const SECP_256_R1_HALF: u256 = 0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551
+    / 2;
+const SECP_256_K1_HALF: u256 = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141
+    / 2;
 
 
 /// @notice The type of the signer that this version of the accounts supports
@@ -38,7 +39,6 @@ enum SignerType {
     Secp256r1,
     Eip191,
     Webauthn,
-    Ed25519,
     SIWS,
 }
 
@@ -51,7 +51,6 @@ enum SignerSignature {
     Secp256r1: (Secp256r1Signer, Secp256Signature),
     Eip191: (Eip191Signer, Secp256Signature),
     Webauthn: (WebauthnSigner, WebauthnSignature),
-    Ed25519: (Ed25519Signer, Ed25519Signature),
     SIWS: (Ed25519Signer, SIWSSignature),
 }
 
@@ -70,13 +69,6 @@ struct StarknetSignature {
     s: felt252,
 }
 
-/// @notice The ed25519 signature
-#[derive(Drop, Copy, Serde, PartialEq)]
-struct Ed25519Signature {
-    r: u256,
-    s: u256,
-}
-
 /// @notice Represents all supported Signers with their different signing schemes
 #[derive(Drop, Copy, Serde)]
 enum Signer {
@@ -85,7 +77,6 @@ enum Signer {
     Secp256r1: Secp256r1Signer,
     Eip191: Eip191Signer,
     Webauthn: WebauthnSigner,
-    Ed25519: Ed25519Signer,
     SIWS: Ed25519Signer,
 }
 
@@ -175,11 +166,6 @@ fn starknet_signer_from_pubkey(pubkey: felt252) -> Signer {
     Signer::Starknet(StarknetSigner { pubkey: pubkey.try_into().expect('argent/zero-pubkey') })
 }
 
-#[inline(always)]
-fn ed25519_signer_from_pubkey(pubkey: u256) -> Signer {
-    Signer::Ed25519(Ed25519Signer { pubkey: pubkey.try_into().expect('argent/zero-pubkey') })
-}
-
 #[generate_trait]
 impl SignerTraitImpl of SignerTrait {
     fn into_guid(self: Signer) -> felt252 {
@@ -208,12 +194,8 @@ impl SignerTraitImpl of SignerTrait {
 
                 while let Option::Some(byte) = origin.pop_front() {
                     hash_state = hash_state.update_with(*byte);
-                };
+                }
                 hash_state.update_with(rp_id_hash).update_with(pubkey).finalize()
-            },
-            Signer::Ed25519(signer) => {
-                let pubkey: u256 = signer.pubkey.into();
-                PoseidonTrait::new().update_with(ED25519_SIGNER_TYPE).update_with(pubkey).finalize()
             },
             Signer::SIWS(signer) => {
                 let pubkey: u256 = signer.pubkey.into();
@@ -243,10 +225,6 @@ impl SignerTraitImpl of SignerTrait {
                 signer_type: SignerType::Webauthn,
                 stored_value: self.into_guid().try_into().unwrap(),
             },
-            Signer::Ed25519 => SignerStorageValue {
-                signer_type: SignerType::Ed25519,
-                stored_value: self.into_guid().try_into().unwrap(),
-            },
             Signer::SIWS => SignerStorageValue {
                 signer_type: SignerType::SIWS, stored_value: self.into_guid().try_into().unwrap(),
             },
@@ -261,7 +239,6 @@ impl SignerTraitImpl of SignerTrait {
             Signer::Secp256r1 => SignerType::Secp256r1,
             Signer::Eip191 => SignerType::Eip191,
             Signer::Webauthn => SignerType::Webauthn,
-            Signer::Ed25519 => SignerType::Ed25519,
             Signer::SIWS => SignerType::SIWS,
         }
     }
@@ -276,7 +253,6 @@ impl SignerStorageValueImpl of SignerStorageTrait {
             SignerType::Secp256k1 => poseidon_2(SECP256K1_SIGNER_TYPE, self.stored_value),
             SignerType::Secp256r1 => self.stored_value,
             SignerType::Webauthn => self.stored_value,
-            SignerType::Ed25519 => self.stored_value,
             SignerType::SIWS => self.stored_value,
         }
     }
@@ -288,7 +264,6 @@ impl SignerStorageValueImpl of SignerStorageTrait {
             SignerType::Secp256k1 => false,
             SignerType::Secp256r1 => true,
             SignerType::Webauthn => true,
-            SignerType::Ed25519 => true,
             SignerType::SIWS => true,
         }
     }
@@ -326,9 +301,6 @@ impl SignerSignatureImpl of SignerSignatureTrait {
             SignerSignature::Webauthn((
                 signer, signature,
             )) => is_valid_webauthn_signature(hash, signer, signature),
-            SignerSignature::Ed25519((
-                signer, signature,
-            )) => is_valid_ed25519_signature(hash.into(), signer, signature),
             SignerSignature::SIWS((
                 signer, signature,
             )) => is_valid_siws_signature(hash, signer, signature),
@@ -342,7 +314,6 @@ impl SignerSignatureImpl of SignerSignatureTrait {
             SignerSignature::Secp256r1((signer, _)) => Signer::Secp256r1(signer),
             SignerSignature::Eip191((signer, _)) => Signer::Eip191(signer),
             SignerSignature::Webauthn((signer, _)) => Signer::Webauthn(signer),
-            SignerSignature::Ed25519((signer, _)) => Signer::Ed25519(signer),
             SignerSignature::SIWS((signer, _)) => Signer::SIWS(signer),
         }
     }
@@ -357,8 +328,7 @@ impl SignerTypeIntoFelt252 of Into<SignerType, felt252> {
             SignerType::Secp256r1 => 2,
             SignerType::Eip191 => 3,
             SignerType::Webauthn => 4,
-            SignerType::Ed25519 => 5,
-            SignerType::SIWS => 6,
+            SignerType::SIWS => 5,
         }
     }
 }
@@ -377,8 +347,6 @@ impl U256TryIntoSignerType of TryInto<u256, SignerType> {
         } else if self == 4 {
             Option::Some(SignerType::Webauthn)
         } else if self == 5 {
-            Option::Some(SignerType::Ed25519)
-        } else if self == 6 {
             Option::Some(SignerType::SIWS)
         } else {
             Option::None
@@ -427,21 +395,6 @@ fn is_valid_webauthn_signature(
     )
 }
 
-/// @notice Verifies an ED25519 signature
-/// @param hash The message hash to verify
-/// @param signer The ED25519 signer with the public key
-/// @param signature The ED25519 signature containing r and s components
-/// @return True if the signature is valid, false otherwise
-#[inline(always)]
-fn is_valid_ed25519_signature(
-    hash: u256, signer: Ed25519Signer, signature: Ed25519Signature,
-) -> bool {
-    let hash_bytes = u256_to_u8s(hash);
-    let pubkey: u256 = signer.pubkey.into();
-    let signature = array![signature.r, signature.s];
-    alexandria_math::ed25519::verify_signature(hash_bytes.span(), signature.span(), pubkey)
-}
-
 trait SignerSpanTrait {
     #[must_use]
     #[inline(always)]
@@ -454,7 +407,7 @@ impl SignerSpanTraitImpl of SignerSpanTrait {
         let mut guids = array![];
         while let Option::Some(signer) = self.pop_front() {
             guids.append((*signer).into_guid());
-        };
+        }
         guids
     }
 }

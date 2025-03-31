@@ -161,12 +161,12 @@ pub impl LinkedSetReadImpl<
 
     fn get_all(self: StorageBase<LinkedSet<T>>) -> Array<T> {
         let mut current_item_hash = 0;
-        let mut all_hashes = array![];
+        let mut all_items = array![];
         while let Option::Some(next_item) = self.next(current_item_hash) {
             current_item_hash = next_item.hash();
-            all_hashes.append(next_item);
+            all_items.append(next_item);
         };
-        all_hashes
+        all_items
     }
 }
 

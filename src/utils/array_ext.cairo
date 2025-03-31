@@ -1,8 +1,8 @@
 #[generate_trait]
 pub impl ArrayExt<T, +Drop<T>, +Copy<T>> of ArrayExtTrait<T> {
     /// @notice Appends multiple elements to an array
-    fn append_all(ref self: Array<T>, mut value: Span<T>) {
-        for item in value {
+    fn append_all(ref self: Array<T>, values: Span<T>) {
+        for item in values {
             self.append(*item);
         };
     }

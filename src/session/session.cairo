@@ -254,7 +254,7 @@ pub mod session_component {
         }
     }
 
-    fn assert_valid_session_calls(token: @SessionToken, mut calls: Span<Call>) {
+    fn assert_valid_session_calls(token: @SessionToken, calls: Span<Call>) {
         let mut proofs = *token.proofs;
         assert(proofs.len() == calls.len(), 'session/unaligned-proofs');
         let merkle_root = *token.session.allowed_methods_root;

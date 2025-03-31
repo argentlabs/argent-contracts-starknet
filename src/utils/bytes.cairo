@@ -151,7 +151,7 @@ pub fn eight_words_to_bytes(words: [u32; 8]) -> [u8; 32] {
 ///     to least significant, into a `u32`. If the length of `arr` is not a multiple of 4, the final
 ///     `u32` and remainder count represent any leftover bytes.
 // Inspired from https://github.com/starkware-libs/cairo/blob/main/corelib/src/sha256.cairo
-pub fn bytes_to_u32s(mut arr: Span<u8>) -> (Array<u32>, u32, u32) {
+pub fn bytes_to_u32s(arr: Span<u8>) -> (Array<u32>, u32, u32) {
     let mut word_arr: Array<u32> = array![];
     let len = arr.len();
     let rem = len % 4;

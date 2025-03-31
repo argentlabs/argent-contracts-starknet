@@ -59,7 +59,7 @@ pub fn initialize_multisig_with_one_signer() -> ITestArgentMultisigDispatcher {
     initialize_multisig_with(threshold, signers_array.span())
 }
 
-pub fn initialize_multisig_with(threshold: usize, mut signers: Span<Signer>) -> ITestArgentMultisigDispatcher {
+pub fn initialize_multisig_with(threshold: usize, signers: Span<Signer>) -> ITestArgentMultisigDispatcher {
     let class_hash = declare_multisig();
     let mut calldata = array![];
     threshold.serialize(ref calldata);

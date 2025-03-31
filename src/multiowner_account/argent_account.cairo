@@ -606,7 +606,8 @@ pub mod ArgentAccount {
                             assert_valid_escape_parameters(self.last_guardian_trigger_escape_attempt.read());
                             self.last_guardian_trigger_escape_attempt.write(get_block_timestamp());
                         }
-                        full_deserialize::<Signer>(*call.calldata).expect('argent/invalid-calldata');
+                        let new_owner = full_deserialize::<Signer>(*call.calldata).expect('argent/invalid-calldata');
+                        assert(!self.owner_manager.is_owner(new_owner), 'argent/new-owner-is-owner');
                         // valid guardian signature also asserts that a guardian is set
                         self.guardian_manager.assert_single_guardian_signature(execution_hash, raw_signature);
                         return; // valid
@@ -632,7 +633,11 @@ pub mod ArgentAccount {
                             self.last_owner_trigger_escape_attempt.write(get_block_timestamp());
                         }
 
-                        let _ = full_deserialize::<Option<Signer>>(*call.calldata).expect('argent/invalid-calldata');
+                        let new_guardian_opt = full_deserialize::<Option<Signer>>(*call.calldata)
+                            .expect('argent/invalid-calldata');
+                        if let Option::Some(new_guardian) = new_guardian_opt {
+                            assert(!self.guardian_manager.is_guardian(new_guardian), 'argent/new-guardian-is-guardian');
+                        }
                         self.owner_manager.assert_single_owner_signature(execution_hash, raw_signature);
                         return; // valid
                     }

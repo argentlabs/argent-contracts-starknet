@@ -163,15 +163,11 @@ pub mod owner_manager_component {
         }
 
         fn complete_owner_escape(ref self: ComponentState<TContractState>, new_owner: SignerStorageValue) {
-            let new_owner_guid = new_owner.into_guid();
-            let mut owner_guids_to_remove = array![];
-            for owner_to_remove_guid in self.owners_storage.get_all_hashes() {
-                if owner_to_remove_guid != new_owner_guid {
-                    owner_guids_to_remove.append(owner_to_remove_guid);
-                };
-            };
-
-            self.change_owners_using_storage(:owner_guids_to_remove, owners_to_add: array![new_owner]);
+            assert(!self.is_owner_guid(new_owner.into_guid()), 'argent/new-owner-is-owner');
+            self
+                .change_owners_using_storage(
+                    owner_guids_to_remove: self.owners_storage.get_all_hashes(), owners_to_add: array![new_owner],
+                );
         }
 
         fn assert_single_owner_signature(

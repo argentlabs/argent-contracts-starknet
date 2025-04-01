@@ -56,6 +56,7 @@ pub trait IArgentMultiOwnerAccount<TContractState> {
     /// @param new_owner The new owner that will replace all existing owners if escape completes
     /// @dev Must be called by the account and authorized by one guardian
     /// @dev Reverts if there's an ongoing guardian escape
+    /// @dev Reverts if the new owner is already an owner
     fn trigger_escape_owner(ref self: TContractState, new_owner: Signer);
 
     /// @notice Initiates escape process to replace or remove guardians. Useful if they are lost or compromised
@@ -64,6 +65,7 @@ pub trait IArgentMultiOwnerAccount<TContractState> {
     /// @dev Must be called by the account and authorized by one owner
     /// @dev Can override an ongoing owner escape
     /// @dev Reverts if there are no guardians currently set
+    /// @dev Reverts if the new guardian is already a guardian
     fn trigger_escape_guardian(ref self: TContractState, new_guardian: Option<Signer>);
 
     /// @notice Completes the owner escape, replacing all owners with the new owner from trigger_escape_owner

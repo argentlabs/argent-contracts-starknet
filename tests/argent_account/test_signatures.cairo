@@ -1,3 +1,4 @@
+use argent::signer::signer_signature::STARK_CURVE_ORDER_U256;
 use crate::setup::argent_account_setup::{
     ITestArgentAccountDispatcher, ITestArgentAccountSafeDispatcher, ITestArgentAccountSafeDispatcherTrait,
 };
@@ -101,3 +102,22 @@ fn invalid_signature_length_with_guardian() {
     initialize_account().is_valid_signature(TX_HASH, to_starknet_signatures(array![OWNER()]));
 }
 
+#[test]
+#[should_panic(expected: ('argent/invalid-r-value',))]
+fn test_stark_curve_order_r() {
+    initialize_account_without_guardian()
+        .is_valid_signature(
+            TX_HASH,
+            to_starknet_signer_signatures(array![OWNER().pubkey, (STARK_CURVE_ORDER_U256 + 1).try_into().unwrap(), 1]),
+        );
+}
+
+#[test]
+#[should_panic(expected: ('argent/invalid-s-value',))]
+fn test_stark_curve_order_s() {
+    initialize_account_without_guardian()
+        .is_valid_signature(
+            TX_HASH,
+            to_starknet_signer_signatures(array![OWNER().pubkey, 1, (STARK_CURVE_ORDER_U256 + 1).try_into().unwrap()]),
+        );
+}

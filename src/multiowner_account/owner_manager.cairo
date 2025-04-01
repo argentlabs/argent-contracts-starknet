@@ -95,7 +95,6 @@ pub mod owner_manager_component {
             self.owners_storage.get_all().span().to_signer_info()
         }
 
-        #[inline(always)]
         fn is_owner(self: @ComponentState<TContractState>, owner: Signer) -> bool {
             self.owners_storage.contains(owner.storage_value())
         }

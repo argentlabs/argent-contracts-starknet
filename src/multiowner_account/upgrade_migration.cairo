@@ -65,6 +65,8 @@ pub mod upgrade_migration_component {
         // Legacy escape attempt counters
         guardian_escape_attempts: felt252,
         owner_escape_attempts: felt252,
+        // Current nonce used up to 0.2.3.1
+        _current_nonce: felt252,
     }
 
     #[event]
@@ -157,6 +159,8 @@ pub mod upgrade_migration_component {
             // During an upgrade we changed the layout from being 3 fields to 3 fields packed onto 2 fields.
             // We need to restore that third field that could have been left behind.
             self._escape.new_signer.write(0);
+            // Reset the nonce to 0 to clean up the storage
+            self._current_nonce.write(0);
 
             let mut contract = self.get_contract_mut();
 
@@ -185,6 +189,10 @@ pub mod upgrade_migration_component {
             };
 
             let guardian_backup_starknet_pubkey = self._guardian_backup.read();
+            assert(
+                !(guardian_starknet_pubkey == 0 && guardian_backup_starknet_pubkey != 0),
+                'argent/backup-should-be-null',
+            );
             if guardian_backup_starknet_pubkey != 0 {
                 guardians_to_migrate
                     .append(starknet_signer_from_pubkey(guardian_backup_starknet_pubkey).storage_value());
@@ -231,11 +239,6 @@ pub mod upgrade_migration_component {
         fn finalize_migration(ref self: ComponentState<TContractState>) {
             let mut contract = self.get_contract_mut();
             contract.finalize_migration();
-        }
-
-        fn migrate_owner(ref self: ComponentState<TContractState>, signer_storage_value: SignerStorageValue) {
-            let mut contract = self.get_contract_mut();
-            contract.migrate_owner(signer_storage_value);
         }
     }
 }

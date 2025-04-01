@@ -191,21 +191,16 @@ pub mod guardian_manager_component {
         fn complete_guardian_escape(
             ref self: ComponentState<TContractState>, new_guardian: Option<SignerStorageValue>,
         ) {
-            if let Option::Some(new_guardian) = new_guardian {
-                let new_guardian_guid = new_guardian.into_guid();
-                let mut guardian_guids_to_remove = array![];
-                for guardian_to_remove_guid in self.guardians_storage.get_all_hashes() {
-                    if guardian_to_remove_guid != new_guardian_guid {
-                        guardian_guids_to_remove.append(guardian_to_remove_guid);
-                    };
-                };
-                self.change_guardians_using_storage(:guardian_guids_to_remove, guardians_to_add: array![new_guardian]);
+            let guardians_to_add = if let Option::Some(new_guardian) = new_guardian {
+                assert(!self.is_guardian_guid(new_guardian.into_guid()), 'argent/new-guardian-is-guardian');
+                array![new_guardian]
             } else {
-                self
-                    .change_guardians_using_storage(
-                        guardian_guids_to_remove: self.guardians_storage.get_all_hashes(), guardians_to_add: array![],
-                    );
-            }
+                array![]
+            };
+            self
+                .change_guardians_using_storage(
+                    guardian_guids_to_remove: self.guardians_storage.get_all_hashes(), :guardians_to_add,
+                );
         }
 
         fn assert_valid_storage(self: @ComponentState<TContractState>) {

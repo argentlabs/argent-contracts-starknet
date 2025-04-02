@@ -26,7 +26,9 @@ The upgrade function on v0.2.3.\* looks like
 func upgrade(implementation: felt, calldata_len: felt, calldata: felt*)
 ```
 
-if `calldata_len` is 0 it will look like it’s working, but the proxy won’t be removed and account will stop working after Starknet regenesis or create other issues. So calldata should be at least an empty array.
+if `calldata_len` is 0 it will look like it’s working, but the proxy won’t be removed and account will stop working after Starknet regenesis or create other issues. So calldata must be at least an empty array.
+
+Upgrading with `calldata_len = 0` is not supported by Argent and it's not a valid upgrade flow, we cannot guarantee that the account will be recoverable. However, if you upgraded the account to version v0.5.0 using the wrong parameters, it might be possible to recover it by calling the `recovery_from_legacy_upgrade` method using another contract. Please note that this method is not guaranteed to be available in future versions.
 
 After the upgrade to v0.3.1 is done, the account can follow the regular upgrade process to update to the desired version.
 

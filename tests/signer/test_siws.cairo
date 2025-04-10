@@ -6,6 +6,8 @@ use garaga::signatures::eddsa_25519::{EdDSASignature, EdDSASignatureWithHint};
 
 #[test]
 fn test_siws_signature_validation() {
+    snforge_std::declare("GaragaEddsa");
+
     let pubkey: u256 = 0x76e70af44d520a839a44156248699346911e4a87efd153df694ef4a188a60c5b;
     let domain: Span<u8> = array![
         'h',

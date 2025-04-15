@@ -177,7 +177,6 @@ pub impl SignerTraitImpl of SignerTrait {
         }
     }
 
-    #[inline(always)]
     fn storage_value(self: Signer) -> SignerStorageValue {
         match self {
             Signer::Starknet(signer) => SignerStorageValue {

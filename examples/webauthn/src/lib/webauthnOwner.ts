@@ -12,8 +12,8 @@ import {
   shortString,
   uint256,
 } from "starknet";
-import { buf2hex, hex2buf } from "./bytes";
-import { KeyPair, SignerType, signerTypeToCustomEnum } from "./signers";
+import { buf2base64url, buf2hex, hex2buf } from "./bytes";
+import { EstimateKeyPair, KeyPair, SignerType, signerTypeToCustomEnum } from "./signers/signers";
 import type { WebauthnAttestation } from "./webauthnAttestation";
 
 import { Message, sha256 as jssha256 } from "js-sha256";
@@ -23,13 +23,11 @@ function sha256(message: Message): Uint8Array {
 }
 
 const normalizeTransactionHash = (transactionHash: string) => transactionHash.replace(/^0x/, "").padStart(64, "0");
-const findInArray = (dataToFind: Uint8Array, arrayToIterate: Uint8Array) => {
-  return arrayToIterate.findIndex((element, i) => {
-    const slice = arrayToIterate.slice(i, i + dataToFind.length);
-    return dataToFind.toString() === slice.toString();
-  });
+export type NormalizedSecpSignature = {
+  r: bigint;
+  s: bigint;
+  yParity: boolean;
 };
-export type NormalizedSecpSignature = { r: bigint; s: bigint; yParity: boolean };
 
 export function normalizeSecpR1Signature(signature: {
   r: bigint;
@@ -55,12 +53,10 @@ export function normalizeSecpSignature(
 const toCharArray = (value: string) => CallData.compile(value.split("").map(shortString.encodeShortString));
 
 interface WebauthnSignature {
-  cross_origin: boolean;
   client_data_json_outro: BigNumberish[];
   flags: number;
   sign_count: number;
   ec_signature: { r: Uint256; s: Uint256; y_parity: boolean };
-  sha256_implementation: CairoCustomEnum;
 }
 
 export class WebauthnOwner extends KeyPair {
@@ -70,7 +66,6 @@ export class WebauthnOwner extends KeyPair {
     challenge: Uint8Array,
   ) => Promise<AuthenticatorAssertionResponse>;
   rpIdHash: Uint256;
-  crossOrigin = false;
 
   constructor(
     attestation: WebauthnAttestation,
@@ -117,35 +112,70 @@ export class WebauthnOwner extends KeyPair {
     });
   }
 
+  public get estimateSigner(): KeyPair {
+    return new EstimateWebauthnOwner(this.attestation.pubKey, this.rpId, this.origin);
+  }
+
   public async signRaw(messageHash: string): Promise<ArraySignatureType> {
-    const challenge = hex2buf(`${normalizeTransactionHash(messageHash)}00`);
-    const assertionResponse = await this.requestSignature(this.attestation, challenge);
+    const webauthnSigner = this.signer.variant.Webauthn;
+    const webauthnSignature = await this.signHash(messageHash);
+    return CallData.compile([
+      signerTypeToCustomEnum(SignerType.Webauthn, {
+        webauthnSigner,
+        webauthnSignature,
+      }),
+    ]);
+  }
+
+  public async signHash(messageHash: string): Promise<WebauthnSignature> {
+    const normalizedChallenge = hex2buf(normalizeTransactionHash(messageHash));
+
+    const assertionResponse = await this.requestSignature(this.attestation, normalizedChallenge);
     const authenticatorData = new Uint8Array(assertionResponse.authenticatorData);
     const clientDataJson = new Uint8Array(assertionResponse.clientDataJSON);
-    const flags = authenticatorData[32];
     const signCount = Number(BigInt(buf2hex(authenticatorData.slice(33, 37))));
-    console.log("clientDataJson", new TextDecoder().decode(clientDataJson));
-    console.log("flags", flags);
-    console.log("signCount", signCount);
-
-    const crossOriginText = new TextEncoder().encode(`"crossOrigin":${this.crossOrigin}`);
-    const crossOriginIndex = findInArray(crossOriginText, clientDataJson);
-    let clientDataJsonOutro = clientDataJson.slice(crossOriginIndex + crossOriginText.length);
-    if (clientDataJsonOutro.length == 1) {
-      clientDataJsonOutro = new Uint8Array();
+    const jsonString = new TextDecoder().decode(clientDataJson);
+    const startJsonString = `{"type":"webauthn.get","challenge":"${buf2base64url(normalizedChallenge)}","origin":"${this.attestation.origin}"`;
+    if (!jsonString.startsWith(startJsonString)) {
+      console.log("Should start with: ", startJsonString);
+      console.log("But got: ", jsonString);
+      throw new Error("Invalid clientDataJSON: does not start with expected string");
+    }
+    const endJsonString = jsonString.replace(startJsonString, "");
+    let clientDataJsonOutro = new Uint8Array();
+    if (endJsonString.length == 0) {
+      throw new Error("Invalid clientDataJSON: invalid JSON");
+    } else if (endJsonString.length == 1) {
+      if (endJsonString[0] !== "}") {
+        throw new Error("Invalid clientDataJSON: does not end with '}'");
+      }
+    } else {
+      console.log("WebauthnOwner signed, endJsonString is:", endJsonString);
+      if (endJsonString[endJsonString.length - 1] !== "}") {
+        throw new Error("Invalid extra data: does not end with '}'");
+      }
+      if (endJsonString[0] !== ",") {
+        throw new Error("Invalid extra data: does not start with ','");
+      }
+      clientDataJsonOutro = new Uint8Array(new TextEncoder().encode(endJsonString));
     }
 
     let { r, s } = parseASN1Signature(assertionResponse.signature);
     let yParity = getYParity(getMessageHash(authenticatorData, clientDataJson), this.publicKey, r, s);
 
-    const normalizedSignature = normalizeSecpR1Signature({ r, s, recovery: yParity ? 1 : 0 });
+    // Flags is the fifth byte from the end of the authenticatorData
+    const flags = authenticatorData[authenticatorData.length - 5]; // Number("0b00000101"); // present and verified
+    const normalizedSignature = normalizeSecpR1Signature({
+      r,
+      s,
+      recovery: yParity ? 1 : 0,
+    });
     r = normalizedSignature.r;
     s = normalizedSignature.s;
     yParity = normalizedSignature.yParity;
 
     const signature: WebauthnSignature = {
-      cross_origin: this.crossOrigin,
-      client_data_json_outro: Array.from(clientDataJsonOutro),
+      client_data_json_outro: CallData.compile(Array.from(clientDataJsonOutro)),
       flags,
       sign_count: signCount,
       ec_signature: {
@@ -153,15 +183,71 @@ export class WebauthnOwner extends KeyPair {
         s: uint256.bnToUint256(s),
         y_parity: yParity,
       },
-      sha256_implementation: new CairoCustomEnum({
-        Cairo0: {},
-        Cairo1: undefined,
-      }),
     };
 
     console.log("WebauthnOwner signed, signature is:", signature);
+    return signature;
+  }
+}
+
+export class EstimateWebauthnOwner extends EstimateKeyPair {
+  rpIdHash: Uint256;
+
+  constructor(
+    public publicKey: ArrayBuffer,
+    public rpId = "localhost",
+    public origin = "http://localhost:5173",
+  ) {
+    super();
+    this.rpIdHash = uint256.bnToUint256(buf2hex(sha256(rpId)));
+  }
+
+  public get guid(): bigint {
+    const rpIdHashAsU256 = this.rpIdHash;
+    const publicKeyAsU256 = uint256.bnToUint256(buf2hex(this.publicKey));
+    const originBytes = toCharArray(this.origin);
+    const elements = [
+      shortString.encodeShortString("Webauthn Signer"),
+      originBytes.length,
+      ...originBytes,
+      rpIdHashAsU256.low,
+      rpIdHashAsU256.high,
+      publicKeyAsU256.low,
+      publicKeyAsU256.high,
+    ];
+    return BigInt(hash.computePoseidonHashOnElements(elements));
+  }
+
+  public get storedValue(): bigint {
+    throw new Error("Not implemented yet");
+  }
+
+  public get signer(): CairoCustomEnum {
+    const signer: WebauthnSigner = {
+      origin: toCharArray(this.origin),
+      rp_id_hash: this.rpIdHash,
+      pubkey: uint256.bnToUint256(buf2hex(this.publicKey)),
+    };
+    return signerTypeToCustomEnum(SignerType.Webauthn, signer);
+  }
+
+  public override async signRaw(messageHash: string): Promise<ArraySignatureType> {
+    const webauthnSigner = this.signer.variant.Webauthn;
+    const webauthnSignature = {
+      client_data_outro: CallData.compile(Array.from(new TextEncoder().encode(',"crossOrigin":false}'))),
+      flags: 0b00011101,
+      sign_count: 0,
+      ec_signature: {
+        r: uint256.bnToUint256("0xc303f24e2f6970f0cd1521c1ff6c661337e4a397a9d4b1bed732f14ddcb828cb"),
+        s: uint256.bnToUint256("0x61d2ef1fa3c30486656361c783ae91316e9e78301fbf4f173057ea868487d387"),
+        y_parity: false,
+      },
+    };
     return CallData.compile([
-      signerTypeToCustomEnum(SignerType.Webauthn, { signer: this.signer.variant.Webauthn, signature }),
+      signerTypeToCustomEnum(SignerType.Webauthn, {
+        webauthnSigner,
+        webauthnSignature,
+      }),
     ]);
   }
 }
@@ -205,3 +291,28 @@ const getYParity = (messageHash: Uint8Array, pubkey: bigint, r: bigint, s: bigin
   }
   throw new Error("Could not determine y_parity");
 };
+
+export function createEstimateWebauthnOwner(owner: WebauthnOwner): KeyPair {
+  class EstimateWebauthnOwner extends WebauthnOwner {
+    public override async signRaw(messageHash: string): Promise<ArraySignatureType> {
+      const webauthnSigner = this.signer.variant.Webauthn;
+      const webauthnSignature = {
+        client_data_outro: CallData.compile(Array.from(new TextEncoder().encode(',"crossOrigin":false}'))),
+        flags: 0b00011101,
+        sign_count: 0,
+        ec_signature: {
+          r: uint256.bnToUint256("0xc303f24e2f6970f0cd1521c1ff6c661337e4a397a9d4b1bed732f14ddcb828cb"),
+          s: uint256.bnToUint256("0x61d2ef1fa3c30486656361c783ae91316e9e78301fbf4f173057ea868487d387"),
+          y_parity: false,
+        },
+      };
+      return CallData.compile([
+        signerTypeToCustomEnum(SignerType.Webauthn, {
+          webauthnSigner,
+          webauthnSignature,
+        }),
+      ]);
+    }
+  }
+  return new EstimateWebauthnOwner(owner.attestation, owner.requestSignature);
+}

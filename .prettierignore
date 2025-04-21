@@ -6,3 +6,5 @@ dist
 .github
 tests-integration/fixtures
 starknet-devnet-rs
+.svelte-kit
+docs

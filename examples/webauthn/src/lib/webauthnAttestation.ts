@@ -13,6 +13,10 @@ export const createWebauthnAttestation = async (
   rpId: string,
   origin: string,
 ): Promise<WebauthnAttestation> => {
+  if (!browserSupportsWebAuthn()) {
+    throw new Error("WebAuthn is not supported in this browser");
+  }
+
   const id = randomBytes(32);
   const challenge = randomBytes(32);
   const credential = await navigator.credentials.create({
@@ -20,9 +24,8 @@ export const createWebauthnAttestation = async (
       rp: { id: rpId, name: "Argent" },
       user: { id, name: email, displayName: email },
       challenge,
-      pubKeyCredParams: [
-        { type: "public-key", alg: -7 }, // -7 means secp256r1 with SHA-256 (ES256). RS256 not supported on purpose.
-      ],
+      // -7 means secp256r1 with SHA-256 (ES256). RS256 not supported on purpose.
+      pubKeyCredParams: [{ type: "public-key", alg: -7 }],
       authenticatorSelection: {
         authenticatorAttachment: "platform",
         residentKey: "preferred",
@@ -44,7 +47,9 @@ export const createWebauthnAttestation = async (
 
   const credentialId = new Uint8Array(attestation.rawId);
   const publicKey = new Uint8Array(attestationResponse.getPublicKey()!);
+  // This public key needs to be stored on the backend
   const x = publicKey.slice(-64, -32);
+
   return { email, rpId, origin, credentialId, pubKey: x };
 };
 
@@ -54,9 +59,14 @@ export const requestSignature = async (
 ): Promise<AuthenticatorAssertionResponse> => {
   const credential = await navigator.credentials.get({
     publicKey: {
-      rpId: attestation.rpId,
       challenge,
-      allowCredentials: [{ id: attestation.credentialId, type: "public-key", transports: ["internal"] }],
+      allowCredentials: [
+        {
+          id: attestation.credentialId,
+          type: "public-key",
+          transports: ["internal"],
+        },
+      ],
       userVerification: "required",
       timeout: 60000,
     },
@@ -68,3 +78,8 @@ export const requestSignature = async (
   const assertion = credential as PublicKeyCredential;
   return assertion.response as AuthenticatorAssertionResponse;
 };
+
+// https://github.com/MasterKale/SimpleWebAuthn/blob/5e3e5718f6b97ee3df09468a4400d3c7770a3f31/packages/browser/src/helpers/browserSupportsWebAuthn.ts
+function browserSupportsWebAuthn(): boolean {
+  return window?.PublicKeyCredential !== undefined && typeof window.PublicKeyCredential === "function";
+}

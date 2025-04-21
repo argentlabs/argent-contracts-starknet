@@ -1,86 +1,71 @@
-mod upgrade {
-    mod interface;
-    mod upgrade;
+pub mod account;
+
+pub mod introspection;
+pub mod offchain_message;
+pub mod recovery;
+pub mod upgrade;
+
+pub mod signer {
+    pub mod eip191;
+    pub mod signer_signature;
+    pub mod webauthn;
 }
 
-mod account {
-    mod interface;
+pub mod outside_execution {
+    pub mod outside_execution;
+    pub mod outside_execution_hash;
 }
 
-mod introspection {
-    mod interface;
-    mod src5;
+pub mod multisig_account {
+    pub mod external_recovery;
+    pub mod multisig_account;
+    pub mod signer_manager;
+    mod upgrade_migration;
 }
 
-mod multisig {
-    mod interface;
-    mod multisig;
+pub mod multiowner_account {
+    pub mod account_interface;
+    pub mod argent_account;
+    pub mod events;
+    pub mod guardian_manager;
+    pub mod owner_alive;
+    pub mod owner_manager;
+    pub mod recovery;
+    pub mod signer_storage_linked_set;
+    pub mod upgrade_migration;
 }
 
-mod signer {
-    mod eip191;
-    mod signer_signature;
-    mod webauthn;
+pub mod linked_set {
+    pub mod linked_set;
+    pub mod linked_set_with_head;
 }
 
-mod signer_storage {
-    mod interface;
-    mod signer_list;
+pub mod utils {
+    pub mod array_ext;
+    pub mod asserts;
+    pub mod bytes;
+    pub mod calls;
+    pub mod hashing;
+    pub mod serialization;
+    pub mod transaction_version;
 }
 
-mod outside_execution {
-    mod interface;
-    mod outside_execution;
-    mod outside_execution_hash;
+
+pub mod session {
+    pub mod session;
+    pub mod session_hash;
 }
 
-mod recovery {
-    mod interface;
-    mod threshold_recovery;
-}
 
-mod external_recovery {
-    mod external_recovery;
-    mod interface;
-}
-
-mod presets {
-    mod argent_account;
-    mod multisig_account;
-    mod user_account;
-}
-
-mod utils {
-    mod array_ext;
-    mod array_store;
-    mod asserts;
-    mod bytes;
-    mod calls;
-    mod hashing;
-    mod multicall;
-    mod serialization;
-    mod transaction_version;
-}
-
-mod mocks {
+pub mod mocks {
     mod future_argent_account;
     mod future_argent_multisig;
+    pub mod linked_set_mock;
     mod mock_dapp;
-    mod mock_erc20;
-    mod multisig_mocks;
+    mod multiowner_mock;
+    pub mod multisig_mocks;
     mod recovery_mocks;
-    mod signature_verifier;
-    mod signer_list_mocks;
-    mod src5_mocks;
+    pub mod src5_mocks;
+    mod stable_address_deployer_mock;
 }
 
-mod session {
-    mod interface;
-    mod session;
-    mod session_hash;
-}
-
-mod offchain_message {
-    mod interface;
-    mod precalculated_hashing;
-}

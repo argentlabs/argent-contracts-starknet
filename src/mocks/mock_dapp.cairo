@@ -1,4 +1,6 @@
-/// @dev 🚨 This smart contract is a mock implementation and is not meant for actual deployment or use in any live environment. It is solely for testing, educational, or demonstration purposes. Any interactions with this contract will not have real-world consequences or effects on blockchain networks. Please refrain from relying on the functionality of this contract for any production. 🚨
+/// @dev 🚨 This smart contract is a mock implementation and is not meant for actual deployment or use in any live
+/// environment. It is solely for testing, educational, or demonstration purposes.
+/// Please refrain from relying on the functionality of this contract for any production code. 🚨
 use starknet::ContractAddress;
 
 #[starknet::interface]
@@ -14,11 +16,13 @@ trait IMockDapp<TContractState> {
 
 #[starknet::contract]
 mod MockDapp {
-    use starknet::{get_caller_address, ContractAddress};
+    use starknet::{
+        ContractAddress, get_caller_address, storage::Map, storage::{StorageMapReadAccess, StorageMapWriteAccess},
+    };
 
     #[storage]
     struct Storage {
-        stored_number: LegacyMap<ContractAddress, felt252>,
+        stored_number: Map<ContractAddress, felt252>,
     }
 
     #[abi(embed_v0)]

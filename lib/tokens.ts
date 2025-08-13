@@ -1,4 +1,5 @@
 import { Contract, num } from "starknet";
+import { deployer, fundAccountCall } from ".";
 import { Manager } from "./manager";
 
 export const ethAddress = "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7";
@@ -45,5 +46,11 @@ export class TokenManager {
   async strkBalance(accountAddress: string): Promise<bigint> {
     const strkContract = await this.strkContract();
     return await strkContract.balanceOf(accountAddress);
+  }
+
+  async fundAccount(recipient: string, amount: number | bigint, token: "ETH" | "STRK") {
+    const call = fundAccountCall(recipient, amount, token);
+    const response = await deployer.execute(call ? [call] : []);
+    await this.manager.waitForTransaction(response.transaction_hash);
   }
 }

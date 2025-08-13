@@ -1,12 +1,10 @@
-use argent::multisig::multisig::{multisig_component};
-use argent::signer::signer_signature::{
-    Signer, SignerTrait, StarknetSigner, SignerSignature, starknet_signer_from_pubkey
-};
-use argent::signer_storage::signer_list::{signer_list_component};
-use snforge_std::{spy_events, SpyOn, EventSpy, EventFetcher, EventAssertions};
-use super::setup::constants::{MULTISIG_OWNER};
+use argent::multisig::multisig::multisig_component;
+use argent::signer::signer_signature::{SignerTrait, starknet_signer_from_pubkey};
+use argent::signer_storage::signer_list::signer_list_component;
+use snforge_std::{EventSpyAssertionsTrait, EventSpyTrait, spy_events};
+use super::setup::constants::MULTISIG_OWNER;
 use super::setup::multisig_test_setup::{
-    initialize_multisig, initialize_multisig_with, ITestArgentMultisigDispatcherTrait
+    ITestArgentMultisigDispatcherTrait, initialize_multisig, initialize_multisig_with,
 };
 
 #[test]
@@ -16,12 +14,12 @@ fn remove_signers_first() {
     let signer_2 = starknet_signer_from_pubkey(MULTISIG_OWNER(2).pubkey);
     let signer_3 = starknet_signer_from_pubkey(MULTISIG_OWNER(3).pubkey);
     let multisig = initialize_multisig_with(threshold: 1, signers: array![signer_1, signer_2, signer_3].span());
-    let mut spy = spy_events(SpyOn::One(multisig.contract_address));
+    let mut spy = spy_events();
 
     // remove signer
     multisig.remove_signers(2, array![signer_1]);
 
-    // check 
+    // check
     let signers = multisig.get_signer_guids();
     assert_eq!(signers.len(), 2, "invalid signers length");
     assert_eq!(multisig.get_threshold(), 2, "new threshold not set");
@@ -29,18 +27,16 @@ fn remove_signers_first() {
     assert!(multisig.is_signer(signer_2), "signer 2 was removed");
     assert!(multisig.is_signer(signer_3), "signer 3 was removed");
 
-    spy.fetch_events();
-
     let removed_owner_guid = signer_1.into_guid();
     let event = signer_list_component::Event::OwnerRemovedGuid(
-        signer_list_component::OwnerRemovedGuid { removed_owner_guid }
+        signer_list_component::OwnerRemovedGuid { removed_owner_guid },
     );
     spy.assert_emitted(@array![(multisig.contract_address, event)]);
 
     let event = multisig_component::Event::ThresholdUpdated(multisig_component::ThresholdUpdated { new_threshold: 2 });
     spy.assert_emitted(@array![(multisig.contract_address, event)]);
 
-    assert_eq!(spy.events.len(), 0, "excess events");
+    assert_eq!(spy.get_events().events.len(), 2, "excess events");
 }
 
 #[test]
@@ -55,7 +51,7 @@ fn remove_signers_center() {
     let signer_to_remove = array![signer_2];
     multisig.remove_signers(1, signer_to_remove);
 
-    // check 
+    // check
     let signers = multisig.get_signer_guids();
     assert_eq!(signers.len(), 2, "invalid signers length");
     assert_eq!(multisig.get_threshold(), 1, "new threshold not set");
@@ -76,7 +72,7 @@ fn remove_signers_last() {
     let signer_to_remove = array![signer_3];
     multisig.remove_signers(1, signer_to_remove);
 
-    // check 
+    // check
     let signers = multisig.get_signer_guids();
     assert_eq!(signers.len(), 2, "invalid signers length");
     assert_eq!(multisig.get_threshold(), 1, "new threshold not set");
@@ -97,7 +93,7 @@ fn remove_1_and_2() {
     let signer_to_remove = array![signer_1, signer_2];
     multisig.remove_signers(1, signer_to_remove);
 
-    // check 
+    // check
     let signers = multisig.get_signer_guids();
     assert_eq!(signers.len(), 1, "invalid signers length");
     assert_eq!(multisig.get_threshold(), 1, "new threshold not set");
@@ -118,7 +114,7 @@ fn remove_1_and_3() {
     let signer_to_remove = array![signer_1, signer_3];
     multisig.remove_signers(1, signer_to_remove);
 
-    // check 
+    // check
     let signers = multisig.get_signer_guids();
     assert_eq!(signers.len(), 1, "invalid signers length");
     assert_eq!(multisig.get_threshold(), 1, "new threshold not set");
@@ -139,7 +135,7 @@ fn remove_2_and_3() {
     let signer_to_remove = array![signer_2, signer_3];
     multisig.remove_signers(1, signer_to_remove);
 
-    // check 
+    // check
     let signers = multisig.get_signer_guids();
     assert_eq!(signers.len(), 1, "invalid signers length");
     assert_eq!(multisig.get_threshold(), 1, "new threshold not set");
@@ -160,7 +156,7 @@ fn remove_2_and_1() {
     let signer_to_remove = array![signer_2, signer_1];
     multisig.remove_signers(1, signer_to_remove);
 
-    // check 
+    // check
     let signers = multisig.get_signer_guids();
     assert_eq!(signers.len(), 1, "invalid signers length");
     assert_eq!(multisig.get_threshold(), 1, "new threshold not set");
@@ -181,7 +177,7 @@ fn remove_3_and_1() {
     let signer_to_remove = array![signer_3, signer_1];
     multisig.remove_signers(1, signer_to_remove);
 
-    // check 
+    // check
     let signers = multisig.get_signer_guids();
     assert_eq!(signers.len(), 1, "invalid signers length");
     assert_eq!(multisig.get_threshold(), 1, "new threshold not set");
@@ -202,7 +198,7 @@ fn remove_3_and_2() {
     let signer_to_remove = array![signer_2, signer_3];
     multisig.remove_signers(1, signer_to_remove);
 
-    // check 
+    // check
     let signers = multisig.get_signer_guids();
     assert_eq!(signers.len(), 1, "invalid signers length");
     assert_eq!(multisig.get_threshold(), 1, "new threshold not set");
@@ -212,7 +208,7 @@ fn remove_3_and_2() {
 }
 
 #[test]
-#[should_panic(expected: ('argent/not-a-signer',))]
+#[should_panic(expected: ('linked-set/item-not-found',))]
 fn remove_invalid_signers() {
     // init
     let multisig = initialize_multisig();

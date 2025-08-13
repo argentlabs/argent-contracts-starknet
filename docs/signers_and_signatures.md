@@ -1,20 +1,25 @@
-# Multiple Signer Types
+---
+icon: signature-lock
+---
 
-Starting from argent [account](./argent-account.md) v0.4.0 and [multisig](./multisig.md) v0.2.0, the accounts will allow the use of other signatures types, besides the Starknet native one. We support the following:
+# Signers and Signatures
 
-- **Starknet**: native starknet key signature, it will be the most efficient in terms of gas usage
-- **Secp256k1**: Uses the curve used by Ethereum and other cryptocurrencies
-- **Secp256r1**: Curve with broad support, especially on secure hardware
-- **Eip191**: Leverages Eip191 signatures to sign on Starknet
-- **Webauthn**: Allow to use passkeys as they are widely supported by browsers, and Operating systems
+## Multiple Signer Types
 
-Every time a new signer is added to the account there will be a `SignerLinked` event emitted, with all the data about the Signer and a GUID, that GUID will uniquely identify that signer in the account. The GUID is a hash of the Signer that will uniquely identify it. The contract won’t always store all the signer data and only the GUID will provided by the contract (there are some exceptions for backwards compatibility)
+Starting from argent [account](argent_account.md) v0.4.0 and [multisig](multisig.md) v0.2.0, the accounts will allow the use of other signature types besides the Starknet native one. We support the following:
 
-At any time it will be possible to get the Signer data linked to a GUID, but querying the account SignerLinked events
-[Example](../scripts/query-guid-info.ts)
+* **Starknet**: native starknet key signature, it will be the most efficient in terms of gas usage
+* **Secp256k1**: Uses the curve used by Ethereum and other cryptocurrencies
+* **Secp256r1**: Curve with broad support, especially on secure hardware
+* **Eip191**: Leverages Eip191 signatures to sign on Starknet
+* **Webauthn**: Allows using passkeys as they are widely supported by browsers and operating systems. See [more info about WebAuthn Signers](webauthn.md)
+
+Every time a new signer is added to the account there will be a `SignerLinked` event emitted, with all the data about the Signer and a GUID, that GUID will uniquely identify that signer in the account. The GUID is a hash of the Signer that will uniquely identify it. The contract won't always store all the signer data and only the GUID will be provided by the contract (there are some exceptions for backwards compatibility)
+
+At any time it will be possible to get the Signer data linked to a GUID, by querying the account SignerLinked events [Example](../scripts/query-guid-info.ts)
 
 ```
-/// For every signer in the account there will be SignerLinked event with its guid
+/// For every signer in the account there will be a SignerLinked event with its guid
 struct SignerLinked {
   #[key]
   signer_guid: felt252,
@@ -22,38 +27,31 @@ struct SignerLinked {
 }
 ```
 
-[More info about signers](../src/signer/signer_signature.cairo)
-[More info about Cairo serialization](https://docs.starknet.io/documentation/architecture_and_concepts/Smart_Contracts/serialization_of_Cairo_types/#data_types_of_252_bits_or_less)
+[More info about signers](../src/signer/signer_signature.cairo) [More info about Cairo serialization](https://docs.starknet.io/documentation/architecture_and_concepts/Smart_Contracts/serialization_of_Cairo_types/#data_types_of_252_bits_or_less)
 
-## Calculate GUIDs from Signer data
+### Calculate GUIDs from Signer data
 
-- Starknet:
+*   Starknet:
 
-  `poseidon('Starknet Signer', signer.pubkey)`
+    `poseidon('Starknet Signer', signer.pubkey)`
+*   Secp256k1:
 
-- Secp256k1:
+    `poseidon('Secp256k1 Signer', signer.pubkey_hash)`
+*   Secp256r1:
 
-  `poseidon('Secp256k1 Signer', signer.pubkey_hash)`
+    `poseidon('Secp256r1 Signer', signer.pubkey.low, signer.pubkey.high)`
+*   Eip191:
 
-- Secp256r1:
+    `poseidon('Eip191 Signer', signer.eth_address)`
+*   Webauthn:
 
-  `poseidon('Secp256r1 Signer', signer.pubkey.low, signer.pubkey.high)`
+    `poseidon('Webauthn Signer', signer.origin.len(), ...signer.origin, signer.rp_id_hash.low, signer.rp_id_hash.high, signer.pubkey.low, signer.pubkey.high)`
 
-- Eip191:
-
-  `poseidon('Eip191 Signer', signer.eth_address)`
-
-- Webauthn:
-
-  `poseidon('Webauthn Signer', signer.origin.len(), ...signer.origin, signer.rp_id_hash.low, signer.rp_id_hash.high, signer.pubkey.low, signer.pubkey.high)`
-
-# Signatures
-
-**NOTE** Besides the format specified here, the argent account also supports concise signatures. See [Signatures](./argent_account.md#Signatures)
+## Signatures
 
 Signatures are provided as an `Array<SignerSignature>`
 
-```
+```rust
 enum SignerSignature {
   Starknet: (StarknetSigner, StarknetSignature),
   Secp256k1: (Secp256k1Signer, Secp256k1Signature),
@@ -82,3 +80,11 @@ Here is an example of a signature with two starknet signers
 ```
 
 [More info about Cairo serialization](https://docs.starknet.io/documentation/architecture_and_concepts/Smart_Contracts/serialization_of_Cairo_types/#data_types_of_252_bits_or_less)
+
+#### Concise Signatures
+
+Besides the format specified here, the argent account also supports concise signatures.
+
+**⚠️** The use of concise signatures is **discouraged** as they will stop working when more than one owner or guardian are added to the account
+
+See more details [here](argent_account.md#concise-format)

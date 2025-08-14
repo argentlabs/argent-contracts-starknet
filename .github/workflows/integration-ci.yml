@@ -9,6 +9,10 @@ jobs:
       - name: Check out main branch
         uses: actions/checkout@v3
 
+      - name: Read .nvmrc
+        run: echo "NVMRC=$(cat .nvmrc)" >> $GITHUB_OUTPUT
+        id: nvm
+
       - name: Setup Scarb
         uses: software-mansion/setup-scarb@v1.5.0
           
@@ -22,7 +26,7 @@ jobs:
         run: curl -L https://raw.githubusercontent.com/software-mansion/universal-sierra-compiler/master/scripts/install.sh | sh -s -- v2.4.0
 
       - name: Run integration tests
-        run: scarb --release build && tsc && yarn mocha --recursive tests-integration/ --extension .test.ts --forbid-only --forbid-pending
+        run: scarb run test-ts
 
   gas-report:
     runs-on: ubuntu-latest

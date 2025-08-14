@@ -2,6 +2,7 @@ import { Account, CallData, Contract, GetTransactionReceiptResponse, RPC, hash, 
 import {
   ArgentAccount,
   KeyPair,
+  LegacyMultisigKeyPair,
   LegacyMultisigSigner,
   MultisigSigner,
   deployer,
@@ -14,7 +15,7 @@ import {
   sortByGuid,
 } from ".";
 
-export interface MultisigWallet {
+interface MultisigWallet {
   account: Account;
   accountContract: Contract;
   keys: KeyPair[];
@@ -22,7 +23,7 @@ export interface MultisigWallet {
   receipt: GetTransactionReceiptResponse;
 }
 
-export type DeployMultisigParams = {
+type DeployMultisigParams = {
   threshold: number;
   signersLength?: number;
   keys?: KeyPair[];
@@ -39,7 +40,7 @@ export async function deployMultisig(params: DeployMultisigParams): Promise<Mult
     ...params,
     classHash: params.classHash ?? (await manager.declareLocalContract("ArgentMultisigAccount")),
     salt: params.salt ?? num.toHex(randomStarknetKeyPair().privateKey),
-    useTxV3: params.useTxV3 ?? false,
+    useTxV3: params.useTxV3 ?? true,
     selfDeploy: params.selfDeploy ?? false,
     selfDeploymentIndexes: params.selfDeploymentIndexes ?? [0],
   };
@@ -59,8 +60,8 @@ export async function deployMultisig(params: DeployMultisigParams): Promise<Mult
   const accountAddress = hash.calculateContractAddressFromHash(salt, classHash, constructorCalldata, 0);
 
   const fundingCall = finalParams.useTxV3
-    ? await fundAccountCall(accountAddress, finalParams.fundingAmount ?? 1e16, "STRK") // 0.01 STRK
-    : await fundAccountCall(accountAddress, finalParams.fundingAmount ?? 1e15, "ETH"); // 0.001 ETH
+    ? fundAccountCall(accountAddress, finalParams.fundingAmount ?? 5e18, "STRK") // 5 STRK
+    : fundAccountCall(accountAddress, finalParams.fundingAmount ?? 1e15, "ETH"); // 0.001 ETH
   const calls = fundingCall ? [fundingCall] : [];
 
   const transactionVersion = finalParams.useTxV3 ? RPC.ETransactionVersion.V3 : RPC.ETransactionVersion.V2;
@@ -68,7 +69,7 @@ export async function deployMultisig(params: DeployMultisigParams): Promise<Mult
   let transactionHash;
   if (finalParams.selfDeploy) {
     const response = await deployer.execute(calls);
-    await manager.waitForTransaction(response.transaction_hash);
+    await manager.waitForTx(response.transaction_hash);
 
     const selfDeploymentSigner = new MultisigSigner(keys.filter((_, i) => selfDeploymentIndexes.includes(i)));
     const account = new Account(manager, accountAddress, selfDeploymentSigner, "1", transactionVersion);
@@ -81,7 +82,7 @@ export async function deployMultisig(params: DeployMultisigParams): Promise<Mult
     transactionHash = transaction_hash;
   }
 
-  const receipt = await manager.waitForTransaction(transactionHash);
+  const receipt = await manager.waitForTx(transactionHash);
   const signer = new MultisigSigner(keys.slice(0, finalParams.threshold));
   const account = new ArgentAccount(manager, accountAddress, signer, "1", transactionVersion);
   const accountContract = await manager.loadContract(account.address);
@@ -105,22 +106,36 @@ const sortedKeyPairs = (length: number) => sortByGuid(randomStarknetKeyPairs(len
 
 const keysToSigners = (keys: KeyPair[]) => keys.map(({ signer }) => signer);
 
-export async function deployLegacyMultisig(classHash: string, threshold = 1) {
+interface LegacyMultisigWallet {
+  account: Account;
+  accountContract: Contract;
+  keys: LegacyMultisigKeyPair[];
+  deploySigner: LegacyMultisigSigner;
+}
+
+export async function deployLegacyMultisig(
+  classHash: string,
+  threshold = 1,
+  version = RPC.ETransactionVersion.V3,
+): Promise<LegacyMultisigWallet> {
   const keys = randomLegacyMultisigKeyPairs(threshold);
   const signersPublicKeys = keys.map((key) => key.publicKey);
   const salt = num.toHex(randomStarknetKeyPair().privateKey);
   const constructorCalldata = CallData.compile({ threshold, signers: signersPublicKeys });
   const contractAddress = hash.calculateContractAddressFromHash(salt, classHash, constructorCalldata, 0);
-  await fundAccount(contractAddress, 1e15, "ETH"); // 0.001 ETH
+  if (version == RPC.ETransactionVersion.V3) {
+    await fundAccount(contractAddress, 5e18, "STRK"); // 5 STRK
+  } else {
+    await fundAccount(contractAddress, 1e15, "ETH"); // 0.001 ETH
+  }
   const deploySigner = new LegacyMultisigSigner([keys[0]]);
-  const account = new Account(manager, contractAddress, deploySigner, "1");
+  const account = new Account(manager, contractAddress, deploySigner, "1", version);
 
   const { transaction_hash } = await account.deploySelf({ classHash, constructorCalldata, addressSalt: salt });
-  await manager.waitForTransaction(transaction_hash);
+  await manager.waitForTx(transaction_hash);
 
-  const signers = new LegacyMultisigSigner(keys);
-  account.signer = signers;
+  account.signer = new LegacyMultisigSigner(keys);
   const accountContract = await manager.loadContract(account.address);
   accountContract.connect(account);
-  return { account, accountContract, deploySigner, signers };
+  return { account, accountContract, deploySigner, keys };
 }

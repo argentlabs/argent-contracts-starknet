@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { Account, num } from "starknet";
-import { StarknetKeyPair, getChangeOwnerMessageHash, manager, starknetSignatureType } from "../lib";
+import { StarknetKeyPair, getOwnerAliveMessageHash, manager, starknetSignatureType } from "../lib";
 
 /// To use this script, fill the following three values:
 /// - accountAddress: the address of the account to change owner
@@ -18,6 +18,7 @@ const owner: bigint = await accountContract.get_owner();
 const account = new Account(manager, accountAddress, ownerSigner, "1");
 accountContract.connect(account);
 const chainId = await manager.getChainId();
+const validUntil = (await manager.getCurrentTimestamp()) + 60 * 60; // Valid 1h
 
 if (owner !== ownerSigner.publicKey) {
   throw new Error(`onchain owner ${owner} not the same as expected ${ownerSigner.publicKey}`);
@@ -29,10 +30,14 @@ if (owner !== ownerSigner.publicKey) {
 // if (BigInt(newOwnerPublicKey) !== newOwner.publicKey) {
 //   throw new Error(`new owner public key ${newOwnerPublicKey} != derived ${newOwner.publicKey}`);
 // }
-// const starknetSignature = await signChangeOwnerMessage(accountContract.address, owner, newOwner, provider);
+// const starknetSignature = await signChangeOwnerMessage(accountContract.address, newOwner, chainId, validUntil);
 
 // remote signing:
-console.log("messageHash:", await getChangeOwnerMessageHash(accountContract.address, owner, chainId)); // share to backend
+// share to backend
+console.log(
+  "messageHash:",
+  await getOwnerAliveMessageHash(accountContract.address, chainId, ownerSigner.guid, validUntil),
+);
 const [r, s] = [1, 2]; // fill with values from backend
 
 console.log("r:", r);
@@ -42,6 +47,6 @@ console.log("Owner before", num.toHex(await accountContract.get_owner()));
 console.log("Changing to ", num.toHex(newOwnerPublicKey));
 
 const response = await accountContract.change_owner(starknetSignatureType(newOwnerPublicKey, r, s));
-await manager.waitForTransaction(response.transaction_hash);
+await manager.waitForTx(response.transaction_hash);
 
 console.log("Owner after ", num.toHex(await accountContract.get_owner()));

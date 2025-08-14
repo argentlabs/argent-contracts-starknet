@@ -1,6 +1,6 @@
 # Argent Webauthn POC
 
-This account is a 1-of-2 multisig account where the signers are a stark key and a webauthn device.
+This account is using the ArgentAccount without a guardian. The signature follows the WebAuthn standard.
 
 ## Setup for testnet
 
@@ -14,7 +14,62 @@ Fill the values in the `.env` file. The deployer account needs at least 0.001 ET
 yarn && yarn dev
 ```
 
-Open the displayed url in Chrome or Safari.
+Open the displayed url.
+
+## Setup with devnet
+
+Run the following command to start the devnet:
+
+```bash
+scarb run start-devnet
+```
+
+Update the `.env`file accordingly. If you use the defaults value it should be `PUBLIC_PROVIDER_URL="http://localhost:5050"`.
+
+Start the service:
+
+```bash
+yarn && yarn dev
+```
+
+Open the displayed url.
+
+## Testing
+
+Some parts of the testing process cannot be automated, so manual testing is required.
+Below is a list of scenarios that need to be tested. Please add any additional cases if you find them missing:
+
+- Test every on every major browser (sorted by most used)
+  - [ ] Chrome
+  - [ ] Safari
+  - [ ] IE (just kidding, Edge)
+  - [ ] Firefox
+  - [ ] Opera
+- Test using every password manager
+  - [ ] 1Password
+  - [ ] Chrome integrated password
+  - [ ] Apple Keychain
+- Test the dApp on different device platforms
+  - [ ] Apple (iPhone)
+  - [ ] Android
+
+Make sure to test various combinations of browsers, password managers, and devices to ensure compatibility across all configurations.
+
+To test the cross-platform part, as the public keys are stored locally (LocalStorage), please fill in the username and the public key field.
+
+### Exposing the dapp
+
+Start by installing a service that allows you to expose your localhost to the internet (e.g., [Ngrok](https://ngrok.com/docs/getting-started/), Localtunnel, etc.).  
+Important: This service must provide an HTTPS connection; otherwise, WebAuthn will not work.
+
+Start your tunneling service and configure it to expose port `5173`.  
+Copy the URL provided by your tunneling service, append /rpc to the end, and update the .env file of the dApp with this value:
+
+```
+PUBLIC_PROVIDER_URL="[YOU_LINK]/rpc"
+```
+
+Now, you can start the dApp by running `yarn dev`. You should be able to access the dApp through the link provided by the tunneling service.
 
 ## Pointers
 
@@ -28,5 +83,5 @@ This demo dapp will:
 Other notes:
 
 - The passkey is created [here](./src/lib/webauthnAttestation.ts#L12).
-- Transaction hashes are signed by the passkey [here](./src/lib/webauthnAssertion.ts#L24).
+- Transaction hashes are signed by the passkey [here](./src/lib/webauthnOwner.ts#L112).
 - A high level starknet.js `Signer` implementation is proposed [here](./src/lib/webauthnOwner.ts).

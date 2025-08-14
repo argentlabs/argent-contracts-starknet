@@ -1,10 +1,18 @@
-import { Account, ArraySignatureType, Call, InvocationsSignerDetails, ec, hash, num, typedData } from "starknet";
 import {
-  OffChainSession,
+  Account,
+  ArraySignatureType,
+  Call,
+  InvocationsSignerDetails,
+  TypedData,
+  TypedDataRevision,
+  typedData,
+} from "starknet";
+import {
+  EstimateStarknetKeyPair,
   OutsideExecution,
+  Session,
   StarknetKeyPair,
   calculateTransactionHash,
-  getSessionTypedData,
   getTypedData,
   manager,
 } from "..";
@@ -15,7 +23,7 @@ export class ArgentX {
     public backendService: BackendService,
   ) {}
 
-  public async getOffchainSignature(typedData: typedData.TypedData): Promise<ArraySignatureType> {
+  public async getOffchainSignature(typedData: TypedData): Promise<ArraySignatureType> {
     return (await this.account.signMessage(typedData)) as ArraySignatureType;
   }
 }
@@ -23,21 +31,21 @@ export class ArgentX {
 export class BackendService {
   // TODO We might want to update this to support KeyPair instead of StarknetKeyPair?
   // Or that backend becomes: "export class BackendService extends KeyPair {", can also extends RawSigner ?
-  constructor(private backendKey: StarknetKeyPair) {}
+  constructor(private backendKey: StarknetKeyPair | EstimateStarknetKeyPair) {}
 
   public async signTxAndSession(
     calls: Call[],
     transactionDetail: InvocationsSignerDetails,
-    sessionTokenToSign: OffChainSession,
-    cacheAuthorization: boolean,
+    sessionTokenToSign: Session,
+    cacheOwnerGuid?: bigint,
   ): Promise<bigint[]> {
     // verify session param correct
     // extremely simplified version of the backend verification
     // backend must check, timestamps fees, used tokens nfts...
-    const allowed_methods = sessionTokenToSign.allowed_methods;
+    const allowedMethods = sessionTokenToSign.allowedMethods;
     if (
       !calls.every((call) => {
-        return allowed_methods.some(
+        return allowedMethods.some(
           (method) => method["Contract Address"] === call.contractAddress && method.selector === call.entrypoint,
         );
       })
@@ -46,41 +54,32 @@ export class BackendService {
     }
 
     const transactionHash = calculateTransactionHash(transactionDetail, calls);
-    const sessionMessageHash = typedData.getMessageHash(
-      await getSessionTypedData(sessionTokenToSign),
-      transactionDetail.walletAddress,
-    );
-    const sessionWithTxHash = hash.computePoseidonHashOnElements([
+    const sessionWithTxHash = await sessionTokenToSign.hashWithTransaction(
       transactionHash,
-      sessionMessageHash,
-      +cacheAuthorization,
-    ]);
-    const signature = ec.starkCurve.sign(sessionWithTxHash, num.toHex(this.backendKey.privateKey));
-    return [signature.r, signature.s];
+      transactionDetail.walletAddress,
+      cacheOwnerGuid,
+    );
+    const signature = await this.backendKey.signRaw(sessionWithTxHash);
+    return [BigInt(signature[2]), BigInt(signature[3])];
   }
 
   public async signOutsideTxAndSession(
-    calls: Call[],
-    sessionTokenToSign: OffChainSession,
+    _calls: Call[],
+    sessionTokenToSign: Session,
     accountAddress: string,
     outsideExecution: OutsideExecution,
-    revision: typedData.TypedDataRevision,
-    cacheAuthorization: boolean,
+    revision: TypedDataRevision,
+    cacheOwnerGuid?: bigint,
   ): Promise<bigint[]> {
     // TODO backend must verify, timestamps fees, used tokens nfts...
     const currentTypedData = getTypedData(outsideExecution, await manager.getChainId(), revision);
     const messageHash = typedData.getMessageHash(currentTypedData, accountAddress);
-    const sessionMessageHash = typedData.getMessageHash(await getSessionTypedData(sessionTokenToSign), accountAddress);
-    const sessionWithTxHash = hash.computePoseidonHashOnElements([
-      messageHash,
-      sessionMessageHash,
-      +cacheAuthorization,
-    ]);
-    const signature = ec.starkCurve.sign(sessionWithTxHash, num.toHex(this.backendKey.privateKey));
-    return [signature.r, signature.s];
+    const sessionWithTxHash = await sessionTokenToSign.hashWithTransaction(messageHash, accountAddress, cacheOwnerGuid);
+    const signature = await this.backendKey.signRaw(sessionWithTxHash);
+    return [BigInt(signature[2]), BigInt(signature[3])];
   }
 
-  public getBackendKey(accountAddress: string): bigint {
+  public getBackendKey(_accountAddress: string): bigint {
     return this.backendKey.publicKey;
   }
 }

@@ -1,4 +1,4 @@
-import { Call, CallData, hash, num, RawArgs, SignerInterface, typedData } from "starknet";
+import { Call, CallData, hash, num, RawArgs, SignerInterface, typedData, TypedDataRevision } from "starknet";
 import { manager } from "./";
 
 const typesRev0 = {
@@ -44,8 +44,8 @@ const typesRev1 = {
   ],
 };
 
-function getDomain(chainId: string, revision: typedData.TypedDataRevision) {
-  if (revision == typedData.TypedDataRevision.Active) {
+function getDomain(chainId: string, revision: TypedDataRevision) {
+  if (revision == TypedDataRevision.ACTIVE) {
     // WARNING! Version and revision are encoded as numbers in the StarkNetDomain type and not as shortstring
     // This is due to a bug in the Braavos implementation, and has been kept for compatibility
     return {
@@ -88,17 +88,13 @@ export function getTypedDataHash(
   outsideExecution: OutsideExecution,
   accountAddress: num.BigNumberish,
   chainId: string,
-  revision: typedData.TypedDataRevision,
+  revision: TypedDataRevision,
 ): string {
   return typedData.getMessageHash(getTypedData(outsideExecution, chainId, revision), accountAddress);
 }
 
-export function getTypedData(
-  outsideExecution: OutsideExecution,
-  chainId: string,
-  revision: typedData.TypedDataRevision,
-) {
-  if (revision == typedData.TypedDataRevision.Active) {
+export function getTypedData(outsideExecution: OutsideExecution, chainId: string, revision: TypedDataRevision) {
+  if (revision == TypedDataRevision.ACTIVE) {
     return {
       types: typesRev1,
       primaryType: "OutsideExecution",
@@ -141,7 +137,7 @@ export async function getOutsideExecutionCall(
   outsideExecution: OutsideExecution,
   accountAddress: string,
   signer: SignerInterface,
-  revision: typedData.TypedDataRevision,
+  revision: TypedDataRevision,
   chainId?: string,
 ): Promise<Call> {
   chainId = chainId ?? (await manager.getChainId());
@@ -149,7 +145,7 @@ export async function getOutsideExecutionCall(
   const signature = await signer.signMessage(currentTypedData, accountAddress);
   return {
     contractAddress: accountAddress,
-    entrypoint: revision == typedData.TypedDataRevision.Active ? "execute_from_outside_v2" : "execute_from_outside",
+    entrypoint: revision == TypedDataRevision.ACTIVE ? "execute_from_outside_v2" : "execute_from_outside",
     calldata: CallData.compile({ ...outsideExecution, signature }),
   };
 }

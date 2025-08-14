@@ -1,6 +1,14 @@
-import { expect } from "chai";
-import { CairoCustomEnum, Contract, hash } from "starknet";
-import { RawSigner } from ".";
+import {
+  CairoCustomEnum,
+  CallData,
+  Contract,
+  shortString,
+  StarknetDomain,
+  TypedData,
+  typedData,
+  TypedDataRevision,
+} from "starknet";
+import { KeyPair } from ".";
 
 export const ESCAPE_SECURITY_PERIOD = 7n * 24n * 60n * 60n; // 7 days
 export const ESCAPE_EXPIRY_PERIOD = 2n * 7n * 24n * 60n * 60n; // 14 days
@@ -31,20 +39,64 @@ export const ESCAPE_TYPE_OWNER = new CairoCustomEnum({
   Owner: {},
 });
 
-export const signChangeOwnerMessage = async (
+export const signOwnerAliveMessage = async (
   accountAddress: string,
-  currentOwnerGuid: bigint,
-  newOwner: RawSigner,
+  newOwner: KeyPair,
   chainId: string,
+  maxTimestamp: number,
 ) => {
-  const messageHash = await getChangeOwnerMessageHash(accountAddress, currentOwnerGuid, chainId);
-  return newOwner.signRaw(messageHash);
+  const messageHash = await getOwnerAliveMessageHash(accountAddress, chainId, newOwner.guid, maxTimestamp);
+  const signature = await newOwner.signRaw(messageHash);
+  return CallData.compile([...signature, maxTimestamp]);
 };
 
-export const getChangeOwnerMessageHash = async (accountAddress: string, currentOwnerGuid: bigint, chainId: string) => {
-  const changeOwnerSelector = hash.getSelectorFromName("change_owner");
-  return hash.computeHashOnElements([changeOwnerSelector, chainId, accountAddress, currentOwnerGuid]);
+const types = {
+  StarknetDomain: [
+    { name: "name", type: "shortstring" },
+    { name: "version", type: "shortstring" },
+    { name: "chainId", type: "shortstring" },
+    { name: "revision", type: "shortstring" },
+  ],
+  "Owner Alive": [
+    { name: "Owner GUID", type: "felt" },
+    { name: "Signature expiration", type: "timestamp" },
+  ],
 };
+
+interface OwnerAlive {
+  ownerGuid: bigint;
+  signatureExpiration: number;
+}
+
+function getDomain(chainId: string): StarknetDomain {
+  return {
+    name: "Owner Alive",
+    version: shortString.encodeShortString("1"),
+    chainId,
+    revision: TypedDataRevision.ACTIVE,
+  };
+}
+
+function getTypedData(myStruct: OwnerAlive, chainId: string): TypedData {
+  return {
+    types,
+    primaryType: "Owner Alive",
+    domain: getDomain(chainId),
+    message: {
+      "Owner GUID": myStruct.ownerGuid,
+      "Signature expiration": myStruct.signatureExpiration,
+    },
+  };
+}
+
+export async function getOwnerAliveMessageHash(
+  accountAddress: string,
+  chainId: string,
+  ownerGuid: bigint,
+  signatureExpiration: number,
+) {
+  return typedData.getMessageHash(getTypedData({ ownerGuid, signatureExpiration }, chainId), accountAddress);
+}
 
 export async function hasOngoingEscape(accountContract: Contract): Promise<boolean> {
   const escape = await accountContract.get_escape();
@@ -52,11 +104,6 @@ export async function hasOngoingEscape(accountContract: Contract): Promise<boole
 }
 
 export async function getEscapeStatus(accountContract: Contract): Promise<EscapeStatus> {
-  // StarknetJs parsing is broken so we do it manually
-  const result = (await accountContract.call("get_escape_and_status", undefined, { parseResponse: false })) as string[];
-  const result_len = result.length;
-  expect(result_len).to.be.oneOf([4, 6]);
-  const status = Number(result[result_len - 1]);
-  expect(status).to.be.lessThan(4, `Unknown status ${status}`);
-  return status;
+  const result = await accountContract.get_escape_and_status();
+  return EscapeStatus[result[1].activeVariant() as keyof typeof EscapeStatus];
 }

@@ -1,11 +1,11 @@
 import { exec } from "child_process";
 import fs from "fs";
 import { mapValues, maxBy, sortBy, sum } from "lodash-es";
-import { InvokeFunctionResponse, RpcProvider, shortString } from "starknet";
-import { ensureAccepted, ensureSuccess } from ".";
+import { InvokeFunctionResponse, shortString } from "starknet";
+import { type Manager } from "./manager";
 
-const ethUsd = 4000n;
-const strkUsd = 2n;
+const ethUsd = 2400;
+const strkUsd = 0.4;
 
 // from https://docs.starknet.io/documentation/architecture_and_concepts/Network_Architecture/fee-mechanism/
 const gasWeights: Record<string, number> = {
@@ -25,10 +25,10 @@ const l2PayloadsWeights: Record<string, number> = {
   calldata: 0.128,
 };
 
-async function profileGasUsage(transactionHash: string, provider: RpcProvider, allowFailedTransactions = false) {
-  const receipt = await ensureAccepted(await provider.waitForTransaction(transactionHash));
+async function profileGasUsage(transactionHash: string, manager: Manager, allowFailedTransactions = false) {
+  const receipt = await manager.ensureAccepted({ transaction_hash: transactionHash });
   if (!allowFailedTransactions) {
-    await ensureSuccess(receipt);
+    await manager.ensureSuccess(receipt);
   }
   const actualFee = BigInt(receipt.actual_fee.amount);
   const rawResources = receipt.execution_resources!;
@@ -63,9 +63,9 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
   };
 
   const blockNumber = receipt.block_number;
-  const blockInfo = await provider.getBlockWithReceipts(blockNumber);
+  const blockInfo = await manager.getBlockWithReceipts(blockNumber);
 
-  const stateUpdate = await provider.getStateUpdate(blockNumber);
+  const stateUpdate = await manager.getStateUpdate(blockNumber);
   const storageDiffs = stateUpdate.state_diff.storage_diffs;
   const paidInStrk = receipt.actual_fee.unit == "FRI";
   const gasPrice = BigInt(paidInStrk ? blockInfo.l1_gas_price.price_in_fri : blockInfo.l1_gas_price.price_in_wei);
@@ -99,9 +99,9 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
   const sortedResources = Object.fromEntries(sortBy(Object.entries(executionResources), 0));
 
   // L2 payloads
-  const { calldata, signature } = (await provider.getTransaction(receipt.transaction_hash)) as any;
-  const calldataGas =
-    calldata && signature ? Math.floor((calldata.length + signature.length) * l2PayloadsWeights.calldata) : undefined; // TODO find workaround for deployment transactions
+  const tx = (await manager.getTransaction(receipt.transaction_hash)) as any;
+  const calldataLen = tx.calldata?.length || tx.constructor_calldata.length;
+  const calldataGas = Math.floor((calldataLen + tx.signature.length) * l2PayloadsWeights.calldata);
 
   const eventGas = Math.floor(
     receipt.events.reduce(
@@ -130,7 +130,7 @@ async function profileGasUsage(transactionHash: string, provider: RpcProvider, a
 
 type Profile = Awaited<ReturnType<typeof profileGasUsage>>;
 
-export function newProfiler(provider: RpcProvider) {
+export function newProfiler(manager: Manager) {
   const profiles: Record<string, Profile> = {};
 
   return {
@@ -143,7 +143,7 @@ export function newProfiler(provider: RpcProvider) {
         transactionHash = transactionHash.transaction_hash;
       }
       console.log(`Profiling: ${name} (${transactionHash})`);
-      const profile = await profileGasUsage(transactionHash, provider, allowFailedTransactions);
+      const profile = await profileGasUsage(transactionHash, manager, allowFailedTransactions);
       if (printProfile) {
         console.dir(profile, { depth: null });
       }
@@ -154,10 +154,10 @@ export function newProfiler(provider: RpcProvider) {
     },
     summarizeCost(profile: Profile) {
       const usdVal = profile.paidInStrk ? strkUsd : ethUsd;
-      const feeUsd = Number((10000n * profile.actualFee * usdVal) / 10n ** 18n) / 10000;
+      const feeUsd = Number((profile.actualFee * BigInt(100000 * usdVal)) / 10n ** 18n) / 100000;
       return {
         "Actual fee": Number(profile.actualFee).toLocaleString("de-DE"),
-        "Fee usd": Number(feeUsd.toFixed(4)),
+        "Fee usd": Number(feeUsd.toFixed(5)),
         "Fee without DA": Number(profile.feeWithoutDa),
         "Gas without DA": Number(profile.gasWithoutDa),
         "Computation gas": Number(profile.computationGas),
@@ -206,7 +206,7 @@ export function newProfiler(provider: RpcProvider) {
       const filename = "gas-report.txt";
       const newFilename = "gas-report-new.txt";
       fs.writeFileSync(newFilename, report);
-      exec(`diff ${filename} ${newFilename}`, (err, stdout) => {
+      exec(`diff ${filename} ${newFilename}`, (_, stdout) => {
         if (stdout) {
           console.log(stdout);
           console.error("⚠️  Changes to gas report detected.\n");

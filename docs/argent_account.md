@@ -1,75 +1,145 @@
+---
+icon: user-shield
+---
+
 # Argent Account
 
-## High-Level Specification
+The Argent account is a custom multisig tailored for individuals.
 
-The Argent account is a custom multisig (1-of-1, 2-of-2 or 2-of-3) tailored for individuals.
+There are two main roles, the owners and the guardians. The **owners** represent keys controlled by the user. The account must have at least one owner. The **guardians** are optional and can be used to add an extra layer of security.
 
-The primary key called the `owner` is typically stored on the user's device. A second key called the `guardian` acts both as a co-validator for typical operations of the wallet, and as the trusted actor that can recover the wallet in case the `owner` key is lost or compromised. In a typical setting the `guardian` key is managed by an off-chain service to enable fraud monitoring (e.g. trusted contacts, daily limits, etc) and recovery.
+## Account with no guardians
 
-The user can always opt-out of the guardian service and manage the guardian key himself. Alternatively he/she can add a second `guardian_backup` key to the account that has the same role as the `guardian` and can be used as the ultimate censorship resistance guarantee. The account can only have a `guardian_backup` when the `guardian` is set.
+When the account has no guardians, it behaves like a 1-of-N multisig. The account requires **one owner signature** for any operation.
 
-By default the account can execute a sequence of operations such as calling external contracts in a multicall. A multicall will fail if one of the inner call fails. Whenever a function of the account must be called (`change_owner`, `trigger_escape_guardian`, `upgrade`, etc), it should be the only call performed in this multicall.
+## Account with guardians
 
-In addition to the main `__execute__` entry point used by the Starknet protocol, the account can also be called by an external contract via the `execute_from_outside` function to e.g. enable sponsored transactions. The calling contract must provide a valid signature (`owner` and/or `guardian`) for the target execution.
+When the account has at least one guardian, it requires **one owner** signature **AND one guardian** signature (unless calling [escape methods](argent_account_escape.md#escape-methods)).
 
-Normal operations of the wallet (calling external contracts via `__execute__` or `execute_from_outside`, `change_owner`, `change_guardian`, `change_guardian_backup`, `cancel_escape`, `upgrade`) require the approval of the `owner` and a `guardian` to be executed.
+The guardian keys are not typically managed by the user directly, but by a 3rd party which the user trusts (the trust only extends to some degree as the guardian alone can't control the account)
 
-Each party alone can trigger the `escape` mode (a.k.a. recovery) on the wallet if the other party is not cooperating or lost. You need to wait for the security period to elapse before the escape is active. Then the non-cooperating party can be replaced. If another security period elapses where the escape is not completed, it will expire. The default security period is 7 days but it can be defined by the user.
+Guardians provide the following **advantages**:
 
-The wallet is asymmetric in favor of the `owner` who can override an escape triggered by a `guardian`.
+* Allow to recover the account if the owner **keys are lost** (see Escape Process below)
+* Protect the account against **compromised owners keys** (for instance the user entering their private keys in a phishing website)
+* **Fraud prevention**: The guardian can request extra confirmations if some transaction seems suspicious
 
-A triggered escape can always be cancelled with the approval of the `owner` and a `guardian`.
+### Escape Process (Recovery)
 
-We assume that the `owner` key is backed up such that the probability of the `owner` key being lost should be close to zero.
+* Allows the guardians to recover the account if the owner keys are lost. Without the guardians, the account would be lost if the owner keys are lost.
+* Allows the owners to remove or change the guardians if they are not cooperating. Bringing censorship resistance to the account
 
-Under this model we can build a simple yet highly secure non-custodial wallet.
+See more about the escape process in [Escape Process](argent_account_escape.md)
 
-To enable that model to evolve the account can be upgraded. Upgrading the wallet to a new implementation requires the approval of both the `owner` and a `guardian`. At the end of the upgrade, a call to `execute_after_upgrade` is made on the new implementation of the account to perform some maintenance if needed (e.g. migrate state).
+### Admin calls
 
-| Action                  | Owner | Guardian | Comments                                 |
-| ----------------------- | ----- | -------- | ---------------------------------------- |
-| Multicall               | X     | X        |                                          |
-| Change Owner            | X     | X        |                                          |
-| Change Guardian         | X     | X        |                                          |
-| Change Guardian Backup  | X     | X        |                                          |
-| Trigger Escape Guardian | X     |          | Can override an escape owner in progress |
-| Trigger Escape Owner    |       | X        | Fail if escape guardian in progress      |
-| Escape Guardian         | X     |          | After security period                    |
-| Escape Owner            |       | X        | After security period                    |
-| Cancel Escape           | X     | X        |                                          |
-| Upgrade                 | X     | X        |                                          |
+The account can **call itself** to perform admin operations like changing the owners, upgrading to a new implementation, setting up guardians, escape... When the account is calling itself, it must be the **only call** performed in this multicall or the transaction will be rejected.
 
 ## Signer types
 
-There's more information about it in [Signers](./signers_and_signatures.md#Multiple_Signer_Types).
-This account restricts the guardian role to only StarknetSigner. Note that the guardian backup supports every type
+Multiple signer types are allowed for both owners and guardians.
+
+There's more information about it in [**Signer Types**](signers_and_signatures.md#multiple-signer-types).
 
 ## Signature format
 
-The information available in [Signatures](./signers_and_signatures.md#Signatures) is also applicable for the argent account.
+* **Regular transactions**:
+  * Account has no guardians: The account expects a signature from one of the owners
+  * Account with guardians: The account require a signature from one of the owners and one from one of the guardians. Owner signature goes first.
+*   **Escape transactions**:
 
-Additionally, this account also supports providing signatures in a concise way when al signers involved are StarknetSigners
+    For transactions calling `trigger_escape_guardian`, `trigger_escape_owner`, `escape_guardian`, `escape_owner` (See [Escape Methods](argent_account_escape.md#escape-methods)), the account expects a signature from one party only.
 
-The account will accept the format
-[first_signer_r, first_signer_s]
+Depending on the above the account receives signatures from one or two signers. The account accepts two formats for the combined signature:
 
-And also
-[first_signer_r, first_signer_s, second_signer_r, second_signer_s]
+### Standard Format (Recommended)
 
-## Change owner signature
+The final signature is serialized as an `Array<SignerSignature>` (even if there's only one signer)
 
-To prevent mistakes where someone changes the owner to some key they don't control, the account will require a signature from the new owner as an argument to the `change_owner` function.
+Here's an example of a regular transaction for an account **without guardians**:
 
-New owner should sign the pedersen hash of the array: `[change_owner_selector, chain_id, account_address, old_owner_guid]`
+```
+0x000001 // number of signatures in the array (1, owner only)
+         // First Signer Signature from the owner
+0x000000 // Owner signature type (0x0 means Starknet)
+0xAAAAAA // owner pubkey
+0xAAA001 // owner signature r
+0xAAA002 // owner signature s
+```
+
+Here is an example of a regular transaction with **guardians**:
+
+```
+0x000002 // number of signatures in the array (2, one from the owner and one from the guardian)
+         // First Signer Signature from the owner
+0x000000 // Owner signature type (0x0 means Starknet)
+0xAAAAAA // owner pubkey
+0xAAA001 // owner signature r
+0xAAA002 // owner signature s
+         // Second signature is the guardian
+0x000000 // Guardian signature type (0x0 means Starknet)
+0xBBBBBB // guardian pubkey
+0xBBB001 // guardian signature r
+0xBBB002 // guardian signature s
+```
+
+More details in [**Signatures**](signers_and_signatures.md#signatures)
+
+### Concise Format
+
+Besides the format specified above, the argent account also supports concise signatures if these two conditions are met:
+
+* There is only one owner and it's a StarknetSigner
+* There is no guardian or there's only one guardian and it's a StarknetSigner
+
+**⚠️** The use of concise signatures is **discouraged** as they will stop working more than one owner or guardian is added to the account
+
+The format of the concise signatures is the following:
+
+`[single_owner_r, single_owner_s]`,
+
+`[single_guardian_r, single_guardian_s]` or
+
+`[single_owner_r, single_owner_s, single_guardian_r, single_guardian_s]`
+
+The first format is intended to help the account be compatible with dev tools and will be supported.
+
+The last two formats are deprecated and likely to be removed in future versions
+
+## Accurate Estimates
+
+The argent multisig can do accurate estimates for transactions with Signers that use significant resources during validations. This also supports accurate estimates for sessions.
+
+See [Accurate Estimates](accurate_estimates.md) for more information.
 
 ## Outside Execution
 
-See [Outside Execution](./outside_execution.md)
+Allows meta-transactions by leveraging offchain signatures
+
+See [Outside Execution](outside_execution.md)
 
 ## Sessions
 
-See [Sessions](./sessions.md)
+Sessions allow dapps to submit transactions on behalf of the user without requiring any user interaction, as long as the transaction to execute follows some restrictions defined when the session is created. This will allow for a better UX in areas such a gaming
+
+See [Sessions](sessions.md)
 
 ## Upgrades
 
-See [Upgrades](./argen_account_upgrades.md)
+See [Upgrades](argent_account_upgrades.md)
+
+**⚠️** Make sure you read this document before upgrading you account, as incorrect upgrades can brick the account
+
+## Owner Alive Signature
+
+To prevent from accidentally bricking the account by changing the owner to some key they don't control, the account will require a signature in the `change_owner` function. See [Owner Alive Signature](owner_alive.md) for more information.
+
+## Release Notes
+
+Find the Argent Account Release notes [here](CHANGELOG_argent_account.md)
+
+## Deployments
+
+Deployed class hashes can be found here for the [Argent Account](../deployments/account.txt)
+
+Other deployment artifacts are located in [/deployments/](../deployments/)

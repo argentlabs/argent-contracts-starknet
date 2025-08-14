@@ -5,14 +5,14 @@ import { manager } from "./manager";
 import { LegacyMultisigSigner, LegacyStarknetKeyPair } from "./signers/legacy";
 import { randomStarknetKeyPair } from "./signers/signers";
 
-export type DeployOzAccountParams = {
+type DeployOzAccountParams = {
   useTxV3?: boolean;
   owner?: LegacyStarknetKeyPair;
   salt?: string;
   fundingAmount?: number | bigint;
 };
 
-export type DeployOzAccountResult = {
+type DeployOzAccountResult = {
   account: Account;
   accountContract: ContractWithClass;
   deployTxHash: string;
@@ -27,7 +27,7 @@ export async function deployOpenZeppelinAccount(params: DeployOzAccountParams): 
     ...params,
     salt: params.salt ?? num.toHex(randomStarknetKeyPair().privateKey),
     owner: params.owner ?? new LegacyStarknetKeyPair(),
-    useTxV3: params.useTxV3 ?? false,
+    useTxV3: params.useTxV3 ?? true,
   };
 
   const constructorCalldata = CallData.compile({
@@ -37,10 +37,9 @@ export async function deployOpenZeppelinAccount(params: DeployOzAccountParams): 
   const contractAddress = hash.calculateContractAddressFromHash(finalParams.salt, classHash, constructorCalldata, 0);
 
   const fundingCall = finalParams.useTxV3
-    ? await fundAccountCall(contractAddress, finalParams.fundingAmount ?? 1e18, "STRK")
-    : await fundAccountCall(contractAddress, finalParams.fundingAmount ?? 1e16, "ETH");
-  const response = await deployer.execute([fundingCall!]);
-  await manager.waitForTransaction(response.transaction_hash);
+    ? fundAccountCall(contractAddress, finalParams.fundingAmount ?? 1e18, "STRK")
+    : fundAccountCall(contractAddress, finalParams.fundingAmount ?? 1e16, "ETH");
+  await manager.waitForTx(deployer.execute([fundingCall!]));
 
   const defaultTxVersion = finalParams.useTxV3 ? RPC.ETransactionVersion.V3 : RPC.ETransactionVersion.V2;
   const signer = new LegacyMultisigSigner([finalParams.owner]);
@@ -52,7 +51,7 @@ export async function deployOpenZeppelinAccount(params: DeployOzAccountParams): 
     addressSalt: finalParams.salt,
   });
 
-  await manager.waitForTransaction(deployTxHash);
+  await manager.waitForTx(deployTxHash);
   const accountContract = await manager.loadContract(account.address, classHash);
   accountContract.connect(account);
 

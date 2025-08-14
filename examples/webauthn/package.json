@@ -9,7 +9,7 @@
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "lint": "prettier --plugin-search-dir . --check .",
-    "format": "prettier --plugin-search-dir . --write ."
+    "format": "prettier --write ."
   },
   "type": "module",
   "dependencies": {
@@ -18,7 +18,7 @@
     "@peculiar/asn1-schema": "^2.3.6",
     "elliptic": "^6.5.4",
     "js-sha256": "^0.11.0",
-    "starknet": "6.5.0"
+    "starknet": "6.11.0"
   },
   "devDependencies": {
     "@sveltejs/adapter-auto": "^2.0.0",

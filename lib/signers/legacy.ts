@@ -73,6 +73,10 @@ export class LegacyMultisigKeyPair extends LegacyKeyPair {
     return BigInt(ec.starkCurve.getStarkKey(this.pk));
   }
 
+  public get guid() {
+    return this.publicKey;
+  }
+
   public get privateKey(): string {
     return this.pk;
   }

@@ -13,8 +13,6 @@ build-external-contracts = ["openzeppelin_presets::account::AccountUpgradeable"]
 # Uses packages form scarbs.xyz
 [dependencies]
 starknet = "2.10.1"
-assert_macros = "2.10.1"
-snforge_std = "0.38.0"
 alexandria_encoding = "0.4.0"
 alexandria_merkle_tree = "0.4.0"
 openzeppelin_security = "1.0.0"
@@ -23,6 +21,10 @@ openzeppelin_presets = "1.0.0"
 [tool.fmt]
 max-line-length = 120
 sort-module-level-items = true
+
+[dev-dependencies]
+assert_macros = "2.10.1"
+snforge_std = "0.38.3"
 
 [scripts]
 test = "snforge test"

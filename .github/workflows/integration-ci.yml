@@ -9,6 +9,10 @@ jobs:
       - name: Check out main branch
         uses: actions/checkout@v3
 
+      - name: Read .nvmrc
+        run: echo "NVMRC=$(cat .nvmrc)" >> $GITHUB_OUTPUT
+        id: nvm
+
       - name: Setup Scarb
         uses: software-mansion/setup-scarb@v1.5.0
           

@@ -13,5 +13,5 @@ const maxFee = 1 * 1e15;
 
 const calls: Array<Call> = [pick(call, ["contractAddress", "calldata", "entrypoint"])];
 
-const executionResult = await deployerV1.execute(calls, undefined, { maxFee: maxFee });
+const executionResult = await deployerV1.execute(calls, { maxFee: maxFee });
 console.log(`transaction_hash: ${executionResult.transaction_hash}`);

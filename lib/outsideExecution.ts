@@ -1,4 +1,4 @@
-import { Call, CallData, hash, num, RawArgs, SignerInterface, typedData, TypedDataRevision } from "starknet";
+import { Call, CallData, hash, num, RawArgs, SignerInterface, typedData, TypedDataRevision, BigNumberish } from "starknet";
 import { manager } from "./";
 
 const typesRev0 = {
@@ -64,15 +64,15 @@ function getDomain(chainId: string, revision: TypedDataRevision) {
 
 export interface OutsideExecution {
   caller: string;
-  nonce: num.BigNumberish;
-  execute_after: num.BigNumberish;
-  execute_before: num.BigNumberish;
+  nonce: BigNumberish;
+  execute_after: BigNumberish;
+  execute_before: BigNumberish;
   calls: OutsideCall[];
 }
 
 export interface OutsideCall {
   to: string;
-  selector: num.BigNumberish;
+  selector: BigNumberish;
   calldata: RawArgs;
 }
 
@@ -86,7 +86,7 @@ export function getOutsideCall(call: Call): OutsideCall {
 
 export function getTypedDataHash(
   outsideExecution: OutsideExecution,
-  accountAddress: num.BigNumberish,
+  accountAddress: BigNumberish,
   chainId: string,
   revision: TypedDataRevision,
 ): string {

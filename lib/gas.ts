@@ -52,7 +52,7 @@ async function profileGasUsage(transactionHash: string, manager: Manager, allowF
   }
 
   const executionResources: Record<string, number> = {
-    steps: rawResources.steps,
+    steps: rawResources.steps ?? 0,
     pedersen: rawResources.pedersen_builtin_applications ?? 0,
     range_check: rawResources.range_check_builtin_applications ?? 0,
     poseidon: rawResources.poseidon_builtin_applications ?? 0,

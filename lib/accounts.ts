@@ -405,7 +405,7 @@ export async function executeWithCustomSig(
     account.transactionVersion,
   );
 
-  return await newAccount.execute(transactions, undefined, transactionsDetail);
+  return await newAccount.execute(transactions, transactionsDetail);
 }
 
 export async function estimateWithCustomSig(
@@ -450,7 +450,7 @@ export async function getSignerDetails(account: ArgentAccount, calls: Call[]): P
   newAccount.signer = customSigner;
   try {
     // Hardcoding skipValidate to skip estimation
-    await newAccount.execute(calls, undefined, { skipValidate: true });
+    await newAccount.execute(calls, { skipValidate: true });
     throw Error("Should not execute");
   } catch (customError) {
     return customSigner.signerDetails!;

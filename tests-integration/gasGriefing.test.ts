@@ -28,7 +28,6 @@ describe("Gas griefing", function () {
       "argent/max-fee-too-high",
       account.execute(
         accountContract.populateTransaction.trigger_escape_owner(randomStarknetKeyPair().compiledSigner),
-        undefined,
         {
           maxFee: "50000000000000001",
         },
@@ -60,7 +59,7 @@ describe("Gas griefing", function () {
 
     await expectExecutionRevert(
       "argent/max-fee-too-high",
-      account.execute(accountContract.populateTransaction.trigger_escape_owner(compiledSigner), undefined, {
+      account.execute(accountContract.populateTransaction.trigger_escape_owner(compiledSigner), {
         resourceBounds: newResourceBounds,
       }),
     );
@@ -133,7 +132,6 @@ describe("Gas griefing", function () {
       "argent/invalid-da-mode",
       account.execute(
         accountContract.populateTransaction.trigger_escape_owner(randomStarknetKeyPair().compiledSigner),
-        undefined,
         {
           nonceDataAvailabilityMode: RPC.EDataAvailabilityMode.L2,
         },
@@ -143,7 +141,6 @@ describe("Gas griefing", function () {
       "argent/invalid-da-mode",
       account.execute(
         accountContract.populateTransaction.trigger_escape_owner(randomStarknetKeyPair().compiledSigner),
-        undefined,
         {
           feeDataAvailabilityMode: RPC.EDataAvailabilityMode.L2,
         },
@@ -158,7 +155,6 @@ describe("Gas griefing", function () {
       "argent/invalid-deployment-data",
       account.execute(
         accountContract.populateTransaction.trigger_escape_owner(randomStarknetKeyPair().compiledSigner),
-        undefined,
         {
           accountDeploymentData: ["0x1"],
         },

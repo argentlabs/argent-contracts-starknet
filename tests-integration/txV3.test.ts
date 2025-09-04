@@ -33,7 +33,7 @@ for (const accountType of ["individual", "multisig"]) {
       const call = mockDapp.populateTransaction.set_number(42n);
       await expectRevertWithErrorMessage(
         "argent/unsupported-paymaster",
-        account.execute(call, undefined, {
+        account.execute(call, {
           paymasterData: ["0x1"],
         }),
       );

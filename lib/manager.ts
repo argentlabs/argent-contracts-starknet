@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-import { RpcProvider } from "starknet";
+import { RpcProvider, config, logger } from "starknet";
 import { WithContracts } from "./contracts";
 import { WithDevnet, devnetBaseUrl } from "./devnet";
 import { WithReceipts } from "./receipts";
@@ -11,7 +11,10 @@ export class Manager extends WithReceipts(WithContracts(WithDevnet(RpcProvider))
   tokens: TokenManager;
 
   constructor(nodeUrl: string) {
-    super({ nodeUrl });
+    super({ 
+      nodeUrl,
+      specVersion: '0.8.1' // Use RPC 0.8 by default for v7 compatibility
+    });
     this.tokens = new TokenManager(this);
   }
 

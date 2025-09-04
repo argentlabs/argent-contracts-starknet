@@ -43,6 +43,6 @@ export const WithReceipts = <T extends Constructor<RpcProvider>>(Base: T) =>
       const receipt = await this.waitForTx(execute, {
         successStates,
       });
-      return receipt as TransactionReceipt;
+      return receipt as unknown as TransactionReceipt;
     }
   };

@@ -52,7 +52,7 @@ describe("ArgentMultisig", function () {
         signersLength: 2,
         selfDeploy: true,
         selfDeploymentIndexes: [],
-      }).then(({ receipt }) => receipt as TransactionReceipt),
+      }).then(({ receipt }) => receipt as unknown as TransactionReceipt),
     );
 
     await expectRevertWithErrorMessage(
@@ -62,7 +62,7 @@ describe("ArgentMultisig", function () {
         signersLength: 2,
         selfDeploy: true,
         selfDeploymentIndexes: [0, 1],
-      }).then(({ receipt }) => receipt as TransactionReceipt),
+      }).then(({ receipt }) => receipt as unknown as TransactionReceipt),
     );
   });
 
@@ -70,7 +70,7 @@ describe("ArgentMultisig", function () {
     const { account } = await deployMultisig1_1({ useTxV3: true });
     await expectExecutionRevert(
       "argent/invalid-deployment-data",
-      account.execute([], undefined, {
+      account.execute([], {
         accountDeploymentData: ["0x1"],
       }),
     );

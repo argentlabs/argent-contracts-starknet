@@ -601,7 +601,7 @@ describe("ArgentAccount: escape mechanism", function () {
 
       await expectRevertWithErrorMessage(
         "argent/guardian-required",
-        account.execute([accountContract.populateTransaction.escape_guardian()], undefined, { skipValidate: false }),
+        account.execute([accountContract.populateTransaction.escape_guardian()], { skipValidate: false }),
       );
     });
 

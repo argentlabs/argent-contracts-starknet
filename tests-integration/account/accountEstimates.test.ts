@@ -38,9 +38,9 @@ describe("Estimates", function () {
         const estimate = await estimateAccount.estimateFee(call, { skipValidate: false });
         await expectRevertWithErrorMessage(
           "argent/invalid-owner-sig",
-          estimateAccount.execute(call, undefined, { ...estimate }),
+          estimateAccount.execute(call, { ...estimate }),
         );
-        await account.execute(call, undefined, { ...estimate });
+        await account.execute(call, { ...estimate });
       });
 
       it(`Use Eip191Signer using txv3: ${useTxV3}`, async function () {
@@ -61,9 +61,9 @@ describe("Estimates", function () {
         const estimate = await estimateAccount.estimateFee(call, { skipValidate: false });
         await expectRevertWithErrorMessage(
           "argent/invalid-owner-sig",
-          estimateAccount.execute(call, undefined, { ...estimate }),
+          estimateAccount.execute(call, { ...estimate }),
         );
-        await account.execute(call, undefined, { ...estimate });
+        await account.execute(call, { ...estimate });
       });
     });
 
@@ -86,9 +86,9 @@ describe("Estimates", function () {
         const estimate = await estimateAccount.estimateFee(call, { skipValidate: false });
         await expectRevertWithErrorMessage(
           "argent/invalid-signature",
-          estimateAccount.execute(call, undefined, { ...estimate }),
+          estimateAccount.execute(call, { ...estimate }),
         );
-        await account.execute(call, undefined, { ...estimate });
+        await account.execute(call, { ...estimate });
       });
 
       it(`Use Eip191Signer using txv3: ${useTxV3}`, async function () {
@@ -106,9 +106,9 @@ describe("Estimates", function () {
         const estimate = await estimateAccount.estimateFee(call, { skipValidate: false });
         await expectRevertWithErrorMessage(
           "argent/invalid-signature",
-          estimateAccount.execute(call, undefined, { ...estimate }),
+          estimateAccount.execute(call, { ...estimate }),
         );
-        await account.execute(call, undefined, { ...estimate });
+        await account.execute(call, { ...estimate });
       });
     });
   }

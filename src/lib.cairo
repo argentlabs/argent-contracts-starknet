@@ -62,9 +62,6 @@ pub mod mocks {
     mod future_argent_account;
     mod future_argent_multisig;
     mod mock_dapp;
-    mod multiowner_mock;
-    pub mod multisig_mocks;
-    mod recovery_mocks;
     mod stable_address_deployer_mock;
 }
 

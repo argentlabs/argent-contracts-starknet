@@ -1,18 +1,20 @@
 use argent::multiowner_account::events::SignerLinked;
 use argent::multisig_account::signer_manager::{OwnerAddedGuid, ThresholdUpdated, signer_manager_component};
 use argent::signer::signer_signature::{SignerTrait};
-use crate::{ITestArgentMultisigDispatcherTrait, SIGNER_1, SIGNER_2, initialize_multisig_with_one_signer};
+use crate::{
+    ITestArgentMultisigDispatcherTrait, MultisigSetup, SignerKeyPairImpl, StarknetKeyPair, initialize_multisig_m_of_n,
+};
 use snforge_std::{EventSpyAssertionsTrait, EventSpyTrait, spy_events};
 
 #[test]
 fn add_signers() {
     // init
-    let multisig = initialize_multisig_with_one_signer();
+    let MultisigSetup { multisig, .. } = initialize_multisig_m_of_n(1, 1);
     let mut spy = spy_events();
 
     // add signer
-    let signer_1 = SIGNER_2();
-    multisig.add_signers(2, array![signer_1]);
+    let new_signer = StarknetKeyPair::random().signer();
+    multisig.add_signers(2, array![new_signer]);
 
     // check
     let signers = multisig.get_signer_guids();
@@ -22,12 +24,12 @@ fn add_signers() {
     let events = array![
         (
             multisig.contract_address,
-            signer_manager_component::Event::OwnerAddedGuid(OwnerAddedGuid { new_owner_guid: signer_1.into_guid() }),
+            signer_manager_component::Event::OwnerAddedGuid(OwnerAddedGuid { new_owner_guid: new_signer.into_guid() }),
         ),
         (
             multisig.contract_address,
             signer_manager_component::Event::SignerLinked(
-                SignerLinked { signer_guid: signer_1.into_guid(), signer: signer_1 },
+                SignerLinked { signer_guid: new_signer.into_guid(), signer: new_signer },
             ),
         ),
     ];
@@ -43,10 +45,10 @@ fn add_signers() {
 #[should_panic(expected: ('linked-set/already-in-set',))]
 fn add_signer_already_in_list() {
     // init
-    let multisig = initialize_multisig_with_one_signer();
+    let MultisigSetup { multisig, signers, .. } = initialize_multisig_m_of_n(2, 2);
 
     // add signer
-    let new_signers = array![SIGNER_1()];
+    let new_signers = array![signers[0].signer()];
     multisig.add_signers(2, new_signers);
 }
 
@@ -54,10 +56,10 @@ fn add_signer_already_in_list() {
 #[should_panic(expected: ('argent/invalid-threshold',))]
 fn add_signer_zero_threshold() {
     // init
-    let multisig = initialize_multisig_with_one_signer();
+    let MultisigSetup { multisig, .. } = initialize_multisig_m_of_n(1, 1);
 
     // add signer
-    let new_signers = array![SIGNER_2()];
+    let new_signers = array![StarknetKeyPair::random().signer()];
     multisig.add_signers(0, new_signers);
 }
 
@@ -65,9 +67,9 @@ fn add_signer_zero_threshold() {
 #[should_panic(expected: ('argent/bad-threshold',))]
 fn add_signer_excessive_threshold() {
     // init
-    let multisig = initialize_multisig_with_one_signer();
+    let MultisigSetup { multisig, .. } = initialize_multisig_m_of_n(1, 1);
 
     // add signer
-    let new_signers = array![SIGNER_2()];
+    let new_signers = array![StarknetKeyPair::random().signer()];
     multisig.add_signers(3, new_signers);
 }

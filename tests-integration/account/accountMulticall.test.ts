@@ -1,6 +1,13 @@
 import { expect } from "chai";
 import { Contract, uint256 } from "starknet";
-import { deployAccount, expectEvent, expectRevertWithErrorMessage, manager, randomStarknetKeyPair } from "../../lib";
+import {
+  deployAccount,
+  expectEvent,
+  expectRevertWithErrorMessage,
+  generateRandomNumber,
+  manager,
+  randomStarknetKeyPair,
+} from "../../lib";
 
 describe("ArgentAccount: multicall", function () {
   let mockDappContract: Contract;
@@ -64,6 +71,7 @@ describe("ArgentAccount: multicall", function () {
     const { account } = await deployAccount();
     const recipient1 = "42";
     const amount1 = uint256.bnToUint256(1000);
+    const randomNumber = generateRandomNumber();
 
     const senderInitialBalance = await manager.tokens.strkBalance(account.address);
     const recipient1InitialBalance = await manager.tokens.strkBalance(recipient1);
@@ -72,7 +80,7 @@ describe("ArgentAccount: multicall", function () {
 
     const { transaction_hash: transferTxHash } = await account.execute([
       strkContract.populateTransaction.transfer(recipient1, amount1),
-      mockDappContract.populateTransaction.set_number(42),
+      mockDappContract.populateTransaction.set_number(randomNumber),
     ]);
     await account.waitForTransaction(transferTxHash);
 
@@ -82,7 +90,7 @@ describe("ArgentAccount: multicall", function () {
     // Before amount should be higher than (after + transfer) amount due to fee
     expect(Number(senderInitialBalance)).to.be.greaterThan(Number(senderFinalBalance) + 1000 + 42000);
     expect(recipient1InitialBalance + 1000n).to.equal(recipient1FinalBalance);
-    expect(finalNumber).to.equal(42n);
+    expect(finalNumber).to.equal(randomNumber);
   });
 
   it("Should keep the tx in correct order", async function () {
@@ -91,18 +99,15 @@ describe("ArgentAccount: multicall", function () {
     const initialNumber = await mockDappContract.get_number(account.address);
     expect(initialNumber).to.equal(0n);
 
-    // Please only use prime number in this test
     const { transaction_hash: transferTxHash } = await account.execute([
       mockDappContract.populateTransaction.set_number(1),
-      mockDappContract.populateTransaction.set_number_double(3),
-      mockDappContract.populateTransaction.set_number_times3(5),
-      mockDappContract.populateTransaction.set_number(7),
-      mockDappContract.populateTransaction.set_number_times3(11),
+      mockDappContract.populateTransaction.increase_number(2),
+      mockDappContract.populateTransaction.double_number(),
     ]);
     await account.waitForTransaction(transferTxHash);
 
     const finalNumber = await mockDappContract.get_number(account.address);
-    expect(finalNumber).to.equal(33n);
+    expect(finalNumber).to.equal(6n); // (1 + 2) * 2
   });
 
   it("Expect an error when a multicall contains a Call referencing the account itself", async function () {

@@ -47,6 +47,7 @@ pub mod utils {
     pub mod calls;
     pub mod hashing;
     pub mod serialization;
+    pub mod transaction;
     pub mod transaction_version;
 }
 

@@ -13,6 +13,7 @@ import {
   expectEvent,
   expectRevertWithErrorMessage,
   fundAccount,
+  generateRandomNumber,
   getUpgradeDataLegacy,
   LegacyWebauthnOwner,
   manager,
@@ -52,6 +53,7 @@ describe("ArgentAccount: upgrade", function () {
   let mockDapp: ContractWithClass;
   let classHashV040: string;
   const upgradeData: UpgradeDataEntry[] = [];
+  let randomNumber: bigint;
 
   before(async () => {
     argentAccountClassHash = await manager.declareLocalContract("ArgentAccount");
@@ -111,6 +113,10 @@ describe("ArgentAccount: upgrade", function () {
     });
   });
 
+  beforeEach(async () => {
+    randomNumber = generateRandomNumber();
+  });
+
   it("Waiting for upgradeData to be filled", function () {
     describe("Upgrade to latest version", function () {
       for (const {
@@ -161,7 +167,7 @@ describe("ArgentAccount: upgrade", function () {
           const accountV3 = await getAccountV3(account);
           mockDapp.connect(accountV3);
           // This should work as long as we support the "old" signature format [r1, s1, r2, s2]
-          await manager.ensureSuccess(mockDapp.set_number(42));
+          await manager.ensureSuccess(mockDapp.set_number(randomNumber));
         });
 
         it(`[${name}] Should be possible to upgrade without guardian from ${name}`, async function () {
@@ -170,22 +176,21 @@ describe("ArgentAccount: upgrade", function () {
           expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
           const accountV3 = await getAccountV3(account);
           mockDapp.connect(accountV3);
-          await manager.ensureSuccess(mockDapp.set_number(42));
+          await manager.ensureSuccess(mockDapp.set_number(randomNumber));
         });
 
         it(`[${name}] Upgrade cairo with multicall`, async function () {
-          const random = randomStarknetKeyPair().publicKey;
           const { account } = await deployAccount();
           const upgradeData = account.cairoVersion
-            ? CallData.compile([[mockDapp.populateTransaction.set_number(random)]])
-            : getUpgradeDataLegacy([mockDapp.populateTransaction.set_number(random)]);
+            ? CallData.compile([[mockDapp.populateTransaction.set_number(randomNumber)]])
+            : getUpgradeDataLegacy([mockDapp.populateTransaction.set_number(randomNumber)]);
           await upgradeAccount(account, argentAccountClassHash, upgradeData);
           expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
-          await mockDapp.get_number(account.address).should.eventually.equal(random);
+          await mockDapp.get_number(account.address).should.eventually.equal(randomNumber);
           // We don't really care about the value here, just that it is successful
           const accountV3 = await getAccountV3(account);
           mockDapp.connect(accountV3);
-          await manager.ensureSuccess(mockDapp.set_number(random));
+          await manager.ensureSuccess(mockDapp.set_number(randomNumber));
         });
 
         it(`[${name}] Should be possible to upgrade if an owner escape is ongoing`, async function () {
@@ -286,7 +291,7 @@ describe("ArgentAccount: upgrade", function () {
       // Since we have to do a raw call, we have the unparsed value returned
       expect(wrongGuids.length).to.equal(1);
       expect(wrongGuids[0]).to.equal("0x0");
-      await expectRevertWithErrorMessage("argent/no-single-stark-owner", mockDapp.set_number(56));
+      await expectRevertWithErrorMessage("argent/no-single-stark-owner", mockDapp.set_number(randomNumber));
 
       const { account: otherAccount } = await deployAccount();
       // Recover the signer
@@ -303,7 +308,7 @@ describe("ArgentAccount: upgrade", function () {
       expect(await newAccountContract.get_owners_guids()).to.deep.equal([newGuid]);
       mockDapp.connect(accountV3);
       // We don't really care about the value here, just that it is successful
-      await manager.ensureSuccess(mockDapp.set_number(56));
+      await manager.ensureSuccess(mockDapp.set_number(randomNumber));
     });
 
     it("Shouldn't be possible to recover the signer twice", async function () {
@@ -369,7 +374,7 @@ describe("ArgentAccount: upgrade", function () {
         if (owner instanceof LegacyWebauthnOwner) {
           accountV3.signer = new ArgentSigner(new WebauthnOwner(owner.getPrivateKey()), guardian);
         }
-        await manager.ensureSuccess(mockDapp.set_number(42));
+        await manager.ensureSuccess(mockDapp.set_number(randomNumber));
       });
 
       it(`[${name}] Testing upgrade without guardian ${name}`, async function () {
@@ -385,7 +390,7 @@ describe("ArgentAccount: upgrade", function () {
         if (owner instanceof LegacyWebauthnOwner) {
           accountV3.signer = new ArgentSigner(new WebauthnOwner(owner.getPrivateKey()));
         }
-        await manager.ensureSuccess(mockDapp.set_number(42));
+        await manager.ensureSuccess(mockDapp.set_number(randomNumber));
       });
     }
   });

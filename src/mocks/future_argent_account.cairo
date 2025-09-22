@@ -25,7 +25,7 @@ mod MockFutureArgentAccount {
     use argent::account::{IAccount, Version};
     use argent::introspection::src5_component;
     use argent::multiowner_account::argent_account::AccountSignature;
-    use argent::signer::signer_signature::{Signer, SignerSignature, SignerSignatureTrait, SignerTrait, SignerType};
+    use argent::signer::signer_signature::{Signer, SignerSignature, SignerSignatureTrait, SignerTrait};
     use argent::upgrade::{
         IUpgradableCallback, IUpgradableCallbackOld, upgrade_component, upgrade_component::UpgradableInternalImpl,
     };
@@ -75,10 +75,8 @@ mod MockFutureArgentAccount {
 
     #[constructor]
     fn constructor(ref self: ContractState, owner: Signer, guardian: Option<Signer>) {
-        assert(owner.signer_type() == SignerType::Starknet, 'argent/owner-must-be-starknet');
         self._signer.write(owner.storage_value().stored_value);
         if let Option::Some(guardian) = guardian {
-            assert(guardian.signer_type() == SignerType::Starknet, 'argent/guardian-must-be-stark');
             self._guardian.write(guardian.storage_value().stored_value);
         };
     }

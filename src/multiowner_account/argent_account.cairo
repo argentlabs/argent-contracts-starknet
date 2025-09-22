@@ -56,7 +56,6 @@ pub mod ArgentAccount {
     use argent::utils::{
         asserts::{assert_no_self_call, assert_only_protocol, assert_only_self},
         calls::{execute_multicall, execute_multicall_with_result}, serialization::{full_deserialize, serialize},
-        transaction::tx_v3_max_fee_and_tip,
         transaction_version::{
             DA_MODE_L1, TX_V1, TX_V1_ESTIMATE, TX_V3, TX_V3_ESTIMATE, assert_correct_declare_version,
             assert_correct_deploy_account_version, assert_correct_invoke_version,
@@ -792,7 +791,7 @@ pub mod ArgentAccount {
     }
 
     fn assert_valid_escape_parameters(last_timestamp: u64) {
-        let tx_info = get_tx_info().unbox();
+        let mut tx_info = get_tx_info().unbox();
         if tx_info.version == TX_V3 || tx_info.version == TX_V3_ESTIMATE {
             // No need for modes other than L1 while escaping
             assert(
@@ -803,8 +802,18 @@ pub mod ArgentAccount {
             // No need to allow self deployment and escaping in one transaction
             assert(tx_info.account_deployment_data.is_empty(), 'argent/invalid-deployment-data');
 
-            let (max_fee, max_tip) = tx_v3_max_fee_and_tip(tx_info);
             // Limit the maximum tip and maximum total fee while escaping
+            // TODO HERE USING NEW FN IN TRANSACTION.CAIRO
+            let mut max_fee: u128 = 0;
+            let mut max_tip: u128 = 0;
+            for bound in tx_info.resource_bounds {
+                let max_resource_amount: u128 = (*bound.max_amount).into();
+                max_fee += *bound.max_price_per_unit * max_resource_amount;
+                if *bound.resource == 'L2_GAS' {
+                    max_tip += tx_info.tip * max_resource_amount;
+                }
+            };
+            max_fee += max_tip;
             assert(max_tip <= MAX_ESCAPE_TIP_STRK, 'argent/tip-too-high');
             assert(max_fee <= MAX_ESCAPE_MAX_FEE_STRK, 'argent/max-fee-too-high');
         } else if tx_info.version == TX_V1 || tx_info.version == TX_V1_ESTIMATE {

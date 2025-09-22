@@ -197,6 +197,17 @@ pub impl SignerTraitImpl of SignerTrait {
         }
     }
 
+    // TODO UNUSED
+    fn signer_type(self: Signer) -> SignerType {
+        match self {
+            Signer::Starknet => SignerType::Starknet,
+            Signer::Secp256k1 => SignerType::Secp256k1,
+            Signer::Secp256r1 => SignerType::Secp256r1,
+            Signer::Eip191 => SignerType::Eip191,
+            Signer::Webauthn => SignerType::Webauthn,
+        }
+    }
+
     fn starknet_pubkey_or_none(self: Signer) -> Option<felt252> {
         match self {
             Signer::Starknet(signer) => Option::Some(signer.pubkey.into()),
@@ -232,6 +243,16 @@ pub impl SignerStorageValueImpl of SignerStorageTrait {
             SignerType::Starknet => Option::Some(self.stored_value),
             _ => Option::None,
         }
+    }
+
+    // TODO UNUSED
+    #[must_use]
+    fn to_guid_list(self: Span<SignerStorageValue>) -> Array<felt252> {
+        let mut guids = array![];
+        for signer_storage_value in self {
+            guids.append((*signer_storage_value).into_guid());
+        };
+        guids
     }
 
     #[must_use]

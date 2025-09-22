@@ -8,6 +8,7 @@ import {
   estimateWithCustomSig,
   executeWithCustomSig,
   expectRevertWithErrorMessage,
+  generateRandomNumber,
   manager,
   randomStarknetKeyPair,
   setupSession,
@@ -18,6 +19,7 @@ import { singleMethodAllowList } from "./sessionTestHelpers";
 describe("ArgentAccount: session basics", function () {
   let sessionAccountClassHash: string;
   let mockDappContract: Contract;
+  let randomNumber: bigint;
   const initialTime = 1710167933n;
 
   before(async () => {
@@ -27,6 +29,7 @@ describe("ArgentAccount: session basics", function () {
 
   beforeEach(async function () {
     await manager.setTime(initialTime);
+    randomNumber = generateRandomNumber();
   });
 
   for (const useTxV3 of [false, true]) {
@@ -40,15 +43,15 @@ describe("ArgentAccount: session basics", function () {
         guardian: guardian as StarknetKeyPair,
         account,
         expiry: initialTime + 150n,
-        allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
+        allowedMethods: singleMethodAllowList(mockDappContract, "set_number"),
       });
 
-      const calls = [mockDappContract.populateTransaction.set_number_double(2)];
+      const calls = [mockDappContract.populateTransaction.set_number(randomNumber)];
 
       const { transaction_hash } = await accountWithDappSigner.execute(calls);
 
       await account.waitForTransaction(transaction_hash);
-      await mockDappContract.get_number(accountContract.address).should.eventually.equal(4n);
+      await mockDappContract.get_number(accountContract.address).should.eventually.equal(randomNumber);
     });
   }
 
@@ -60,10 +63,10 @@ describe("ArgentAccount: session basics", function () {
       guardian: estimateGuardian,
       account,
       expiry: initialTime + 150n,
-      allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
+      allowedMethods: singleMethodAllowList(mockDappContract, "set_number"),
     });
 
-    const calls = [mockDappContract.populateTransaction.set_number_double(2)];
+    const calls = [mockDappContract.populateTransaction.set_number(randomNumber)];
     const sessionToken = await dappService.getSessionToken({
       calls,
       account: accountWithDappSigner,
@@ -87,10 +90,10 @@ describe("ArgentAccount: session basics", function () {
       guardian: guardian as StarknetKeyPair,
       account,
       expiry: initialTime + 150n,
-      allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
+      allowedMethods: singleMethodAllowList(mockDappContract, "set_number"),
     });
 
-    const calls = [mockDappContract.populateTransaction.set_number_double(2)];
+    const calls = [mockDappContract.populateTransaction.set_number(randomNumber)];
     const sessionToken = await dappService.getSessionToken({
       calls,
       account: accountWithDappSigner,
@@ -133,15 +136,15 @@ describe("ArgentAccount: session basics", function () {
       guardian: guardian as StarknetKeyPair,
       account,
       expiry: initialTime + 150n,
-      allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
+      allowedMethods: singleMethodAllowList(mockDappContract, "set_number"),
     });
 
-    const calls = [mockDappContract.populateTransaction.set_number_double(2)];
+    const calls = [mockDappContract.populateTransaction.set_number(randomNumber)];
 
     const { transaction_hash } = await accountWithDappSigner.execute(calls);
 
     await account.waitForTransaction(transaction_hash);
-    await mockDappContract.get_number(accountContract.address).should.eventually.equal(4n);
+    await mockDappContract.get_number(accountContract.address).should.eventually.equal(randomNumber);
   });
 
   it("Only execute tx if session not expired", async function () {
@@ -153,21 +156,20 @@ describe("ArgentAccount: session basics", function () {
       guardian: guardian as StarknetKeyPair,
       account,
       expiry: initialTime + 150n,
-      allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
+      allowedMethods: singleMethodAllowList(mockDappContract, "set_number"),
     });
 
-    const calls = [mockDappContract.populateTransaction.set_number_double(2)];
+    const calls = [mockDappContract.populateTransaction.set_number(randomNumber)];
     const { transaction_hash } = await accountWithDappSigner.execute(calls);
 
     // non expired session
     await manager.setTime(expiresAt - 10800n);
     await account.waitForTransaction(transaction_hash);
-    await mockDappContract.get_number(accountContract.address).should.eventually.equal(4n);
+    await mockDappContract.get_number(accountContract.address).should.eventually.equal(randomNumber);
 
     // Expired session
     await manager.setTime(expiresAt + 7200n);
     await expectRevertWithErrorMessage("session/expired", accountWithDappSigner.execute(calls));
-    await mockDappContract.get_number(accountContract.address).should.eventually.equal(4n);
   });
 
   it("Revoke a session", async function () {
@@ -177,20 +179,20 @@ describe("ArgentAccount: session basics", function () {
       guardian: guardian as StarknetKeyPair,
       account,
       expiry: initialTime + 150n,
-      allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
+      allowedMethods: singleMethodAllowList(mockDappContract, "set_number"),
     });
 
-    const calls = [mockDappContract.populateTransaction.set_number_double(2)];
+    const calls = [mockDappContract.populateTransaction.set_number(randomNumber)];
 
     const { transaction_hash } = await accountWithDappSigner.execute(calls);
 
     await account.waitForTransaction(transaction_hash);
-    await mockDappContract.get_number(accountContract.address).should.eventually.equal(4n);
+    await mockDappContract.get_number(accountContract.address).should.eventually.equal(randomNumber);
     // Revoke Session
     await accountContract.revoke_session(sessionHash);
     await accountContract.is_session_revoked(sessionHash).should.eventually.be.true;
     await expectRevertWithErrorMessage("session/revoked", accountWithDappSigner.execute(calls));
-    await mockDappContract.get_number(accountContract.address).should.eventually.equal(4n);
+    await mockDappContract.get_number(accountContract.address).should.eventually.equal(randomNumber);
 
     await expectRevertWithErrorMessage("session/already-revoked", accountContract.revoke_session(sessionHash));
   });
@@ -201,11 +203,7 @@ describe("ArgentAccount: session basics", function () {
     const allowedMethods: AllowedMethod[] = [
       {
         "Contract Address": mockDappContract.address,
-        selector: "set_number_double",
-      },
-      {
-        "Contract Address": mockDappContract.address,
-        selector: "set_number_times3",
+        selector: "set_number",
       },
       {
         "Contract Address": mockDappContract.address,
@@ -214,9 +212,8 @@ describe("ArgentAccount: session basics", function () {
     ];
 
     const calls = [
-      mockDappContract.populateTransaction.set_number_double(2),
-      mockDappContract.populateTransaction.set_number_double(4),
-      mockDappContract.populateTransaction.increase_number(2),
+      mockDappContract.populateTransaction.set_number(2),
+      mockDappContract.populateTransaction.set_number(4),
       mockDappContract.populateTransaction.increase_number(2),
     ];
 

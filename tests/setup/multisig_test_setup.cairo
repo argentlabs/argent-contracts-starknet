@@ -1,6 +1,7 @@
 use argent::account::Version;
 use argent::signer::signer_signature::{Signer, SignerSignature};
-use crate::{SIGNER_1, SIGNER_2, SIGNER_3};
+use argent::utils::serialization::serialize;
+use crate::{SignerKeyPair, SignerKeyPairImpl, StarknetKeyPair};
 use snforge_std::{ContractClass, ContractClassTrait, DeclareResultTrait, declare, start_cheat_caller_address_global};
 use starknet::account::Call;
 
@@ -47,25 +48,32 @@ pub fn declare_multisig() -> ContractClass {
     *declare("ArgentMultisigAccount").expect('Fail decl ArgentMultisigAccount').contract_class()
 }
 
-pub fn initialize_multisig() -> ITestArgentMultisigDispatcher {
-    let threshold = 1;
-    let signers_array = array![SIGNER_1(), SIGNER_2(), SIGNER_3()];
-    initialize_multisig_with(threshold, signers_array.span())
+#[derive(Drop)]
+pub struct MultisigSetup {
+    pub threshold: usize,
+    pub signers: Array<SignerKeyPair>,
+    pub multisig: ITestArgentMultisigDispatcher,
 }
 
-pub fn initialize_multisig_with_one_signer() -> ITestArgentMultisigDispatcher {
-    let threshold = 1;
-    let signers_array = array![SIGNER_1()];
-    initialize_multisig_with(threshold, signers_array.span())
+// This initializes a Multisig with all signers being over the Stark curve
+pub fn initialize_multisig_m_of_n(threshold: usize, signers_count: usize) -> MultisigSetup {
+    let mut signers = array![];
+    for _ in 0..signers_count {
+        signers.append(SignerKeyPair::Starknet(StarknetKeyPair::random()));
+    };
+    let multisig = initialize_multisig_with(threshold, signers.clone());
+    MultisigSetup { threshold, signers, multisig }
 }
 
-pub fn initialize_multisig_with(threshold: usize, signers: Span<Signer>) -> ITestArgentMultisigDispatcher {
+fn initialize_multisig_with(threshold: usize, signers: Array<SignerKeyPair>) -> ITestArgentMultisigDispatcher {
     let class_hash = declare_multisig();
-    let mut calldata = array![];
-    threshold.serialize(ref calldata);
-    signers.serialize(ref calldata);
+    let mut actual_signers = array![];
+    for signer in signers.span() {
+        actual_signers.append((*signer).signer());
+    };
+    let constructor_args = (threshold, actual_signers);
 
-    let (contract_address, _) = class_hash.deploy(@calldata).expect('Multisig deployment fail');
+    let (contract_address, _) = class_hash.deploy(@serialize(@constructor_args)).expect('Multisig deployment fail');
 
     // This will set the caller for subsequent calls (avoid 'argent/only-self')
     start_cheat_caller_address_global(contract_address);

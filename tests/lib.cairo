@@ -28,9 +28,8 @@ mod multisig {
 
 mod setup {
     pub mod argent_account_setup;
-    pub mod constants;
     pub mod multisig_test_setup;
-    pub mod utils;
+    pub mod signers;
 }
 
 mod webauthn {
@@ -41,16 +40,14 @@ mod webauthn {
 // Re-export the test setup functions to have them all available in one place
 use setup::{
     argent_account_setup::{
-        ITestArgentAccountDispatcherTrait, initialize_account, initialize_account_with,
-        initialize_account_without_guardian,
-    },
-    constants::{
-        ARGENT_ACCOUNT_ADDRESS, GUARDIAN, KeyAndSig, MULTISIG_OWNER, OWNER, SIGNER_1, SIGNER_2, SIGNER_3, SIGNER_4,
-        TX_HASH, WRONG_GUARDIAN, WRONG_OWNER,
+        ArgentAccountSetup, ArgentAccountWithoutGuardianSetup, ITestArgentAccountDispatcherTrait, initialize_account,
+        initialize_account_with_owners_and_guardians, initialize_account_without_guardian,
     },
     multisig_test_setup::{
-        ITestArgentMultisigDispatcherTrait, declare_multisig, initialize_multisig, initialize_multisig_with,
-        initialize_multisig_with_one_signer,
+        ITestArgentMultisigDispatcherTrait, MultisigSetup, declare_multisig, initialize_multisig_m_of_n,
     },
-    utils::{ByteArrayExt, Felt252TryIntoStarknetSigner, to_starknet_signatures, to_starknet_signer_signatures},
+    signers::{
+        Eip191KeyPair, Secp256k1KeyPair, Secp256r1KeyPair, SignerKeyPair, SignerKeyPairImpl, SignerKeyPairTestTrait,
+        StarknetKeyPair,
+    },
 };

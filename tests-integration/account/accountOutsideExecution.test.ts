@@ -67,7 +67,7 @@ describe("ArgentAccount: outside execution", function () {
       nonce: randomStarknetKeyPair().publicKey,
       execute_after: initialTime - 100,
       execute_before: initialTime + 100,
-      calls: [getOutsideCall(mockDapp.populateTransaction.set_number(42))],
+      calls: [getOutsideCall(mockDapp.populateTransaction.set_number(randomNumber))],
     };
     const outsideExecutionCall = await getOutsideExecutionCall(
       outsideExecution,

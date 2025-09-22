@@ -1,202 +1,260 @@
-import * as crypto from "crypto";
-import * as fs from "fs";
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "fs";
-import { dirname, resolve } from "path";
 import {
-  Abi,
-  AccountInterface,
-  CompiledContract,
-  CompiledSierra,
-  Contract,
-  DeclareContractPayload,
-  ProviderInterface,
-  UniversalDetails,
-  extractContractHashes,
-  json,
+  ArraySignatureType,
+  CairoCustomEnum,
+  Call,
+  CallData,
+  StarknetDomain,
+  TypedData,
+  TypedDataRevision,
+  byteArray,
+  hash,
+  merkle,
+  selector,
+  shortString,
+  typedData,
 } from "starknet";
-import { deployer } from "./accounts";
-import { WithDevnet } from "./devnet";
+import {
+  ArgentAccount,
+  ArgentX,
+  BackendService,
+  DappService,
+  EstimateStarknetKeyPair,
+  StarknetKeyPair,
+  manager,
+  randomStarknetKeyPair,
+} from "..";
 
-export const contractsFolder = "./target/release/argent_";
-export const fixturesFolder = "./tests-integration/fixtures/argent_";
-const artifactsFolder = "./deployments/artifacts";
-const cacheClassHashFilepath = "./dist/classHashCache.json";
+export const sessionTypes = {
+  StarknetDomain: [
+    { name: "name", type: "shortstring" },
+    { name: "version", type: "shortstring" },
+    { name: "chainId", type: "shortstring" },
+    { name: "revision", type: "shortstring" },
+  ],
+  "Allowed Method": [
+    { name: "Contract Address", type: "ContractAddress" },
+    { name: "selector", type: "selector" },
+  ],
+  Session: [
+    { name: "Expires At", type: "timestamp" },
+    { name: "Allowed Methods", type: "merkletree", contains: "Allowed Method" },
+    { name: "Metadata", type: "string" },
+    { name: "Session Key", type: "felt" },
+  ],
+};
 
-export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) =>
-  class extends Base {
-    // Maps a contract name to its class hash to avoid redeclaring the same contract
-    protected declaredContracts: Record<string, string> = {};
-    // Holds the latest know class hashes for a given contract
-    // It doesn't guarantee that the class hash is up to date, or that the contact is declared
-    // They key is the fileHash of the contract class file
-    protected cacheClassHashes: Record<string, { compiledClassHash: string | undefined; classHash: string }> = {};
+export const ALLOWED_METHOD_HASH = typedData.getTypeHash(sessionTypes, "Allowed Method", TypedDataRevision.ACTIVE);
 
-    protected abiCache: Record<string, Abi> = {};
+export interface AllowedMethod {
+  "Contract Address": string;
+  selector: string;
+}
 
-    clearClassCache() {
-      for (const contractName of Object.keys(this.declaredContracts)) {
-        delete this.declaredContracts[contractName];
-      }
-    }
+export interface OnChainSession {
+  expires_at: bigint;
+  allowed_methods_root: string;
+  metadata_hash: string;
+  session_key_guid: bigint;
+}
 
-    async restartDevnetAndClearClassCache() {
-      if (this.isDevnet) {
-        await this.restart();
-        this.clearClassCache();
-      }
-    }
+export class SessionToken {
+  public session: Session;
+  public proofs: string[][];
+  public cacheOwnerGuid?: bigint;
+  public sessionAuthorization?: string[];
+  public sessionSignature: CairoCustomEnum;
+  public guardianSignature: CairoCustomEnum;
+  private legacyMode: boolean;
 
-    // Could extends Account to add our specific fn but that's too early.
-    async declareLocalContract(contractName: string, wait = true, folder = contractsFolder): Promise<string> {
-      const cachedClass = this.declaredContracts[contractName];
-      if (cachedClass) {
-        return cachedClass;
-      }
+  constructor({
+    session,
+    cacheOwnerGuid,
+    sessionAuthorization,
+    sessionSignature,
+    guardianSignature,
+    calls,
+    isLegacyAccount,
+  }: {
+    session: Session;
+    cacheOwnerGuid?: bigint;
+    sessionAuthorization?: string[];
+    sessionSignature: CairoCustomEnum;
+    guardianSignature: CairoCustomEnum;
+    calls: Call[];
+    isLegacyAccount: boolean;
+  }) {
+    this.session = session;
+    this.proofs = session.getProofs(calls);
+    this.cacheOwnerGuid = cacheOwnerGuid;
+    this.sessionAuthorization = sessionAuthorization;
+    this.sessionSignature = sessionSignature;
+    this.guardianSignature = guardianSignature;
+    this.legacyMode = isLegacyAccount;
+  }
 
-      const payload = getDeclareContractPayload(contractName, folder);
-      let details: UniversalDetails | undefined;
-      // Setting resourceBounds skips estimate
-      if (this.isDevnet) {
-        details = {
-          skipValidate: true,
-          resourceBounds: {
-            l2_gas: { max_amount: "0x0", max_price_per_unit: "0x0" },
-            l1_gas: { max_amount: "0x30000", max_price_per_unit: "0x300000000000" },
-          },
-        };
-      }
+  public compileSignature(): string[] {
+    const SESSION_MAGIC = shortString.encodeShortString("session-token");
+    const tokenData = {
+      session: this.session.toOnChainSession(),
+      ...(this.legacyMode
+        ? { cache_authorization: this.cacheOwnerGuid !== undefined }
+        : { cache_owner_guid: this.cacheOwnerGuid ?? 0 }),
+      session_authorization: this.sessionAuthorization ?? [],
+      session_signature: this.sessionSignature,
+      guardian_signature: this.guardianSignature,
+      proofs: this.proofs,
+    };
+    return [SESSION_MAGIC, ...CallData.compile(tokenData)];
+  }
+}
 
-      // If cache isn't initialized, initialize it
-      if (Object.keys(this.cacheClassHashes).length === 0) {
-        if (!existsSync(cacheClassHashFilepath)) {
-          mkdirSync(dirname(cacheClassHashFilepath), { recursive: true });
-          writeFileSync(cacheClassHashFilepath, "{}");
-        }
-
-        this.cacheClassHashes = JSON.parse(readFileSync(cacheClassHashFilepath).toString("ascii"));
-      }
-
-      const fileHash = await hashFileFast(`${folder}${contractName}.contract_class.json`);
-
-      // If the contract is not in the cache, extract the class hash and add it to the cache
-      if (!this.cacheClassHashes[fileHash]) {
-        console.log(`Updating cache for ${contractName} (${fileHash})`);
-        const { compiledClassHash, classHash } = extractContractHashes(payload);
-        this.cacheClassHashes[fileHash] = { compiledClassHash, classHash };
-        writeFileSync(cacheClassHashFilepath, JSON.stringify(this.cacheClassHashes, null, 2));
-      }
-
-      // Populate the payload with the class hash
-      // If you don't restart devnet, and provide a wrong compiledClassHash, it will work
-      payload.compiledClassHash = this.cacheClassHashes[fileHash].compiledClassHash;
-      payload.classHash = this.cacheClassHashes[fileHash].classHash;
-
-      const { class_hash, transaction_hash } = await deployer.declareIfNot(payload, details);
-      if (wait && transaction_hash) {
-        await this.waitForTransaction(transaction_hash);
-        console.log(`\t${contractName} declared`);
-      }
-      this.declaredContracts[contractName] = class_hash;
-      this.abiCache[class_hash] = (payload.contract as CompiledContract).abi;
-      return class_hash;
-    }
-
-    async declareFixtureContract(contractName: string, wait = true): Promise<string> {
-      return await this.declareLocalContract(contractName, wait, fixturesFolder);
-    }
-
-    async declareArtifactAccountContract(contractVersion: string, wait = true): Promise<string> {
-      const allArtifactsFolders = getSubfolders(artifactsFolder);
-      let contractName = allArtifactsFolders.find((folder) => folder.startsWith(`account-${contractVersion}`));
-      if (!contractName) {
-        throw new Error(`No contract found for version ${contractVersion}`);
-      }
-      contractName = `/${contractName}/ArgentAccount`;
-      return await this.declareLocalContract(contractName, wait, artifactsFolder);
-    }
-
-    async declareArtifactMultisigContract(contractVersion: string, wait = true): Promise<string> {
-      const allArtifactsFolders = getSubfolders(artifactsFolder);
-      let contractName = allArtifactsFolders.find((folder) => folder.startsWith(`multisig-${contractVersion}`));
-      if (!contractName) {
-        throw new Error(`No contract found for version ${contractVersion}`);
-      }
-      contractName = `/${contractName}/ArgentMultisig`;
-      return await this.declareLocalContract(contractName, wait, artifactsFolder);
-    }
-
-    async loadContract(contractAddress: string, classHash?: string): Promise<ContractWithClass> {
-      classHash ??= await this.getClassHashAt(contractAddress);
-      let abi = this.abiCache[classHash];
-      if (!abi) {
-        abi = (await this.getClassAt(contractAddress)).abi;
-        this.abiCache[classHash] = abi;
-      }
-      return new ContractWithClass(abi, contractAddress, this, classHash);
-    }
-
-    async declareAndDeployContract(contractName: string): Promise<ContractWithClass> {
-      const classHash = await this.declareLocalContract(contractName, true, contractsFolder);
-      const { contract_address } = await deployer.deployContract({ classHash });
-
-      return await this.loadContract(contract_address, classHash);
-    }
-  };
-
-export class ContractWithClass extends Contract {
+export class Session {
   constructor(
-    abi: Abi,
-    address: string,
-    providerOrAccount: ProviderInterface | AccountInterface,
-    public readonly classHash: string,
-  ) {
-    super(abi, address, providerOrAccount);
+    public expiresAt: bigint,
+    public allowedMethods: AllowedMethod[],
+    public metadata: string,
+    public sessionKeyGuid?: bigint,
+    private legacyMode = false,
+  ) {}
+
+  private buildMerkleTree(): merkle.MerkleTree {
+    const leaves = this.allowedMethods.map((method) =>
+      hash.computePoseidonHashOnElements([
+        ALLOWED_METHOD_HASH,
+        method["Contract Address"],
+        selector.getSelectorFromName(method.selector),
+      ]),
+    );
+    return new merkle.MerkleTree(leaves, hash.computePoseidonHash);
+  }
+
+  public getProofs(calls: Call[]): string[][] {
+    const merkleTree = this.buildMerkleTree();
+    return calls.map((call) => {
+      const allowedIndex = this.allowedMethods.findIndex((allowedMethod) => {
+        return allowedMethod["Contract Address"] == call.contractAddress && allowedMethod.selector == call.entrypoint;
+      });
+      return merkleTree.getProof(merkleTree.leaves[allowedIndex], merkleTree.leaves);
+    });
+  }
+
+  public async isSessionCached(
+    accountAddress: string,
+    cacheOwnerGuid?: bigint,
+    cacheGuardianGuid?: bigint,
+  ): Promise<boolean> {
+    if (!cacheOwnerGuid || !cacheGuardianGuid) return false;
+    const sessionContract = await manager.loadContract(accountAddress);
+    const sessionMessageHash = typedData.getMessageHash(await this.getTypedData(), accountAddress);
+    if (this.legacyMode) {
+      return await sessionContract.is_session_authorization_cached(sessionMessageHash);
+    }
+    return await sessionContract.is_session_authorization_cached(sessionMessageHash, cacheOwnerGuid, cacheGuardianGuid);
+  }
+
+  public async hashWithTransaction(
+    transactionHash: string,
+    accountAddress: string,
+    cacheOwnerGuid?: bigint,
+  ): Promise<string> {
+    const sessionMessageHash = typedData.getMessageHash(await this.getTypedData(), accountAddress);
+    const sessionWithTxHash = hash.computePoseidonHashOnElements([
+      transactionHash,
+      sessionMessageHash,
+      this.legacyMode ? +(cacheOwnerGuid != undefined) : cacheOwnerGuid ?? 0,
+    ]);
+    return sessionWithTxHash;
+  }
+
+  public async getTypedData(): Promise<TypedData> {
+    return {
+      types: sessionTypes,
+      primaryType: "Session",
+      domain: await this.getSessionDomain(),
+      message: {
+        "Expires At": this.expiresAt,
+        "Allowed Methods": this.allowedMethods,
+        Metadata: this.metadata,
+        "Session Key": this.sessionKeyGuid,
+      },
+    };
+  }
+
+  private async getSessionDomain(): Promise<StarknetDomain> {
+    // WARNING! Revision is encoded as a number in the StarkNetDomain type and not as shortstring
+    // This is due to a bug in the Braavos implementation, and has been kept for compatibility
+    const chainId = await manager.getChainId();
+    return {
+      name: "SessionAccount.session",
+      version: shortString.encodeShortString("1"),
+      chainId: chainId,
+      revision: "1",
+    };
+  }
+
+  public toOnChainSession(): OnChainSession {
+    const bArray = byteArray.byteArrayFromString(this.metadata);
+    const metadataHash = hash.computePoseidonHashOnElements(CallData.compile(bArray));
+
+    return {
+      expires_at: this.expiresAt,
+      allowed_methods_root: this.buildMerkleTree().root.toString(),
+      metadata_hash: metadataHash,
+      session_key_guid: this.sessionKeyGuid ?? 0n,
+    };
   }
 }
 
-export function getDeclareContractPayload(contractName: string, folder = contractsFolder): DeclareContractPayload {
-  const contract: CompiledSierra = readContract(`${folder}${contractName}.contract_class.json`);
-  const payload: DeclareContractPayload = { contract };
-  if ("sierra_program" in contract) {
-    payload.casm = readContract(`${folder}${contractName}.compiled_contract_class.json`);
-  }
-  return payload;
+interface SessionSetup {
+  accountWithDappSigner: ArgentAccount;
+  sessionHash: string;
+  allowedMethods: AllowedMethod[];
+  sessionRequest: Session;
+  authorizationSignature: ArraySignatureType;
+  backendService: BackendService;
+  dappService: DappService;
+  argentX: ArgentX;
 }
 
-export function readContract(path: string) {
-  return json.parse(readFileSync(path).toString("ascii"));
-}
+export async function setupSession({
+  guardian,
+  account,
+  allowedMethods,
+  expiry = BigInt(Date.now()) + 10000n,
+  dappKey = randomStarknetKeyPair(),
+  cacheOwnerGuid = undefined,
+  isLegacyAccount = false,
+}: {
+  guardian: StarknetKeyPair | EstimateStarknetKeyPair;
+  account: ArgentAccount;
+  mockDappContractAddress?: string;
+  allowedMethods: AllowedMethod[];
+  expiry?: bigint;
+  dappKey?: StarknetKeyPair;
+  cacheOwnerGuid?: bigint;
+  isLegacyAccount?: boolean;
+}): Promise<SessionSetup> {
+  const backendService = new BackendService(guardian);
+  const dappService = new DappService(backendService, dappKey);
+  const argentX = new ArgentX(account, backendService);
+  const sessionRequest = dappService.createSessionRequest(allowedMethods, expiry, isLegacyAccount);
+  const sessionTypedData = await sessionRequest.getTypedData();
+  const authorizationSignature = await argentX.getOffchainSignature(sessionTypedData);
 
-/**
- * Get all subfolders in a directory.
- * @param dirPath The directory path to search.
- * @returns An array of subfolder names.
- */
-function getSubfolders(dirPath: string): string[] {
-  try {
-    // Resolve the directory path to an absolute path
-    const absolutePath = resolve(dirPath);
-
-    // Read all items in the directory
-    const items = readdirSync(absolutePath, { withFileTypes: true });
-
-    // Filter for directories and map to their names
-    const folders = items.filter((item) => item.isDirectory()).map((folder) => folder.name);
-
-    return folders;
-  } catch (err) {
-    throw new Error(`Error reading the directory at ${dirPath}`);
-  }
-}
-
-// This has to be fast. We don't care much about collisions
-async function hashFileFast(filePath: string): Promise<string> {
-  const hash = crypto.createHash("md5");
-  const stream = fs.createReadStream(filePath);
-
-  for await (const chunk of stream) {
-    hash.update(chunk);
-  }
-
-  return hash.digest("hex");
+  return {
+    accountWithDappSigner: dappService.getAccountWithSessionSigner(
+      account,
+      sessionRequest,
+      authorizationSignature,
+      cacheOwnerGuid,
+      isLegacyAccount,
+    ),
+    sessionHash: typedData.getMessageHash(sessionTypedData, account.address),
+    allowedMethods,
+    sessionRequest,
+    authorizationSignature,
+    backendService,
+    dappService,
+    argentX,
+  };
 }

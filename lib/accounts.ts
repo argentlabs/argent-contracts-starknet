@@ -429,6 +429,8 @@ export async function estimateWithCustomSig(
   return await newAccount.estimateFee(transactions);
 }
 
+class ShouldNotExecuteError extends Error {}
+
 export async function getSignerDetails(account: ArgentAccount, calls: Call[]): Promise<InvocationsSignerDetails> {
   const newAccount = new ArgentAccount(
     manager,
@@ -441,7 +443,7 @@ export async function getSignerDetails(account: ArgentAccount, calls: Call[]): P
     public signerDetails?: InvocationsSignerDetails;
     public async signTransaction(_calls: Call[], signerDetails: InvocationsSignerDetails): Promise<Signature> {
       this.signerDetails = signerDetails;
-      throw Error("Should not execute");
+      throw new ShouldNotExecuteError();
     }
     public async signRaw(_messageHash: string): Promise<string[]> {
       throw Error("Not implemented");
@@ -451,8 +453,11 @@ export async function getSignerDetails(account: ArgentAccount, calls: Call[]): P
   try {
     // Hardcoding skipValidate to skip estimation
     await newAccount.execute(calls, undefined, { skipValidate: true });
-    throw Error("Should not execute");
-  } catch (customError) {
+    throw Error("Execution didn't fail");
+  } catch (error) {
+    if (!(error instanceof ShouldNotExecuteError)) {
+      throw error;
+    }
     return customSigner.signerDetails!;
   }
 }

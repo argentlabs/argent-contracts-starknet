@@ -249,6 +249,7 @@ class SessionSigner extends RawSigner {
     super();
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public async signRaw(messageHash: string): Promise<string[]> {
     throw new Error("Method not implemented.");
   }

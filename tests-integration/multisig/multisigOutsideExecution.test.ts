@@ -6,6 +6,7 @@ import {
   deployer,
   expectExecutionRevert,
   expectRevertWithErrorMessage,
+  generateRandomNumber,
   getOutsideCall,
   getOutsideExecutionCall,
   getTypedDataHash,
@@ -19,9 +20,14 @@ const activeRevision = TypedDataRevision.ACTIVE;
 const initialTime = 1713139200;
 describe("ArgentMultisig: outside execution", function () {
   let mockDapp: Contract;
+  let randomNumber: bigint;
 
   before(async () => {
     mockDapp = await manager.declareAndDeployContract("MockDapp");
+  });
+
+  beforeEach(async () => {
+    randomNumber = generateRandomNumber();
   });
 
   it("Correct message hash", async function () {
@@ -59,7 +65,7 @@ describe("ArgentMultisig: outside execution", function () {
       nonce: randomStarknetKeyPair().privateKey,
       execute_after: initialTime - 100,
       execute_before: initialTime + 100,
-      calls: [getOutsideCall(mockDapp.populateTransaction.set_number(42))],
+      calls: [getOutsideCall(mockDapp.populateTransaction.set_number(randomNumber))],
     };
     const outsideExecutionCall = await getOutsideExecutionCall(
       outsideExecution,
@@ -115,7 +121,7 @@ describe("ArgentMultisig: outside execution", function () {
     // normal scenario
     await accountContract.is_valid_outside_execution_nonce(outsideExecution.nonce).should.eventually.equal(true);
     await manager.waitForTx(deployer.execute(outsideExecutionCall));
-    await mockDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
+    await mockDapp.get_number(account.address).should.eventually.equal(randomNumber, "invalid new value");
     await accountContract.is_valid_outside_execution_nonce(outsideExecution.nonce).should.eventually.equal(false);
 
     // ensure a transaction can't be replayed
@@ -132,7 +138,7 @@ describe("ArgentMultisig: outside execution", function () {
       nonce: randomStarknetKeyPair().privateKey,
       execute_after: 0,
       execute_before: initialTime + 100,
-      calls: [getOutsideCall(mockDapp.populateTransaction.set_number(42))],
+      calls: [getOutsideCall(mockDapp.populateTransaction.set_number(randomNumber))],
     };
     const outsideExecutionCall = await getOutsideExecutionCall(
       outsideExecution,
@@ -145,7 +151,7 @@ describe("ArgentMultisig: outside execution", function () {
 
     // ensure the caller is not used
     await manager.waitForTx(deployer.execute(outsideExecutionCall));
-    await mockDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
+    await mockDapp.get_number(account.address).should.eventually.equal(randomNumber, "invalid new value");
   });
 
   it("Basics: Rev 1", async function () {
@@ -213,7 +219,7 @@ describe("ArgentMultisig: outside execution", function () {
     // normal scenario
     await accountContract.is_valid_outside_execution_nonce(outsideExecution.nonce).should.eventually.equal(true);
     await manager.waitForTx(deployer.execute(outsideExecutionCall));
-    await mockDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
+    await mockDapp.get_number(account.address).should.eventually.equal(randomNumber, "invalid new value");
     await accountContract.is_valid_outside_execution_nonce(outsideExecution.nonce).should.eventually.equal(false);
 
     // ensure a transaction can't be replayed
@@ -230,7 +236,7 @@ describe("ArgentMultisig: outside execution", function () {
       nonce: randomStarknetKeyPair().publicKey,
       execute_after: 0,
       execute_before: initialTime + 100,
-      calls: [getOutsideCall(mockDapp.populateTransaction.set_number(42))],
+      calls: [getOutsideCall(mockDapp.populateTransaction.set_number(randomNumber))],
     };
     const outsideExecutionCall = await getOutsideExecutionCall(
       outsideExecution,
@@ -243,7 +249,7 @@ describe("ArgentMultisig: outside execution", function () {
 
     // ensure the caller is not used
     await manager.waitForTx(deployer.execute(outsideExecutionCall));
-    await mockDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
+    await mockDapp.get_number(account.address).should.eventually.equal(randomNumber, "invalid new value");
   });
 
   it("No reentrancy", async function () {

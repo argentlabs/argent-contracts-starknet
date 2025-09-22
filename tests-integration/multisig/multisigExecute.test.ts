@@ -6,15 +6,21 @@ import {
   deployMultisig1_1,
   expectEvent,
   expectRevertWithErrorMessage,
+  generateRandomNumber,
   manager,
   sortByGuid,
 } from "../../lib";
 
 describe("ArgentMultisig: Execute", function () {
   let mockDappContract: Contract;
+  let randomNumber: bigint;
 
   before(async () => {
     mockDappContract = await manager.declareAndDeployContract("MockDapp");
+  });
+
+  beforeEach(async () => {
+    randomNumber = generateRandomNumber();
   });
 
   for (const useTxV3 of [false, true]) {
@@ -24,10 +30,10 @@ describe("ArgentMultisig: Execute", function () {
       await mockDappContract.get_number(account.address).should.eventually.equal(0n);
 
       mockDappContract.connect(account);
-      const { transaction_hash } = await mockDappContract.increase_number(42);
+      const { transaction_hash } = await mockDappContract.increase_number(randomNumber);
 
       const finalNumber = await mockDappContract.get_number(account.address);
-      expect(finalNumber).to.equal(42n);
+      expect(finalNumber).to.equal(randomNumber);
 
       await expectEvent(transaction_hash, {
         from_address: account.address,
@@ -44,9 +50,9 @@ describe("ArgentMultisig: Execute", function () {
     account.signer = new MultisigSigner(sortByGuid(keys).slice(0, 1));
 
     mockDappContract.connect(account);
-    await mockDappContract.set_number(42);
+    await mockDappContract.set_number(randomNumber);
 
-    await mockDappContract.get_number(account.address).should.eventually.equal(42n);
+    await mockDappContract.get_number(account.address).should.eventually.equal(randomNumber);
   });
 
   it("Should be able to execute a transaction using multiple owners when (signer_list > 1, threshold > 1)", async function () {
@@ -55,10 +61,10 @@ describe("ArgentMultisig: Execute", function () {
     account.signer = new MultisigSigner(sortByGuid(keys).slice(0, 3));
 
     mockDappContract.connect(account);
-    const calls = [mockDappContract.populateTransaction.set_number(42)];
+    const calls = [mockDappContract.populateTransaction.set_number(randomNumber)];
     await account.execute(calls);
 
-    await mockDappContract.get_number(account.address).should.eventually.equal(42n);
+    await mockDappContract.get_number(account.address).should.eventually.equal(randomNumber);
   });
 
   it("Should be able to execute multiple transactions using multiple owners when (signer_list > 1, threshold > 1)", async function () {
@@ -84,7 +90,7 @@ describe("ArgentMultisig: Execute", function () {
     const wrongSignerOrder = [keys[1], keys[3], keys[0]];
     account.signer = new MultisigSigner(wrongSignerOrder);
 
-    await expectRevertWithErrorMessage("argent/signatures-not-sorted", mockDappContract.set_number(42));
+    await expectRevertWithErrorMessage("argent/signatures-not-sorted", mockDappContract.set_number(randomNumber));
   });
 
   it("Expect 'argent/signatures-not-sorted' when tx is signed by one owner twice (signer_list > 1, threshold > 1)", async function () {
@@ -96,6 +102,6 @@ describe("ArgentMultisig: Execute", function () {
     const repeatedSigners = [keys[0], keys[0], keys[1]];
     account.signer = new MultisigSigner(repeatedSigners);
 
-    await expectRevertWithErrorMessage("argent/signatures-not-sorted", mockDappContract.set_number(42));
+    await expectRevertWithErrorMessage("argent/signatures-not-sorted", mockDappContract.set_number(randomNumber));
   });
 });

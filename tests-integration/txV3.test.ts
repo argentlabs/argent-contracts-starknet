@@ -1,5 +1,5 @@
 import { Contract } from "starknet";
-import { deployAccount, deployMultisig1_1, expectRevertWithErrorMessage, manager } from "../lib";
+import { deployAccount, deployMultisig1_1, expectRevertWithErrorMessage, generateRandomNumber, manager } from "../lib";
 
 for (const accountType of ["individual", "multisig"]) {
   describe(`TxV3 ${accountType} account`, function () {
@@ -22,15 +22,16 @@ for (const accountType of ["individual", "multisig"]) {
     it("Should be possible to call dapp", async function () {
       const { account } = await deployAccountType();
       mockDapp.connect(account);
-      const { transaction_hash: transferTxHash } = await mockDapp.set_number(42n);
+      const randomNumber = generateRandomNumber();
+      const { transaction_hash: transferTxHash } = await mockDapp.set_number(randomNumber);
       await account.waitForTransaction(transferTxHash);
-      await mockDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
+      await mockDapp.get_number(account.address).should.eventually.equal(randomNumber, "invalid new value");
     });
 
     it("Should reject paymaster data", async function () {
       const { account } = await deployAccountType();
       mockDapp.connect(account);
-      const call = mockDapp.populateTransaction.set_number(42n);
+      const call = mockDapp.populateTransaction.set_number(generateRandomNumber());
       await expectRevertWithErrorMessage(
         "argent/unsupported-paymaster",
         account.execute(call, undefined, {

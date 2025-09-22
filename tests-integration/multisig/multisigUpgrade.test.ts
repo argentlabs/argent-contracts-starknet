@@ -12,6 +12,7 @@ import {
   deployMultisig1_1,
   expectEvent,
   fundAccount,
+  generateRandomNumber,
   manager,
   signerTypeToCustomEnum,
   sortByGuid,
@@ -134,10 +135,13 @@ describe("ArgentMultisig: upgrade", function () {
 
             // Default estimation is too low, we need to increase it
             mockDapp.connect(accountV3);
-            const estimate = await mockDapp.estimateFee.set_number(42);
+            const randomNumber = generateRandomNumber();
+            const estimate = await mockDapp.estimateFee.set_number(randomNumber);
             estimate.resourceBounds.l1_gas.max_amount = estimate.resourceBounds.l1_gas.max_amount * 4;
             // Perform a simple dapp interaction to make sure nothing is broken
-            await manager.ensureSuccess(accountV3.execute(mockDapp.populateTransaction.set_number(42), estimate));
+            await manager.ensureSuccess(
+              accountV3.execute(mockDapp.populateTransaction.set_number(randomNumber), estimate),
+            );
           });
         }
       }

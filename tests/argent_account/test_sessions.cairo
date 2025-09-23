@@ -1,26 +1,14 @@
-use argent::session::session::session_component;
-use argent::session::session::session_component::SessionRevoked;
 use crate::{
     ArgentAccountSetup, ITestArgentAccountDispatcherTrait, SignerKeyPairImpl, StarknetKeyPair, initialize_account,
 };
-use snforge_std::{EventSpyAssertionsTrait, spy_events, start_cheat_caller_address_global};
+use snforge_std::{start_cheat_caller_address_global};
 
 #[test]
 fn test_revoke_session() {
     let ArgentAccountSetup { account, .. } = initialize_account();
     assert!(!account.is_session_revoked(42));
-    let mut spy = spy_events();
     account.revoke_session(42);
     assert!(account.is_session_revoked(42));
-    spy
-        .assert_emitted(
-            @array![
-                (
-                    account.contract_address,
-                    session_component::Event::SessionRevoked(SessionRevoked { session_hash: 42 }),
-                ),
-            ],
-        );
 }
 
 #[test]

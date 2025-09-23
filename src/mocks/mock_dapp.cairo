@@ -21,7 +21,6 @@ mod MockDapp {
     #[storage]
     struct Storage {
         stored_number: Map<ContractAddress, felt252>,
-        revoked: Map<ContractAddress, felt252>,
     }
 
     #[abi(embed_v0)]

@@ -11,8 +11,8 @@ export class TokenManager {
 
   constructor(private manager: Manager) {}
 
-  async feeTokenContract(useTxV3: boolean): Promise<Contract> {
-    return useTxV3 ? this.strkContract() : this.ethContract();
+  async feeTokenContract(): Promise<Contract> {
+    return this.strkContract();
   }
 
   async ethContract(): Promise<Contract> {
@@ -23,7 +23,7 @@ export class TokenManager {
     if (ethProxy.abi.some((entry) => entry.name == "implementation")) {
       const { address } = await ethProxy.implementation();
       const { abi } = await this.manager.loadContract(num.toHex(address));
-      this.ethCache = new Contract(abi, ethAddress, ethProxy.providerOrAccount);
+      this.ethCache = new Contract({ abi, address: ethAddress, providerOrAccount: ethProxy.providerOrAccount });
     } else {
       this.ethCache = ethProxy;
     }

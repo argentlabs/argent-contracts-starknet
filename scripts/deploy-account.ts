@@ -8,7 +8,7 @@ console.log("MockDapp class hash:", mockDappClassHash);
 
 console.log("Deploying new account");
 // Deploy an account with 2 STRK
-const { account } = await deployAccount({ classHash: accountClassHash, fundingAmount: 2 * 1e18, useTxV3: true });
+const { account } = await deployAccount({ classHash: accountClassHash, fundingAmount: 2 * 1e18 });
 console.log("Account address:", account.address);
 
 console.log("Deploying new test dapp");
@@ -17,7 +17,7 @@ console.log("MockDapp address:", contract_address);
 const mockDappContract = await manager.loadContract(contract_address);
 
 console.log("Calling test dapp");
-mockDappContract.connect(account);
+mockDappContract.providerOrAccount = account;
 const response = await mockDappContract.set_number(42n);
 await manager.waitForTx(response.transaction_hash);
 

@@ -401,7 +401,7 @@ describe("Session Account: execute caching", function () {
 
       const newContract = await manager.loadContract(account.address, argentAccountClassHash);
 
-      newContract.connect(account);
+      newContract.providerOrAccount = account;
       const newOwner = randomStarknetKeyPair();
       await newContract.change_owners(
         CallData.compile({

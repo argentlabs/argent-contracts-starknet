@@ -9,20 +9,19 @@ import {
   Call,
   CallData,
   Contract,
-  EstimateFee,
-  EstimateFeeAction,
+  ETransactionVersion,
+  EstimateFeeResponseOverhead,
   InvocationsSignerDetails,
   InvokeFunctionResponse,
-  Provider,
   ProviderInterface,
   ProviderOptions,
-  RPC,
   RawCalldata,
   Signature,
   SignerInterface,
   TransactionReceipt,
   TypedDataRevision,
   UniversalDetails,
+  defaultDeployer,
   hash,
   num,
   uint256,
@@ -39,30 +38,37 @@ export class ArgentAccount extends Account {
     address: string,
     pkOrSigner: string | Uint8Array | SignerInterface,
     cairoVersion: CairoVersion = "1",
-    transactionVersion: "0x2" | "0x3" = "0x3",
   ) {
-    super(providerOrOptions, address, pkOrSigner, cairoVersion, transactionVersion);
+    // TODO Update to use the new Account constructor
+    // TODO Check where transacationVersion = 0x2 is used
+    super({
+      provider: providerOrOptions,
+      address,
+      signer: pkOrSigner,
+      cairoVersion,
+      transactionVersion: ETransactionVersion.V3,
+    });
   }
 
-  override async getSuggestedFee(action: EstimateFeeAction, details: UniversalDetails): Promise<EstimateFee> {
-    if (!details.skipValidate) {
-      details.skipValidate = false;
-    }
-    if (this.signer instanceof ArgentSigner) {
-      const { owner, guardian } = this.signer as ArgentSigner;
-      const estimateSigner = new ArgentSigner(owner.estimateSigner, guardian?.estimateSigner);
-      const estimateAccount = new Account(
-        this as Provider,
-        this.address,
-        estimateSigner,
-        this.cairoVersion,
-        this.transactionVersion,
-      );
-      return await estimateAccount.getSuggestedFee(action, details);
-    } else {
-      return await super.getSuggestedFee(action, details);
-    }
-  }
+  // override async getSuggestedFee(action: EstimateFeeAction, details: UniversalDetails): Promise<EstimateFee> {
+  //   if (!details.skipValidate) {
+  //     details.skipValidate = false;
+  //   }
+  //   if (this.signer instanceof ArgentSigner) {
+  //     const { owner, guardian } = this.signer as ArgentSigner;
+  //     const estimateSigner = new ArgentSigner(owner.estimateSigner, guardian?.estimateSigner);
+  //     const estimateAccount = new Account(
+  //       this as Provider,
+  //       this.address,
+  //       estimateSigner,
+  //       this.cairoVersion,
+  //       this.transactionVersion,
+  //     );
+  //     return await estimateAccount.getSuggestedFee(action, details);
+  //   } else {
+  //     return await super.getSuggestedFee(action, details);
+  //   }
+  // }
 }
 
 class ArgentWallet implements ArgentWallet {
@@ -97,7 +103,7 @@ class ArgentWallet implements ArgentWallet {
     },
   ): Promise<ArgentWallet> {
     const accountContract = await manager.loadContract(finalParams.account.address);
-    accountContract.connect(finalParams.account);
+    accountContract.providerOrAccount = finalParams.account;
 
     return new ArgentWallet(
       finalParams.account,
@@ -122,12 +128,24 @@ export const deployer = (() => {
   if (manager.isDevnet) {
     const devnetAddress = "0x64b48806902a367c8598f4f95c305e8c1a1acba5f082d294a43793113115691";
     const devnetPrivateKey = "0x71d7bb07b9a64f6f78ac4c816aff4da9";
-    return new Account(manager, devnetAddress, devnetPrivateKey, "1", RPC.ETransactionVersion.V3);
+    return new Account({
+      provider: manager,
+      address: devnetAddress,
+      signer: devnetPrivateKey,
+      cairoVersion: "1",
+      transactionVersion: ETransactionVersion.V3,
+    });
   }
   const address = process.env.ADDRESS;
   const privateKey = process.env.PRIVATE_KEY;
   if (address && privateKey) {
-    return new Account(manager, address, privateKey, "1", RPC.ETransactionVersion.V3);
+    return new Account({
+      provider: manager,
+      address,
+      signer: privateKey,
+      cairoVersion: "1",
+      transactionVersion: ETransactionVersion.V3,
+    });
   }
   throw new Error("Missing deployer address or private key, please set ADDRESS and PRIVATE_KEY env variables.");
 })();
@@ -165,7 +183,7 @@ async function deployOldAccountWithProxyInner(
 
   const contractAddress = hash.calculateContractAddressFromHash(salt, proxyClassHash, constructorCalldata, 0);
 
-  const account = new Account(manager, contractAddress, owner);
+  const account = new Account({ provider: manager, address: contractAddress, signer: owner });
   const keys = [owner];
   if (guardian) {
     keys.push(guardian);
@@ -183,9 +201,9 @@ async function deployOldAccountWithProxyInner(
   await manager.waitForTx(transaction_hash);
 
   const { abi } = await manager.getClass(oldArgentAccountClassHash);
-  const accountContract = new Contract(abi, account.address, account);
+  const accountContract = new Contract({ abi, address: account.address, providerOrAccount: account });
 
-  accountContract.connect(account);
+  accountContract.providerOrAccount = account;
   return { account, accountContract, owner, guardian };
 }
 
@@ -201,7 +219,6 @@ async function deployAccountInner(params: DeployAccountParams): Promise<ArgentWa
     salt: params.salt ?? num.toHex(randomStarknetKeyPair().privateKey),
     owners: owners ?? [randomStarknetKeyPair()],
     guardians: guardians ?? [],
-    useTxV3: params.useTxV3 ?? true,
     selfDeploy: params.selfDeploy ?? false,
   };
   const guardian =
@@ -213,24 +230,20 @@ async function deployAccountInner(params: DeployAccountParams): Promise<ArgentWa
 
   const { classHash, salt } = finalParams;
   const contractAddress = hash.calculateContractAddressFromHash(salt, classHash, constructorCalldata, 0);
-  const fundingCall = finalParams.useTxV3
-    ? fundAccountCall(contractAddress, finalParams.fundingAmount ?? 5e18, "STRK") // 5 STRK
-    : fundAccountCall(contractAddress, finalParams.fundingAmount ?? 1e18, "ETH"); // 1 ETH
+  const fundingCall = fundAccountCall(contractAddress, finalParams.fundingAmount ?? 5e18, "STRK"); // 1 ETH
   const calls = fundingCall ? [fundingCall] : [];
 
-  const transactionVersion = finalParams.useTxV3 ? RPC.ETransactionVersion.V3 : RPC.ETransactionVersion.V2;
   const signer = new ArgentSigner(owner, finalParams.guardians.at(0));
-  const account = new ArgentAccount(manager, contractAddress, signer, "1", transactionVersion);
+  const account = new ArgentAccount(manager, contractAddress, signer, "1");
 
   let transactionHash;
   if (finalParams.selfDeploy) {
-    const response = await deployer.execute(calls);
-    await manager.waitForTx(response.transaction_hash);
+    await manager.ensureSuccess(deployer.execute(calls));
     const { transaction_hash } = await account.deploySelf({ classHash, constructorCalldata, addressSalt: salt });
     transactionHash = transaction_hash;
 
     const accountContract = await manager.loadContract(account.address);
-    accountContract.connect(account);
+    accountContract.providerOrAccount = account;
     if (finalParams.owners.length > 1) {
       const calldata = CallData.compile([
         {
@@ -252,8 +265,11 @@ async function deployAccountInner(params: DeployAccountParams): Promise<ArgentWa
       await accountContract.invoke("change_guardians", calldata);
     }
   } else {
-    const udcCalls = deployer.buildUDCContractPayload({ classHash, salt, constructorCalldata, unique: false });
-    const finalCalls = [...calls, ...udcCalls];
+    const udcCalls = defaultDeployer.buildDeployerCall(
+      { classHash, salt, constructorCalldata, unique: false },
+      contractAddress,
+    );
+    const finalCalls = [...calls, ...udcCalls.calls];
     if (finalParams.owners.length > 1) {
       const outsideCall = {
         caller: deployer.address,
@@ -302,7 +318,6 @@ async function deployAccountInner(params: DeployAccountParams): Promise<ArgentWa
 }
 
 type DeployAccountParams = {
-  useTxV3?: boolean;
   classHash?: string;
   owners?: KeyPair[];
   owner?: KeyPair;
@@ -329,7 +344,7 @@ export async function deployAccountWithoutGuardians(
 
 export async function deployLegacyAccount(
   classHash: string,
-  transactionVersion = RPC.ETransactionVersion.V3,
+  transactionVersion = ETransactionVersion.V3,
 ): Promise<LegacyArgentWallet> {
   const guardian = new LegacyStarknetKeyPair();
   return deployLegacyAccountInner(classHash, guardian, transactionVersion);
@@ -337,7 +352,7 @@ export async function deployLegacyAccount(
 
 export async function deployLegacyAccountWithoutGuardian(
   classHash: string,
-  transactionVersion = RPC.ETransactionVersion.V3,
+  transactionVersion = ETransactionVersion.V3,
 ): Promise<LegacyArgentWallet> {
   return deployLegacyAccountInner(classHash, undefined, transactionVersion);
 }
@@ -345,19 +360,25 @@ export async function deployLegacyAccountWithoutGuardian(
 async function deployLegacyAccountInner(
   classHash: string,
   guardian?: LegacyStarknetKeyPair,
-  transactionVersion = RPC.ETransactionVersion.V3,
+  transactionVersion = ETransactionVersion.V3,
 ): Promise<LegacyArgentWallet> {
   const owner = new LegacyStarknetKeyPair();
   const salt = num.toHex(owner.privateKey);
   const constructorCalldata = CallData.compile({ owner: owner.publicKey, guardian: guardian?.publicKey || 0 });
   const contractAddress = hash.calculateContractAddressFromHash(salt, classHash, constructorCalldata, 0);
-  if (transactionVersion === RPC.ETransactionVersion.V3) {
+  if (transactionVersion === ETransactionVersion.V3) {
     await fundAccount(contractAddress, 1e18, "STRK");
   } else {
     await fundAccount(contractAddress, 1e15, "ETH");
   }
 
-  const account = new Account(manager, contractAddress, owner, "1", transactionVersion);
+  const account = new Account({
+    provider: manager,
+    address: contractAddress,
+    signer: owner,
+    cairoVersion: "1",
+    transactionVersion: ETransactionVersion.V3,
+  });
   account.signer = new LegacyArgentSigner(owner, guardian);
 
   const { transaction_hash } = await account.deploySelf({
@@ -368,7 +389,7 @@ async function deployLegacyAccountInner(
   await manager.waitForTx(transaction_hash);
 
   const accountContract = await manager.loadContract(account.address);
-  accountContract.connect(account);
+  accountContract.providerOrAccount = account;
   return { account, accountContract, owner, guardian };
 }
 
@@ -393,58 +414,43 @@ export async function executeWithCustomSig(
   transactionsDetail: UniversalDetails = {},
 ): Promise<InvokeFunctionResponse> {
   const signer = new (class extends RawSigner {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async signRaw(_messageHash: string): Promise<string[]> {
       return signature;
     }
   })();
-  const newAccount = new ArgentAccount(
-    manager,
-    account.address,
-    signer,
-    account.cairoVersion,
-    account.transactionVersion,
-  );
+  const newAccount = new ArgentAccount(manager, account.address, signer, account.cairoVersion);
 
-  return await newAccount.execute(transactions, undefined, transactionsDetail);
+  return await newAccount.execute(transactions, transactionsDetail);
 }
 
 export async function estimateWithCustomSig(
   account: ArgentAccount,
   transactions: AllowArray<Call>,
   signature: ArraySignatureType,
-): Promise<EstimateFee> {
+): Promise<EstimateFeeResponseOverhead> {
   const signer = new (class extends RawSigner {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async signRaw(_messageHash: string): Promise<string[]> {
       return signature;
     }
   })();
-  const newAccount = new ArgentAccount(
-    manager,
-    account.address,
-    signer,
-    account.cairoVersion,
-    account.transactionVersion,
-  );
+  const newAccount = new ArgentAccount(manager, account.address, signer, account.cairoVersion);
   // If the transaction fails, the estimation will fail and an error will be thrown
-  return await newAccount.estimateFee(transactions);
+  return await newAccount.estimateInvokeFee(transactions);
 }
 
 class ShouldNotExecuteError extends Error {}
 
 export async function getSignerDetails(account: ArgentAccount, calls: Call[]): Promise<InvocationsSignerDetails> {
-  const newAccount = new ArgentAccount(
-    manager,
-    account.address,
-    account.signer,
-    account.cairoVersion,
-    account.transactionVersion,
-  );
+  const newAccount = new ArgentAccount(manager, account.address, account.signer, account.cairoVersion);
   const customSigner = new (class extends RawSigner {
     public signerDetails?: InvocationsSignerDetails;
     public async signTransaction(_calls: Call[], signerDetails: InvocationsSignerDetails): Promise<Signature> {
       this.signerDetails = signerDetails;
       throw new ShouldNotExecuteError();
     }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public async signRaw(_messageHash: string): Promise<string[]> {
       throw Error("Not implemented");
     }
@@ -452,7 +458,7 @@ export async function getSignerDetails(account: ArgentAccount, calls: Call[]): P
   newAccount.signer = customSigner;
   try {
     // Hardcoding skipValidate to skip estimation
-    await newAccount.execute(calls, undefined, { skipValidate: true });
+    await newAccount.execute(calls, { skipValidate: true });
     throw Error("Execution didn't fail");
   } catch (error) {
     if (!(error instanceof ShouldNotExecuteError)) {

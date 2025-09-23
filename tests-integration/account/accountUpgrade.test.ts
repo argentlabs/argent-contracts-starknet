@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { Account, CairoOption, CairoOptionVariant, CallData, Contract, hash, RawArgs, RPC } from "starknet";
+import { Account, CairoOption, CairoOptionVariant, CallData, Contract, hash, RawArgs } from "starknet";
 import {
   ArgentAccount,
   ArgentSigner,
@@ -70,18 +70,18 @@ describe("ArgentAccount: upgrade", function () {
       triggerEscapeGuardianCall: { entrypoint: "triggerEscapeGuardian" },
     });
 
-    const v030 = "0.3.0";
-    const classHashV030 = await manager.declareArtifactAccountContract(v030);
+    // const v030 = "0.3.0";
+    // const classHashV030 = await manager.declareArtifactAccountContract(v030);
     const triggerEscapeOwnerCallV03 = { entrypoint: "trigger_escape_owner", calldata: [12] };
     const triggerEscapeGuardianCallV03 = { entrypoint: "trigger_escape_guardian", calldata: [12] };
-    upgradeData.push({
-      name: v030,
-      deployAccount: async () => deployLegacyAccount(classHashV030, RPC.ETransactionVersion.V2),
-      deployAccountWithoutGuardians: async () =>
-        deployLegacyAccountWithoutGuardian(classHashV030, RPC.ETransactionVersion.V2),
-      triggerEscapeOwnerCall: triggerEscapeOwnerCallV03,
-      triggerEscapeGuardianCall: triggerEscapeGuardianCallV03,
-    });
+    // upgradeData.push({
+    //   name: v030,
+    //   deployAccount: async () => deployLegacyAccount(classHashV030, ETransactionVersion.V2),
+    //   deployAccountWithoutGuardians: async () =>
+    //     deployLegacyAccountWithoutGuardian(classHashV030, ETransactionVersion.V2),
+    //   triggerEscapeOwnerCall: triggerEscapeOwnerCallV03,
+    //   triggerEscapeGuardianCall: triggerEscapeGuardianCallV03,
+    // });
 
     // From here on we begin support for V3 transactions
     const v031 = "0.3.1";
@@ -165,7 +165,7 @@ describe("ArgentAccount: upgrade", function () {
             `Unexpected events ${eventsEmittedByAccount.join(", ")} found`,
           );
           const accountV3 = await getAccountV3(account);
-          mockDapp.connect(accountV3);
+          mockDapp.providerOrAccount = accountV3;
           // This should work as long as we support the "old" signature format [r1, s1, r2, s2]
           await manager.ensureSuccess(mockDapp.set_number(randomNumber));
         });
@@ -175,7 +175,7 @@ describe("ArgentAccount: upgrade", function () {
           await upgradeAccount(account, argentAccountClassHash, upgradeExtraCalldata);
           expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
           const accountV3 = await getAccountV3(account);
-          mockDapp.connect(accountV3);
+          mockDapp.providerOrAccount = accountV3;
           await manager.ensureSuccess(mockDapp.set_number(randomNumber));
         });
 
@@ -189,7 +189,7 @@ describe("ArgentAccount: upgrade", function () {
           await mockDapp.get_number(account.address).should.eventually.equal(randomNumber);
           // We don't really care about the value here, just that it is successful
           const accountV3 = await getAccountV3(account);
-          mockDapp.connect(accountV3);
+          mockDapp.providerOrAccount = accountV3;
           await manager.ensureSuccess(mockDapp.set_number(randomNumber));
         });
 
@@ -282,7 +282,7 @@ describe("ArgentAccount: upgrade", function () {
 
       expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(legacyClassHash));
       const accountV3 = await getAccountV3(account);
-      mockDapp.connect(accountV3);
+      mockDapp.providerOrAccount = accountV3;
       // Check the account is in the wrong state
       const wrongGuids = await account.callContract({
         contractAddress: account.address,
@@ -306,7 +306,7 @@ describe("ArgentAccount: upgrade", function () {
       const newAccountContract = await manager.loadContract(account.address);
       const newGuid = new StarknetKeyPair(owner.privateKey).guid;
       expect(await newAccountContract.get_owners_guids()).to.deep.equal([newGuid]);
-      mockDapp.connect(accountV3);
+      mockDapp.providerOrAccount = accountV3;
       // We don't really care about the value here, just that it is successful
       await manager.ensureSuccess(mockDapp.set_number(randomNumber));
     });
@@ -369,7 +369,7 @@ describe("ArgentAccount: upgrade", function () {
         expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
 
         const accountV3 = await getAccountV3(account);
-        mockDapp.connect(accountV3);
+        mockDapp.providerOrAccount = accountV3;
         // We have to update the owner with the new webauthn format
         if (owner instanceof LegacyWebauthnOwner) {
           accountV3.signer = new ArgentSigner(new WebauthnOwner(owner.getPrivateKey()), guardian);
@@ -385,7 +385,7 @@ describe("ArgentAccount: upgrade", function () {
         expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
 
         const accountV3 = await getAccountV3(account);
-        mockDapp.connect(accountV3);
+        mockDapp.providerOrAccount = accountV3;
         // We have to update the owner with the new webauthn format
         if (owner instanceof LegacyWebauthnOwner) {
           accountV3.signer = new ArgentSigner(new WebauthnOwner(owner.getPrivateKey()));
@@ -397,8 +397,8 @@ describe("ArgentAccount: upgrade", function () {
 });
 
 async function getAccountV3(account: Account): Promise<Account> {
-  if (account.transactionVersion == RPC.ETransactionVersion.V2) {
-    await fundAccount(account.address, 1e18, "STRK");
-  }
+  // if (account.transactionVersion == ETransactionVersion.V2) {
+  await fundAccount(account.address, 1e18, "STRK");
+  // }
   return new ArgentAccount(account, account.address, account.signer);
 }

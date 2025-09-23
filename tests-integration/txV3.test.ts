@@ -11,9 +11,9 @@ for (const accountType of ["individual", "multisig"]) {
 
     async function deployAccountType() {
       if (accountType === "individual") {
-        return await deployAccount({ useTxV3: true });
+        return await deployAccount();
       } else if (accountType === "multisig") {
-        return await deployMultisig1_1({ useTxV3: true });
+        return await deployMultisig1_1();
       } else {
         throw new Error(`Unknown account type ${accountType}`);
       }
@@ -21,7 +21,7 @@ for (const accountType of ["individual", "multisig"]) {
 
     it("Should be possible to call dapp", async function () {
       const { account } = await deployAccountType();
-      mockDapp.connect(account);
+      mockDapp.providerOrAccount = account;
       const randomNumber = generateRandomNumber();
       const { transaction_hash: transferTxHash } = await mockDapp.set_number(randomNumber);
       await account.waitForTransaction(transferTxHash);
@@ -30,11 +30,11 @@ for (const accountType of ["individual", "multisig"]) {
 
     it("Should reject paymaster data", async function () {
       const { account } = await deployAccountType();
-      mockDapp.connect(account);
+      mockDapp.providerOrAccount = account;
       const call = mockDapp.populateTransaction.set_number(generateRandomNumber());
       await expectRevertWithErrorMessage(
         "argent/unsupported-paymaster",
-        account.execute(call, undefined, {
+        account.execute(call, {
           paymasterData: ["0x1"],
         }),
       );

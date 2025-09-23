@@ -1,4 +1,4 @@
-import { Account, CallData, RPC, hash, num } from "starknet";
+import { Account, CallData, ETransactionVersion, hash, num } from "starknet";
 import { deployer, fundAccountCall } from "./accounts";
 import { ContractWithClass } from "./contracts";
 import { manager } from "./manager";
@@ -6,7 +6,6 @@ import { LegacyMultisigSigner, LegacyStarknetKeyPair } from "./signers/legacy";
 import { randomStarknetKeyPair } from "./signers/signers";
 
 type DeployOzAccountParams = {
-  useTxV3?: boolean;
   owner?: LegacyStarknetKeyPair;
   salt?: string;
   fundingAmount?: number | bigint;
@@ -16,7 +15,6 @@ type DeployOzAccountResult = {
   account: Account;
   accountContract: ContractWithClass;
   deployTxHash: string;
-  useTxV3: boolean;
   owner: LegacyStarknetKeyPair;
   salt: string;
 };
@@ -27,7 +25,6 @@ export async function deployOpenZeppelinAccount(params: DeployOzAccountParams): 
     ...params,
     salt: params.salt ?? num.toHex(randomStarknetKeyPair().privateKey),
     owner: params.owner ?? new LegacyStarknetKeyPair(),
-    useTxV3: params.useTxV3 ?? true,
   };
 
   const constructorCalldata = CallData.compile({
@@ -36,14 +33,17 @@ export async function deployOpenZeppelinAccount(params: DeployOzAccountParams): 
 
   const contractAddress = hash.calculateContractAddressFromHash(finalParams.salt, classHash, constructorCalldata, 0);
 
-  const fundingCall = finalParams.useTxV3
-    ? fundAccountCall(contractAddress, finalParams.fundingAmount ?? 1e18, "STRK")
-    : fundAccountCall(contractAddress, finalParams.fundingAmount ?? 1e16, "ETH");
+  const fundingCall = fundAccountCall(contractAddress, finalParams.fundingAmount ?? 1e18, "STRK");
   await manager.waitForTx(deployer.execute([fundingCall!]));
 
-  const defaultTxVersion = finalParams.useTxV3 ? RPC.ETransactionVersion.V3 : RPC.ETransactionVersion.V2;
   const signer = new LegacyMultisigSigner([finalParams.owner]);
-  const account = new Account(manager, contractAddress, signer, "1", defaultTxVersion);
+  const account = new Account({
+    provider: manager,
+    address: contractAddress,
+    signer: signer,
+    cairoVersion: "1",
+    transactionVersion: ETransactionVersion.V3,
+  });
 
   const { transaction_hash: deployTxHash } = await account.deploySelf({
     classHash,
@@ -53,7 +53,7 @@ export async function deployOpenZeppelinAccount(params: DeployOzAccountParams): 
 
   await manager.waitForTx(deployTxHash);
   const accountContract = await manager.loadContract(account.address, classHash);
-  accountContract.connect(account);
+  accountContract.providerOrAccount = account;
 
   return { ...finalParams, account, accountContract, deployTxHash };
 }

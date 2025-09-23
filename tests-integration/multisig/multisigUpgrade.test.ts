@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { Account, CallData, Contract, RPC, uint256 } from "starknet";
+import { Account, CallData, Contract, ETransactionVersion, uint256 } from "starknet";
 import {
   ContractWithClass,
   KeyPair,
@@ -36,14 +36,14 @@ describe("ArgentMultisig: upgrade", function () {
   let mockDapp: ContractWithClass;
 
   before(async () => {
-    const v010 = "0.1.0";
-    const classHashV010 = await manager.declareArtifactMultisigContract(v010);
-    artifactNames.push({
-      name: v010,
-      // Doesn't support V3 transactions
-      deployMultisig: (threshold: number) => deployLegacyMultisig(classHashV010, threshold, RPC.ETransactionVersion.V2),
-      getGuidsSelector: "get_signers",
-    });
+    // const v010 = "0.1.0";
+    // const classHashV010 = await manager.declareArtifactMultisigContract(v010);
+    // artifactNames.push({
+    //   name: v010,
+    //   // Doesn't support V3 transactions
+    //   deployMultisig: (threshold: number) => deployLegacyMultisig(classHashV010, threshold, ETransactionVersion.V2),
+    //   getGuidsSelector: "get_signers",
+    // });
     // Start of support for V3 transactions
     const v011 = "0.1.1";
     const classHashV011 = await manager.declareArtifactMultisigContract(v011);
@@ -71,7 +71,7 @@ describe("ArgentMultisig: upgrade", function () {
     await upgradeAccount(account, argentMultisigFutureClassHash);
     expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentMultisigFutureClassHash));
     const strkContract = await manager.tokens.strkContract();
-    strkContract.connect(account);
+    strkContract.providerOrAccount = account;
     const recipient = "0xabde1";
     const amount = uint256.bnToUint256(1n);
     await manager.ensureSuccess(strkContract.transfer(recipient, amount));
@@ -123,18 +123,18 @@ describe("ArgentMultisig: upgrade", function () {
             expect(getSignerGuids).to.have.members(newSignersGuids);
 
             // As old version might be in V1 or V2, we need to create a new account with V3
-            const accountV3 = new Account(
-              account,
-              account.address,
-              new MultisigSigner(newSigners),
-              "1",
-              RPC.ETransactionVersion.V3,
-            );
+            const accountV3 = new Account({
+              provider: account,
+              address: account.address,
+              signer: new MultisigSigner(newSigners),
+              cairoVersion: "1",
+              transactionVersion: ETransactionVersion.V3,
+            });
             // Need some STRK for v3 transactions
             await fundAccount(accountV3.address, 1e18, "STRK");
 
             // Default estimation is too low, we need to increase it
-            mockDapp.connect(accountV3);
+            mockDapp.providerOrAccount = accountV3;
             const randomNumber = generateRandomNumber();
             const estimate = await mockDapp.estimateFee.set_number(randomNumber);
             estimate.resourceBounds.l1_gas.max_amount = estimate.resourceBounds.l1_gas.max_amount * 4;

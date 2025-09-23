@@ -5,7 +5,6 @@ import { dirname, resolve } from "path";
 import {
   Abi,
   AccountInterface,
-  CompiledSierra,
   Contract,
   DeclareContractPayload,
   ProviderInterface,
@@ -55,15 +54,15 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
       const payload = getDeclareContractPayload(contractName, folder);
       let details: UniversalDetails | undefined;
       // Setting resourceBounds skips estimate
-      if (this.isDevnet) {
-        details = {
-          skipValidate: true,
-          resourceBounds: {
-            l2_gas: { max_amount: "0x0", max_price_per_unit: "0x0" },
-            l1_gas: { max_amount: "0x30000", max_price_per_unit: "0x300000000000" },
-          },
-        };
-      }
+      // if (this.isDevnet) {
+      //   details = {
+      //     skipValidate: true,
+      //     resourceBounds: {
+      //       l2_gas: { max_amount: "0x0", max_price_per_unit: "0x0" },
+      //       l1_gas: { max_amount: "0x30000", max_price_per_unit: "0x300000000000" },
+      //     },
+      //   };
+      // }
 
       // If cache isn't initialized, initialize it
       if (Object.keys(this.cacheClassHashes).length === 0) {
@@ -76,7 +75,6 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
       }
 
       const fileHash = await hashFileFast(`${folder}${contractName}.contract_class.json`);
-
       // If the contract is not in the cache, extract the class hash and add it to the cache
       if (!this.cacheClassHashes[fileHash]) {
         console.log(`Updating cache for ${contractName} (${fileHash})`);
@@ -149,17 +147,15 @@ export class ContractWithClass extends Contract {
     providerOrAccount: ProviderInterface | AccountInterface,
     public readonly classHash: string,
   ) {
-    super(abi, address, providerOrAccount);
+    super({ abi, address, providerOrAccount });
   }
 }
 
 export function getDeclareContractPayload(contractName: string, folder = contractsFolder): DeclareContractPayload {
-  const contract: CompiledSierra = readContract(`${folder}${contractName}.contract_class.json`);
-  const payload: DeclareContractPayload = { contract };
-  if ("sierra_program" in contract) {
-    payload.casm = readContract(`${folder}${contractName}.compiled_contract_class.json`);
-  }
-  return payload;
+  return {
+    contract: readContract(`${folder}${contractName}.contract_class.json`),
+    casm: readContract(`${folder}${contractName}.compiled_contract_class.json`),
+  };
 }
 
 export function readContract(path: string) {

@@ -32,28 +32,25 @@ describe("ArgentAccount: session basics", function () {
     randomNumber = generateRandomNumber();
   });
 
-  for (const useTxV3 of [false, true]) {
-    it(`Execute basic session (TxV3: ${useTxV3})`, async function () {
-      const { accountContract, account, guardian } = await deployAccount({
-        useTxV3,
-        classHash: sessionAccountClassHash,
-      });
-
-      const { accountWithDappSigner } = await setupSession({
-        guardian: guardian as StarknetKeyPair,
-        account,
-        expiry: initialTime + 150n,
-        allowedMethods: singleMethodAllowList(mockDappContract, "set_number"),
-      });
-
-      const calls = [mockDappContract.populateTransaction.set_number(randomNumber)];
-
-      const { transaction_hash } = await accountWithDappSigner.execute(calls);
-
-      await account.waitForTransaction(transaction_hash);
-      await mockDappContract.get_number(accountContract.address).should.eventually.equal(randomNumber);
+  it(`Execute basic session`, async function () {
+    const { accountContract, account, guardian } = await deployAccount({
+      classHash: sessionAccountClassHash,
     });
-  }
+
+    const { accountWithDappSigner } = await setupSession({
+      guardian: guardian as StarknetKeyPair,
+      account,
+      expiry: initialTime + 150n,
+      allowedMethods: singleMethodAllowList(mockDappContract, "set_number"),
+    });
+
+    const calls = [mockDappContract.populateTransaction.set_number(randomNumber)];
+
+    const { transaction_hash } = await accountWithDappSigner.execute(calls);
+
+    await account.waitForTransaction(transaction_hash);
+    await mockDappContract.get_number(accountContract.address).should.eventually.equal(randomNumber);
+  });
 
   it(`Should be possible to estimate a basic session given an invalid guardian signature`, async function () {
     const { account, guardian } = await deployAccount({ classHash: sessionAccountClassHash });

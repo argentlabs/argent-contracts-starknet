@@ -45,7 +45,7 @@ describe("ArgentAccount: escape mechanism", function () {
     it("Expect 'argent/only-self' when called from another account", async function () {
       const { account } = await deployAccount();
       const { accountContract } = await deployAccount();
-      accountContract.connect(account);
+      accountContract.providerOrAccount = account;
       await expectRevertWithErrorMessage(
         "argent/only-self",
         accountContract.trigger_escape_owner(newKeyPair.compiledSigner),
@@ -213,7 +213,7 @@ describe("ArgentAccount: escape mechanism", function () {
     it("Expect 'argent/only-self' when called from another account", async function () {
       const { account } = await deployAccount();
       const { accountContract } = await deployAccount();
-      accountContract.connect(account);
+      accountContract.providerOrAccount = account;
       await expectRevertWithErrorMessage("argent/only-self", accountContract.escape_owner());
     });
 
@@ -492,7 +492,7 @@ describe("ArgentAccount: escape mechanism", function () {
     it("Expect 'argent/only-self' when called from another account", async function () {
       const { account } = await deployAccount();
       const { accountContract } = await deployAccount();
-      accountContract.connect(account);
+      accountContract.providerOrAccount = account;
       await expectRevertWithErrorMessage(
         "argent/only-self",
         accountContract.trigger_escape_guardian(newKeyPair.compiledSignerAsOption),
@@ -590,7 +590,7 @@ describe("ArgentAccount: escape mechanism", function () {
     it("Expect 'argent/only-self' when called from another account", async function () {
       const { account } = await deployAccount();
       const { accountContract } = await deployAccount();
-      accountContract.connect(account);
+      accountContract.providerOrAccount = account;
       await expectRevertWithErrorMessage("argent/only-self", accountContract.escape_guardian());
     });
 
@@ -601,7 +601,7 @@ describe("ArgentAccount: escape mechanism", function () {
 
       await expectRevertWithErrorMessage(
         "argent/guardian-required",
-        account.execute([accountContract.populateTransaction.escape_guardian()], undefined, { skipValidate: false }),
+        account.execute([accountContract.populateTransaction.escape_guardian()], { skipValidate: false }),
       );
     });
 
@@ -727,7 +727,7 @@ describe("ArgentAccount: escape mechanism", function () {
     it("Expect 'argent/only-self' when called from another account", async function () {
       const { account } = await deployAccount();
       const { accountContract } = await deployAccount();
-      accountContract.connect(account);
+      accountContract.providerOrAccount = account;
       await expectRevertWithErrorMessage("argent/only-self", accountContract.cancel_escape());
     });
 

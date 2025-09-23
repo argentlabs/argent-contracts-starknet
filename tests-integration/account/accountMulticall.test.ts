@@ -24,7 +24,7 @@ describe("ArgentAccount: multicall", function () {
     const amount = uint256.bnToUint256(1000);
     const senderInitialBalance = await manager.tokens.strkBalance(account.address);
     const recipientInitialBalance = await manager.tokens.strkBalance(recipient);
-    strkContract.connect(account);
+    strkContract.providerOrAccount = account;
     const { transaction_hash } = await strkContract.transfer(recipient, amount);
     await account.waitForTransaction(transaction_hash);
 

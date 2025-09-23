@@ -42,6 +42,8 @@ export class ArgentAccount extends Account {
       // TODO: make accurate estimates work with sessions and legacy signers
       const estimateFee = await super.getSuggestedFee(action, details);
       const PERCENT = 30;
+      console.log("estimateFee");
+      console.log(estimateFee);
       return {
         ...estimateFee,
         suggestedMaxFee: num.addPercent(estimateFee.suggestedMaxFee, PERCENT),

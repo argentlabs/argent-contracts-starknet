@@ -1,23 +1,23 @@
-import { hash, RPC, uint256 } from "starknet";
+import { hash, uint256 } from "starknet";
 import {
   ArgentAccount,
   ArgentSigner,
-  deployAccount,
-  deployAccountWithoutGuardians,
-  deployer,
-  deployOldAccountWithProxy,
-  deployOpenZeppelinAccount,
   Eip191KeyPair,
   EthKeyPair,
-  fundAccountCall,
   KeyPair,
   LegacyArgentSigner,
   LegacyStarknetKeyPair,
-  manager,
   Secp256r1KeyPair,
-  setupSession,
   StarknetKeyPair,
   WebauthnOwner,
+  deployAccount,
+  deployAccountWithoutGuardians,
+  deployOldAccountWithProxy,
+  deployOpenZeppelinAccount,
+  deployer,
+  fundAccountCall,
+  manager,
+  setupSession,
 } from "../lib";
 import { newProfiler } from "../lib/gas";
 
@@ -75,19 +75,19 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
     new LegacyStarknetKeyPair(guardian.privateKey),
     "0xDE",
   );
-  ethContract.connect(account);
+  ethContract.providerOrAccount = account;
   await profiler.profile("Transfer - Old account with guardian", await ethContract.transfer(recipient, amount));
 }
 
 {
   const account = await deployAccountUsingProxy({ owner: starknetOwner, salt: "0x3" });
-  strkContract.connect(account);
+  strkContract.providerOrAccount = account;
   await profiler.profile("Transfer - No guardian", await strkContract.transfer(recipient, amount));
 }
 
 {
   const account = await deployAccountUsingProxy({ owner: starknetOwner, guardian, salt: "0x2" });
-  strkContract.connect(account);
+  strkContract.providerOrAccount = account;
   await profiler.profile("Transfer - With guardian", await strkContract.transfer(recipient, amount));
 }
 
@@ -105,7 +105,7 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
     allowedMethods,
     expiry: sessionTime + 150n,
   });
-  strkContract.connect(accountWithDappSigner);
+  strkContract.providerOrAccount = accountWithDappSigner;
   await profiler.profile("Transfer - With Session", await strkContract.transfer(recipient, amount));
 }
 
@@ -124,7 +124,7 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
     expiry: sessionTime + 150n,
     cacheOwnerGuid: starknetOwner.guid,
   });
-  strkContract.connect(accountWithDappSigner);
+  strkContract.providerOrAccount = accountWithDappSigner;
   await profiler.profile(
     "Transfer - With Session - Caching Values (1)",
     await strkContract.transfer(recipient, amount),
@@ -148,7 +148,7 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
     expiry: sessionTime + 150n,
     cacheOwnerGuid: owner.guid,
   });
-  strkContract.connect(accountWithDappSigner);
+  strkContract.providerOrAccount = accountWithDappSigner;
   await profiler.profile(
     "Transfer - With Session (Webauthn owner) - Caching Values (1)",
     await strkContract.transfer(recipient, amount),
@@ -162,7 +162,7 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
 {
   const account = await deployAccountUsingProxy({ owner: starknetOwner, salt: "0xF1" });
   account.signer = new LegacyStarknetKeyPair(starknetOwner.privateKey);
-  strkContract.connect(account);
+  strkContract.providerOrAccount = account;
   await profiler.profile("Transfer - No guardian (Old Sig)", await strkContract.transfer(recipient, amount));
 }
 
@@ -172,37 +172,37 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
     new LegacyStarknetKeyPair(starknetOwner.privateKey),
     new LegacyStarknetKeyPair(guardian.privateKey),
   );
-  strkContract.connect(account);
+  strkContract.providerOrAccount = account;
   await profiler.profile("Transfer - With guardian (Old Sig)", await strkContract.transfer(recipient, amount));
 }
 
 {
   const { account } = await deployOpenZeppelinAccount({ owner: new LegacyStarknetKeyPair(42n), salt: "0x1" });
-  strkContract.connect(account);
+  strkContract.providerOrAccount = account;
   await profiler.profile("Transfer - OZ account", await strkContract.transfer(recipient, amount));
 }
 
 {
   const account = await deployAccountUsingProxy({ owner: new EthKeyPair(privateKey), guardian, salt: "0x4" });
-  strkContract.connect(account);
+  strkContract.providerOrAccount = account;
   await profiler.profile("Transfer - Eth sig with guardian", await strkContract.transfer(recipient, amount));
 }
 
 {
   const account = await deployAccountUsingProxy({ owner: new Secp256r1KeyPair(privateKey), guardian, salt: "0x5" });
-  strkContract.connect(account);
+  strkContract.providerOrAccount = account;
   await profiler.profile("Transfer - Secp256r1 with guardian", await strkContract.transfer(recipient, amount));
 }
 
 {
   const account = await deployAccountUsingProxy({ owner: new Eip191KeyPair(privateKey), guardian, salt: "0x6" });
-  strkContract.connect(account);
+  strkContract.providerOrAccount = account;
   await profiler.profile("Transfer - Eip161 with guardian", await strkContract.transfer(recipient, amount));
 }
 
 {
   const account = await deployAccountUsingProxy({ owner: new WebauthnOwner(privateKey), guardian, salt: "0x8" });
-  strkContract.connect(account);
+  strkContract.providerOrAccount = account;
   await profiler.profile("Transfer - Webauthn no guardian", await strkContract.transfer(recipient, amount));
 }
 
@@ -237,11 +237,5 @@ async function deployAccountUsingProxy({
 
   await deployer.execute(calls);
 
-  return new ArgentAccount(
-    manager,
-    contract_address,
-    new ArgentSigner(owner, guardian),
-    "1",
-    RPC.ETransactionVersion.V3,
-  );
+  return new ArgentAccount(manager, contract_address, new ArgentSigner(owner, guardian), "1");
 }

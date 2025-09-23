@@ -246,7 +246,7 @@ describe("ArgentAccount: upgrade", function () {
     });
   });
 
-  it.only("Upgrade from current version FutureVersion", async function () {
+  it("Upgrade from current version FutureVersion", async function () {
     const argentAccountFutureClassHash = await manager.declareLocalContract("MockFutureArgentAccount");
     const { account } = await deployAccount();
 

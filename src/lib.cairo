@@ -47,8 +47,6 @@ pub mod utils {
     pub mod calls;
     pub mod hashing;
     pub mod serialization;
-    // TODO DECIDE IF WE NEED THIS
-    // pub mod transaction;
     pub mod transaction_version;
 }
 

@@ -197,7 +197,6 @@ pub impl SignerTraitImpl of SignerTrait {
         }
     }
 
-    // TODO UNUSED
     fn signer_type(self: Signer) -> SignerType {
         match self {
             Signer::Starknet => SignerType::Starknet,
@@ -245,7 +244,6 @@ pub impl SignerStorageValueImpl of SignerStorageTrait {
         }
     }
 
-    // TODO UNUSED
     #[must_use]
     fn to_guid_list(self: Span<SignerStorageValue>) -> Array<felt252> {
         let mut guids = array![];

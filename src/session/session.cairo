@@ -102,8 +102,8 @@ pub mod session_component {
     }
 
     #[derive(Drop, starknet::Event)]
-    pub struct SessionRevoked {
-        pub session_hash: felt252,
+    struct SessionRevoked {
+        session_hash: felt252,
     }
 
     #[storage]

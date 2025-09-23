@@ -803,7 +803,6 @@ pub mod ArgentAccount {
             assert(tx_info.account_deployment_data.is_empty(), 'argent/invalid-deployment-data');
 
             // Limit the maximum tip and maximum total fee while escaping
-            // TODO HERE USING NEW FN IN TRANSACTION.CAIRO
             let mut max_fee: u128 = 0;
             let mut max_tip: u128 = 0;
             for bound in tx_info.resource_bounds {

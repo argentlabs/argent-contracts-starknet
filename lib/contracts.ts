@@ -152,9 +152,13 @@ export class ContractWithClass extends Contract {
 }
 
 export function getDeclareContractPayload(contractName: string, folder = contractsFolder): DeclareContractPayload {
+  let casm;
+  if (existsSync(`${folder}${contractName}.compiled_contract_class.json`)) {
+    casm = readContract(`${folder}${contractName}.compiled_contract_class.json`);
+  }
   return {
     contract: readContract(`${folder}${contractName}.contract_class.json`),
-    casm: readContract(`${folder}${contractName}.compiled_contract_class.json`),
+    casm,
   };
 }
 

@@ -9,7 +9,7 @@ import {
 } from "starknet";
 
 export function calculateTransactionHash(transactionDetail: InvocationsSignerDetails, calls: Call[]): string {
-  if (transactionDetail.version !== ETransactionVersion.V3) {
+  if (transactionDetail.version !== ETransactionVersion.V3 && transactionDetail.version !== ETransactionVersion.F3) {
     throw new Error("unsupported transaction version");
   }
 

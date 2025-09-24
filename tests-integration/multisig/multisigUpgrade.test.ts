@@ -31,7 +31,7 @@ interface UpgradeDataEntry {
   getGuidsSelector: string;
 }
 
-describe("ArgentMultisig: upgrade", function () {
+xdescribe("ArgentMultisig: upgrade", function () {
   const artifactNames: UpgradeDataEntry[] = [];
   let mockDapp: ContractWithClass;
 

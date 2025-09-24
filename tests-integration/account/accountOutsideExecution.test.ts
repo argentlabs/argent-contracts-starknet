@@ -51,7 +51,7 @@ describe("ArgentAccount: outside execution", function () {
     };
 
     const foundHash = num.toHex(
-      await accountContract.get_outside_execution_message_hash_rev_0(outsideExecution, { nonce: undefined }),
+      await accountContract.get_outside_execution_message_hash_rev_0(outsideExecution),
     );
     const expectedMessageHash = getTypedDataHash(outsideExecution, account.address, chainId, legacyRevision);
     expect(foundHash).to.equal(expectedMessageHash);

@@ -10,9 +10,12 @@ import {
   CallData,
   Contract,
   ETransactionVersion,
+  EstimateFeeBulk,
   EstimateFeeResponseOverhead,
+  Invocations,
   InvocationsSignerDetails,
   InvokeFunctionResponse,
+  Provider,
   ProviderInterface,
   ProviderOptions,
   RawCalldata,
@@ -40,7 +43,6 @@ export class ArgentAccount extends Account {
     cairoVersion: CairoVersion = "1",
   ) {
     // TODO Update to use the new Account constructor
-    // TODO Check where transacationVersion = 0x2 is used
     super({
       provider: providerOrOptions,
       address,
@@ -50,25 +52,26 @@ export class ArgentAccount extends Account {
     });
   }
 
-  // override async getSuggestedFee(action: EstimateFeeAction, details: UniversalDetails): Promise<EstimateFee> {
-  //   if (!details.skipValidate) {
-  //     details.skipValidate = false;
-  //   }
-  //   if (this.signer instanceof ArgentSigner) {
-  //     const { owner, guardian } = this.signer as ArgentSigner;
-  //     const estimateSigner = new ArgentSigner(owner.estimateSigner, guardian?.estimateSigner);
-  //     const estimateAccount = new Account(
-  //       this as Provider,
-  //       this.address,
-  //       estimateSigner,
-  //       this.cairoVersion,
-  //       this.transactionVersion,
-  //     );
-  //     return await estimateAccount.getSuggestedFee(action, details);
-  //   } else {
-  //     return await super.getSuggestedFee(action, details);
-  //   }
-  // }
+  // TODO We have a bit more granularity over when to use the estimate signer, we can now use estimateAccountDeployFee(), check if Y/N
+  override async estimateFeeBulk(invocations: Invocations, details?: UniversalDetails): Promise<EstimateFeeBulk> {
+    if (!details?.skipValidate) {
+      details!.skipValidate = false;
+    }
+    if (this.signer instanceof ArgentSigner) {
+      const { owner, guardian } = this.signer as ArgentSigner;
+      const estimateSigner = new ArgentSigner(owner.estimateSigner, guardian?.estimateSigner);
+      const estimateAccount = new Account({
+        provider: this as Provider,
+        address: this.address,
+        signer: estimateSigner,
+        cairoVersion: this.cairoVersion,
+        transactionVersion: this.transactionVersion,
+      });
+      return await estimateAccount.estimateFeeBulk(invocations, details);
+    } else {
+      return await super.estimateFeeBulk(invocations, details);
+    }
+  }
 }
 
 class ArgentWallet implements ArgentWallet {

@@ -21,7 +21,7 @@ describe("ArgentAccount", function () {
     argentAccountClassHash = await manager.declareLocalContract("ArgentAccount");
   });
 
-  it.only("Deploy externally", async function () {
+  it("Deploy externally", async function () {
     const owner = randomStarknetKeyPair();
     const guardian = randomStarknetKeyPair();
     const constructorCalldata = CallData.compile({ owner: owner.signer, guardian: guardian.signerAsOption });
@@ -33,16 +33,12 @@ describe("ArgentAccount", function () {
         classHash: argentAccountClassHash,
         salt,
         constructorCalldata,
+        unique: false,
       },
       contractAddress,
     );
+    // TODO defaultDeployer.parseDeployerEvent??
     const receipt = await manager.waitForTx(deployer.execute(udcCalls.calls));
-    console.log("defaultDeployer.address");
-    console.log(defaultDeployer.address);
-    console.log("deployer.address");
-    console.log(deployer.address);
-    console.log("contractAddress");
-    console.log(contractAddress);
     await expectEvent(receipt, {
       from_address: contractAddress,
       eventName: "AccountCreated",

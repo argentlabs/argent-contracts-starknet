@@ -19,12 +19,6 @@ async function expectEventFromReceipt(receipt: TransactionReceipt, event: Event,
   expect(event.keys?.length).to.be.greaterThan(0, "Unsupported: No keys");
   const events = receipt.events ?? [];
   const normalizedEvent = normalizeEvent(event);
-  for (const e of events) {
-    console.log("e");
-    console.log(normalizeEvent(e));
-  }
-  console.log("--------------------------------");
-  console.log(normalizedEvent);
   const matches = events.filter((e) => isEqual(normalizeEvent(e), normalizedEvent)).length;
   if (matches == 0) {
     assert.fail(`No matches detected in this transaction: ${eventName}`);

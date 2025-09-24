@@ -45,7 +45,7 @@ export abstract class RawSigner implements SignerInterface {
   }
 
   public async signTransaction(transactions: Call[], details: InvocationsSignerDetails): Promise<Signature> {
-    if (details.version !== ETransactionVersion.V3) {
+    if (details.version !== ETransactionVersion.V3 && details.version !== ETransactionVersion.F3) {
       throw new Error("unsupported signTransaction version");
     }
 
@@ -63,7 +63,7 @@ export abstract class RawSigner implements SignerInterface {
   }
 
   public async signDeployAccountTransaction(details: DeployAccountSignerDetails): Promise<Signature> {
-    if (details.version !== ETransactionVersion.V3) {
+    if (details.version !== ETransactionVersion.V3 && details.version !== ETransactionVersion.F3) {
       throw new Error("unsupported signDeployAccountTransaction version");
     }
     const compiledConstructorCalldata = CallData.compile(details.constructorCalldata);
@@ -85,7 +85,7 @@ export abstract class RawSigner implements SignerInterface {
     // contractClass: ContractClass,  // Should be used once class hash is present in ContractClass
     details: DeclareSignerDetails,
   ): Promise<Signature> {
-    if (details.version !== ETransactionVersion.V3) {
+    if (details.version !== ETransactionVersion.V3 && details.version !== ETransactionVersion.F3) {
       throw new Error("unsupported signDeclareTransaction version");
     }
     const det = details as V3DeclareSignerDetails;

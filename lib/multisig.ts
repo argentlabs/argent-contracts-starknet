@@ -66,7 +66,7 @@ export async function deployMultisig(params: DeployMultisigParams): Promise<Mult
   const { classHash, salt, selfDeploymentIndexes } = finalParams;
   const accountAddress = hash.calculateContractAddressFromHash(salt, classHash, constructorCalldata, 0);
 
-  const fundingCall = fundAccountCall(accountAddress, finalParams.fundingAmount ?? 1e15, "ETH"); // 0.001 ETH
+  const fundingCall = fundAccountCall(accountAddress, finalParams.fundingAmount ?? 5e18, "STRK"); // 5 STRK
   const calls = fundingCall ? [fundingCall] : [];
 
   let transactionHash;

@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { CallData, hash, num } from "starknet";
+import { CallData, defaultDeployer, hash, num } from "starknet";
 import {
   StarknetKeyPair,
   deployContractUDC,
@@ -7,7 +7,6 @@ import {
   expectEvent,
   manager,
   randomStarknetKeyPair,
-  udcAddress,
 } from "../lib";
 
 describe("Deploy UDC", function () {
@@ -35,7 +34,7 @@ describe("Deploy UDC", function () {
     );
 
     await expectEvent(transactionHash, {
-      from_address: udcAddress,
+      from_address: num.cleanHex(defaultDeployer.address.toString()),
       eventName: "ContractDeployed",
       data: CallData.compile({
         address: udcDeploymentAddress,

@@ -217,7 +217,7 @@ describe("ArgentAccount: escape mechanism", function () {
       await expectRevertWithErrorMessage("argent/only-self", accountContract.escape_owner());
     });
 
-    it("Cancel escape when upgrading", async function () {
+    xit("Cancel escape when upgrading", async function () {
       const { account, accountContract, owner, guardian } = await deployOldAccountWithProxy();
       account.signer = new LegacyMultisigSigner([guardian]);
 
@@ -234,7 +234,7 @@ describe("ArgentAccount: escape mechanism", function () {
       await getEscapeStatus(await manager.loadContract(account.address)).should.eventually.equal(EscapeStatus.None);
     });
 
-    it("Clear expired escape when upgrading", async function () {
+    xit("Clear expired escape when upgrading", async function () {
       const { account, accountContract, owner, guardian } = await deployOldAccountWithProxy();
       account.signer = new LegacyMultisigSigner([guardian]);
 

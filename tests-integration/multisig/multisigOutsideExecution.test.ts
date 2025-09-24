@@ -34,7 +34,6 @@ describe("ArgentMultisig: outside execution", function () {
     const { accountContract } = await deployMultisig({ threshold: 1, signersLength: 2 });
 
     const chainId = await manager.getChainId();
-
     const outsideExecution: OutsideExecution = {
       caller: deployer.address,
       execute_after: 0,
@@ -50,8 +49,9 @@ describe("ArgentMultisig: outside execution", function () {
     };
 
     const foundHash = num.toHex(
-      await accountContract.get_outside_execution_message_hash_rev_0(outsideExecution, { nonce: undefined }),
+      await accountContract.get_outside_execution_message_hash_rev_0(outsideExecution),
     );
+    console.log("expectedMessageHash");
     const expectedMessageHash = getTypedDataHash(outsideExecution, accountContract.address, chainId, legacyRevision);
     expect(foundHash).to.equal(expectedMessageHash);
   });

@@ -1,7 +1,6 @@
 import { defaultDeployer, RawCalldata, UniversalDeployerContractPayload } from "starknet";
 import { deployer } from ".";
 
-
 export async function deployContractUDC(
   classHash: string,
   salt: string,

@@ -1,13 +1,6 @@
 import { expect } from "chai";
 import { CallData, defaultDeployer, hash, num } from "starknet";
-import {
-  StarknetKeyPair,
-  deployContractUDC,
-  deployer,
-  expectEvent,
-  manager,
-  randomStarknetKeyPair,
-} from "../lib";
+import { StarknetKeyPair, deployContractUDC, deployer, expectEvent, manager, randomStarknetKeyPair } from "../lib";
 
 describe("Deploy UDC", function () {
   let argentAccountClassHash: string;

@@ -8,8 +8,6 @@ import {
   deployAccountWithoutGuardians,
   deployLegacyAccount,
   deployLegacyAccountWithoutGuardian,
-  deployOldAccountWithProxy,
-  deployOldAccountWithProxyWithoutGuardian,
   expectEvent,
   expectRevertWithErrorMessage,
   fundAccount,
@@ -48,7 +46,7 @@ interface UpgradeDataEntry {
   triggerEscapeGuardianCall: SelfCall;
 }
 
-xdescribe("ArgentAccount: upgrade", function () {
+describe("ArgentAccount: upgrade", function () {
   let argentAccountClassHash: string;
   let mockDapp: ContractWithClass;
   let classHashV040: string;
@@ -59,29 +57,8 @@ xdescribe("ArgentAccount: upgrade", function () {
     argentAccountClassHash = await manager.declareLocalContract("ArgentAccount");
     mockDapp = await manager.declareAndDeployContract("MockDapp");
 
-    upgradeData.push({
-      name: "0.2.3.1",
-      deployAccount: async () => await deployOldAccountWithProxy(),
-      // Required to ensure execute_after_upgrade is called. Without any calldata, the execute_after_upgrade won't be called
-      upgradeExtraCalldata: ["0"],
-      deployAccountWithoutGuardians: async () => await deployOldAccountWithProxyWithoutGuardian(),
-      // Gotta call like that as the entrypoint is not found on the contract for legacy versions
-      triggerEscapeOwnerCall: { entrypoint: "triggerEscapeSigner" },
-      triggerEscapeGuardianCall: { entrypoint: "triggerEscapeGuardian" },
-    });
-
-    // const v030 = "0.3.0";
-    // const classHashV030 = await manager.declareArtifactAccountContract(v030);
     const triggerEscapeOwnerCallV03 = { entrypoint: "trigger_escape_owner", calldata: [12] };
     const triggerEscapeGuardianCallV03 = { entrypoint: "trigger_escape_guardian", calldata: [12] };
-    // upgradeData.push({
-    //   name: v030,
-    //   deployAccount: async () => deployLegacyAccount(classHashV030, ETransactionVersion.V2),
-    //   deployAccountWithoutGuardians: async () =>
-    //     deployLegacyAccountWithoutGuardian(classHashV030, ETransactionVersion.V2),
-    //   triggerEscapeOwnerCall: triggerEscapeOwnerCallV03,
-    //   triggerEscapeGuardianCall: triggerEscapeGuardianCallV03,
-    // });
 
     // From here on we begin support for V3 transactions
     const v031 = "0.3.1";
@@ -272,84 +249,6 @@ xdescribe("ArgentAccount: upgrade", function () {
   it("Shouldn't upgrade from current version to itself", async function () {
     const { account } = await deployAccount();
     await expectRevertWithErrorMessage("argent/downgrade-not-allowed", upgradeAccount(account, argentAccountClassHash));
-  });
-
-  describe("Testing recovery_from_legacy_upgrade when upgrading from 0.2.3", function () {
-    it("Should be possible to recover the signer", async function () {
-      const { account, owner } = await deployOldAccountWithProxy();
-      const legacyClassHash = await manager.getClassHashAt(account.address);
-      await upgradeAccount(account, argentAccountClassHash, []);
-
-      expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(legacyClassHash));
-      const accountV3 = await getAccountV3(account);
-      mockDapp.providerOrAccount = accountV3;
-      // Check the account is in the wrong state
-      const wrongGuids = await account.callContract({
-        contractAddress: account.address,
-        entrypoint: "get_owners_guids",
-      });
-      // Since we have to do a raw call, we have the unparsed value returned
-      expect(wrongGuids.length).to.equal(1);
-      expect(wrongGuids[0]).to.equal("0x0");
-      await expectRevertWithErrorMessage("argent/no-single-stark-owner", mockDapp.set_number(randomNumber));
-
-      const { account: otherAccount } = await deployAccount();
-      // Recover the signer
-      await otherAccount.execute({
-        contractAddress: account.address,
-        entrypoint: "recovery_from_legacy_upgrade",
-        calldata: [],
-      });
-      expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
-
-      // Making sure it has the new owner migrated correctly
-      const newAccountContract = await manager.loadContract(account.address);
-      const newGuid = new StarknetKeyPair(owner.privateKey).guid;
-      expect(await newAccountContract.get_owners_guids()).to.deep.equal([newGuid]);
-      mockDapp.providerOrAccount = accountV3;
-      // We don't really care about the value here, just that it is successful
-      await manager.ensureSuccess(mockDapp.set_number(randomNumber));
-    });
-
-    it("Shouldn't be possible to recover the signer twice", async function () {
-      const { account } = await deployOldAccountWithProxy();
-
-      await upgradeAccount(account, argentAccountClassHash, []);
-
-      const { account: otherAccount } = await deployAccount();
-      // Recover the signer for the first time
-      await otherAccount.execute({
-        contractAddress: account.address,
-        entrypoint: "recovery_from_legacy_upgrade",
-        calldata: [],
-      });
-      expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
-
-      // Trying to recover the signer a second time
-      await otherAccount
-        .execute({
-          contractAddress: account.address,
-          entrypoint: "recovery_from_legacy_upgrade",
-          calldata: [],
-        })
-        .should.be.rejectedWith("argent/no-signer-to-recover");
-    });
-
-    it("Shouldn't be possible to recover the signer an account that was correctly upgraded", async function () {
-      const { account } = await deployOldAccountWithProxy();
-      await upgradeAccount(account, argentAccountClassHash, ["0"]);
-
-      expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
-
-      const { account: otherAccount } = await deployAccount();
-      await otherAccount
-        .execute({
-          contractAddress: account.address,
-          entrypoint: "recovery_from_legacy_upgrade",
-          calldata: [],
-        })
-        .should.be.rejectedWith("argent/no-signer-to-recover");
-    });
   });
 
   describe("Testing upgrade version 0.4.0 with every signer type", function () {

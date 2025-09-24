@@ -10,20 +10,17 @@ import {
   EscapeStatus,
   KeyPair,
   LegacyArgentSigner,
-  LegacyMultisigSigner,
   LegacyStarknetKeyPair,
   MAX_U64,
   StarknetKeyPair,
   deployAccount,
   deployAccountWithoutGuardians,
-  deployOldAccountWithProxy,
   expectEvent,
   expectRevertWithErrorMessage,
   getEscapeStatus,
   hasOngoingEscape,
   manager,
   randomStarknetKeyPair,
-  upgradeAccount,
   zeroStarknetSignatureType,
 } from "../../lib";
 
@@ -215,37 +212,6 @@ describe("ArgentAccount: escape mechanism", function () {
       const { accountContract } = await deployAccount();
       accountContract.providerOrAccount = account;
       await expectRevertWithErrorMessage("argent/only-self", accountContract.escape_owner());
-    });
-
-    xit("Cancel escape when upgrading", async function () {
-      const { account, accountContract, owner, guardian } = await deployOldAccountWithProxy();
-      account.signer = new LegacyMultisigSigner([guardian]);
-
-      await manager.setTime(randomTime);
-      await manager.waitForTx(accountContract.triggerEscapeSigner());
-
-      account.signer = new LegacyMultisigSigner([owner, guardian]);
-      const upgradeReceipt = await upgradeAccount(account, argentAccountClassHash, ["0"]);
-
-      await expectEvent(upgradeReceipt.transaction_hash, {
-        from_address: account.address,
-        eventName: "EscapeCanceled",
-      });
-      await getEscapeStatus(await manager.loadContract(account.address)).should.eventually.equal(EscapeStatus.None);
-    });
-
-    xit("Clear expired escape when upgrading", async function () {
-      const { account, accountContract, owner, guardian } = await deployOldAccountWithProxy();
-      account.signer = new LegacyMultisigSigner([guardian]);
-
-      await manager.setTime(randomTime);
-      await manager.waitForTx(accountContract.triggerEscapeSigner());
-
-      await manager.setTime(randomTime + ESCAPE_EXPIRY_PERIOD + 1n);
-
-      account.signer = new LegacyMultisigSigner([owner, guardian]);
-      await upgradeAccount(account, argentAccountClassHash, ["0"]);
-      await getEscapeStatus(await manager.loadContract(account.address)).should.eventually.equal(EscapeStatus.None);
     });
 
     describe(`Escaping by guardian`, function () {

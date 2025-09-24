@@ -155,6 +155,7 @@ export const deployer = (() => {
 
 console.log("Deployer:", deployer.address);
 
+// TODO Delete?
 export async function deployOldAccountWithProxy(
   owner = new LegacyStarknetKeyPair(),
   guardian = new LegacyStarknetKeyPair(),

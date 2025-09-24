@@ -125,14 +125,7 @@ interface LegacyMultisigWallet {
   deploySigner: LegacyMultisigSigner;
 }
 
-export async function deployLegacyMultisig(
-  classHash: string,
-  threshold = 1,
-  version = ETransactionVersion.V3,
-): Promise<LegacyMultisigWallet> {
-  if (version !== ETransactionVersion.V3) {
-    throw new Error("Unsupported transaction version");
-  }
+export async function deployLegacyMultisig(classHash: string, threshold = 1): Promise<LegacyMultisigWallet> {
   const keys = randomLegacyMultisigKeyPairs(threshold);
   const signersPublicKeys = keys.map((key) => key.publicKey);
   const salt = num.toHex(randomStarknetKeyPair().privateKey);

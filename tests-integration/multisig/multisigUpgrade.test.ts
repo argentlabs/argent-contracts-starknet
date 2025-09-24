@@ -31,19 +31,11 @@ interface UpgradeDataEntry {
   getGuidsSelector: string;
 }
 
-xdescribe("ArgentMultisig: upgrade", function () {
+describe("ArgentMultisig: upgrade", function () {
   const artifactNames: UpgradeDataEntry[] = [];
   let mockDapp: ContractWithClass;
 
   before(async () => {
-    // const v010 = "0.1.0";
-    // const classHashV010 = await manager.declareArtifactMultisigContract(v010);
-    // artifactNames.push({
-    //   name: v010,
-    //   // Doesn't support V3 transactions
-    //   deployMultisig: (threshold: number) => deployLegacyMultisig(classHashV010, threshold, ETransactionVersion.V2),
-    //   getGuidsSelector: "get_signers",
-    // });
     // Start of support for V3 transactions
     const v011 = "0.1.1";
     const classHashV011 = await manager.declareArtifactMultisigContract(v011);
@@ -137,7 +129,7 @@ xdescribe("ArgentMultisig: upgrade", function () {
             mockDapp.providerOrAccount = accountV3;
             const randomNumber = generateRandomNumber();
             const estimate = await mockDapp.estimateFee.set_number(randomNumber);
-            estimate.resourceBounds.l1_gas.max_amount = estimate.resourceBounds.l1_gas.max_amount * 4;
+            estimate.resourceBounds.l2_gas.max_amount = estimate.resourceBounds.l2_gas.max_amount * 4n;
             // Perform a simple dapp interaction to make sure nothing is broken
             await manager.ensureSuccess(
               accountV3.execute(mockDapp.populateTransaction.set_number(randomNumber), estimate),

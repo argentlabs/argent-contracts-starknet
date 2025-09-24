@@ -48,9 +48,7 @@ describe("ArgentMultisig: outside execution", function () {
       ],
     };
 
-    const foundHash = num.toHex(
-      await accountContract.get_outside_execution_message_hash_rev_0(outsideExecution),
-    );
+    const foundHash = num.toHex(await accountContract.get_outside_execution_message_hash_rev_0(outsideExecution));
     console.log("expectedMessageHash");
     const expectedMessageHash = getTypedDataHash(outsideExecution, accountContract.address, chainId, legacyRevision);
     expect(foundHash).to.equal(expectedMessageHash);

@@ -42,7 +42,7 @@ export class ArgentAccount extends Account {
     pkOrSigner: string | Uint8Array | SignerInterface,
     cairoVersion: CairoVersion = "1",
   ) {
-    // TODO Update to use the new Account constructor
+    // TODO Update to use the new Account constructor?
     super({
       provider: providerOrOptions,
       address,

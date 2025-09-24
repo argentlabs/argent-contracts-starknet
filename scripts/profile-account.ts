@@ -12,7 +12,6 @@ import {
   WebauthnOwner,
   deployAccount,
   deployAccountWithoutGuardians,
-  deployOldAccountWithProxy,
   deployOpenZeppelinAccount,
   deployer,
   fundAccountCall,
@@ -35,7 +34,6 @@ if (manager.isDevnet) {
 }
 
 const strkContract = await manager.tokens.strkContract();
-const ethContract = await manager.tokens.ethContract();
 const recipient = "0xadbe1";
 const amount = uint256.bnToUint256(1);
 const starknetOwner = new StarknetKeyPair(privateKey);
@@ -67,16 +65,6 @@ const latestClassHash = await manager.declareLocalContract("ArgentAccount");
 {
   const { deployTxHash } = await deployOpenZeppelinAccount({ owner: new LegacyStarknetKeyPair(42n), salt: "0xDE" });
   await profiler.profile("Deploy - OZ", deployTxHash);
-}
-
-{
-  const { account } = await deployOldAccountWithProxy(
-    new LegacyStarknetKeyPair(privateKey),
-    new LegacyStarknetKeyPair(guardian.privateKey),
-    "0xDE",
-  );
-  ethContract.providerOrAccount = account;
-  await profiler.profile("Transfer - Old account with guardian", await ethContract.transfer(recipient, amount));
 }
 
 {

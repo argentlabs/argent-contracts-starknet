@@ -26,6 +26,7 @@ async function profileGasUsage(transactionHash: string, manager: Manager, allowF
   };
 }
 
+// TODO Improve whole profiler
 type Profile = Awaited<ReturnType<typeof profileGasUsage>>;
 
 export function newProfiler(manager: Manager) {

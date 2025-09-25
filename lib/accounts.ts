@@ -238,7 +238,7 @@ async function deployAccountInner(params: DeployAccountParams): Promise<ArgentWa
   const calls = fundingCall ? [fundingCall] : [];
 
   const signer = new ArgentSigner(owner, finalParams.guardians.at(0));
-  const account = new ArgentAccount(manager, contractAddress, signer, "1");
+  const account = new ArgentAccount(manager, contractAddress, signer);
 
   let transactionHash;
   if (finalParams.selfDeploy) {

@@ -15,7 +15,6 @@ interface EventWithName extends Event {
 
 async function expectEventFromReceipt(receipt: TransactionReceipt, event: Event, eventName?: string) {
   receipt = await manager.ensureSuccess(receipt);
-  // TODO NEW IN SNJS: myTestContract.parseEvents(txReceipt);
   expect(event.keys?.length).to.be.greaterThan(0, "Unsupported: No keys");
   const events = receipt.events ?? [];
   const normalizedEvent = normalizeEvent(event);

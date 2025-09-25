@@ -25,7 +25,7 @@ describe("Estimates", function () {
         new EstimateStarknetKeyPair((owner as StarknetKeyPair).publicKey),
         new EstimateStarknetKeyPair((guardian as StarknetKeyPair).publicKey),
       );
-      const estimateAccount = new ArgentAccount(manager, account.address, estimateSigner, "1");
+      const estimateAccount = new ArgentAccount(manager, account.address, estimateSigner);
       const call = (await manager.tokens.feeTokenContract()).populateTransaction.transfer(recipient, amount);
 
       const estimate = await estimateAccount.estimateInvokeFee(call, { skipValidate: false });
@@ -40,7 +40,7 @@ describe("Estimates", function () {
         new EstimateEip191KeyPair((owner as Eip191KeyPair).address),
         new EstimateStarknetKeyPair((guardian as StarknetKeyPair).publicKey),
       );
-      const estimateAccount = new ArgentAccount(manager, account.address, estimateSigner, "1");
+      const estimateAccount = new ArgentAccount(manager, account.address, estimateSigner);
       const call = (await manager.tokens.feeTokenContract()).populateTransaction.transfer(recipient, amount);
       const estimate = await estimateAccount.estimateInvokeFee(call, { skipValidate: false });
       await expectRevertWithErrorMessage("argent/invalid-owner-sig", estimateAccount.execute(call, { ...estimate }));
@@ -53,7 +53,7 @@ describe("Estimates", function () {
       const { account, keys } = await deployMultisig1_3({});
 
       const estimateSigner = new MultisigSigner([new EstimateStarknetKeyPair((keys[0] as StarknetKeyPair).publicKey)]);
-      const estimateAccount = new ArgentAccount(manager, account.address, estimateSigner, "1");
+      const estimateAccount = new ArgentAccount(manager, account.address, estimateSigner);
       const call = (await manager.tokens.feeTokenContract()).populateTransaction.transfer(recipient, amount);
 
       const estimate = await estimateAccount.estimateInvokeFee(call, { skipValidate: false });
@@ -65,7 +65,7 @@ describe("Estimates", function () {
       const { account, keys } = await deployMultisig1_3({ keys: [new Eip191KeyPair()] });
 
       const estimateSigner = new MultisigSigner([new EstimateEip191KeyPair((keys[0] as Eip191KeyPair).address)]);
-      const estimateAccount = new ArgentAccount(manager, account.address, estimateSigner, "1");
+      const estimateAccount = new ArgentAccount(manager, account.address, estimateSigner);
       const call = (await manager.tokens.feeTokenContract()).populateTransaction.transfer(recipient, amount);
       const estimate = await estimateAccount.estimateInvokeFee(call, { skipValidate: false });
       await expectRevertWithErrorMessage("argent/invalid-signature", estimateAccount.execute(call, { ...estimate }));

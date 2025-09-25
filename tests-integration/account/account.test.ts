@@ -37,7 +37,6 @@ describe("ArgentAccount", function () {
       },
       contractAddress,
     );
-    // TODO defaultDeployer.parseDeployerEvent??
     const receipt = await manager.waitForTx(deployer.execute(udcCalls.calls));
     await expectEvent(receipt, {
       from_address: contractAddress,

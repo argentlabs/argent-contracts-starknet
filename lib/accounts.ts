@@ -42,7 +42,6 @@ export class ArgentAccount extends Account {
     pkOrSigner: string | Uint8Array | SignerInterface,
     cairoVersion: CairoVersion = "1",
   ) {
-    // TODO Update to use the new Account constructor?
     super({
       provider: providerOrOptions,
       address,
@@ -154,7 +153,6 @@ export const deployer = (() => {
 
 console.log("Deployer:", deployer.address);
 
-// TODO Delete?
 export async function deployOldAccountWithProxy(
   owner = new LegacyStarknetKeyPair(),
   guardian = new LegacyStarknetKeyPair(),

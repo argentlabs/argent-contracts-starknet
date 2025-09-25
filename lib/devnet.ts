@@ -1,4 +1,4 @@
-import { RawArgs, RpcProvider } from "starknet";
+import { RpcProvider } from "starknet";
 import { Constructor } from ".";
 
 const dumpFolderPath = "./dump";
@@ -44,16 +44,7 @@ export const WithDevnet = <T extends Constructor<RpcProvider>>(Base: T) =>
       await this.handleJsonRpc("devnet_load", { path: dumpFolderPath });
     }
 
-    async handlePost(path: string, payload?: RawArgs) {
-      const url = `${this.channel.nodeUrl}/${path}`;
-      const headers = { "Content-Type": "application/json" };
-      const response = await fetch(url, { method: "POST", headers, body: JSON.stringify(payload) });
-      if (!response.ok) {
-        throw new Error(`HTTP error! calling ${url} Status: ${response.status} Message: ${await response.text()}`);
-      }
-    }
-
-    async handleJsonRpc(method: string, params: any = {}) {
+    async handleJsonRpc(method: string, params = {}) {
       const body = {
         jsonrpc: "2.0",
         id: Date.now(),

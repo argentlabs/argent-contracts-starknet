@@ -54,15 +54,16 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
       const payload = getDeclareContractPayload(contractName, folder);
       let details: UniversalDetails | undefined;
       // Setting resourceBounds skips estimate
-      // if (this.isDevnet) {
-      //   details = {
-      //     skipValidate: true,
-      //     resourceBounds: {
-      //       l2_gas: { max_amount: "0x0", max_price_per_unit: "0x0" },
-      //       l1_gas: { max_amount: "0x30000", max_price_per_unit: "0x300000000000" },
-      //     },
-      //   };
-      // }
+      if (this.isDevnet) {
+        details = {
+          skipValidate: true,
+          resourceBounds: {
+            l2_gas: { max_amount: 10000000000n, max_price_per_unit: 1500000000n },
+            l1_gas: { max_amount: 0n, max_price_per_unit: 52500000000000n },
+            l1_data_gas: { max_amount: 1000n, max_price_per_unit: 1n }
+          },
+        };
+      }
 
       // If cache isn't initialized, initialize it
       if (Object.keys(this.cacheClassHashes).length === 0) {

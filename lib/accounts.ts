@@ -52,7 +52,6 @@ export class ArgentAccount extends Account {
     });
   }
 
-  // TODO We have a bit more granularity over when to use the estimate signer, we can now use estimateAccountDeployFee(), check if Y/N
   override async estimateFeeBulk(invocations: Invocations, details?: UniversalDetails): Promise<EstimateFeeBulk> {
     if (!details?.skipValidate) {
       details!.skipValidate = false;

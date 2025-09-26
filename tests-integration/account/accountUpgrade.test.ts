@@ -41,7 +41,6 @@ interface UpgradeDataEntry {
   name: string;
   deployAccount: () => Promise<DeployAccountReturn>;
   deployAccountWithoutGuardians: () => Promise<DeployAccountReturn>;
-  upgradeExtraCalldata?: string[]; // Optional, as it's not present in all entries
   triggerEscapeOwnerCall: SelfCall;
   triggerEscapeGuardianCall: SelfCall;
 }
@@ -102,11 +101,10 @@ describe("ArgentAccount: upgrade", function () {
         triggerEscapeOwnerCall,
         triggerEscapeGuardianCall,
         deployAccountWithoutGuardians,
-        upgradeExtraCalldata,
       } of upgradeData) {
         it(`[${name}] Should be possible to upgrade `, async function () {
           const { account } = await deployAccount();
-          const txReceipt = await upgradeAccount(account, argentAccountClassHash, upgradeExtraCalldata);
+          const txReceipt = await upgradeAccount(account, argentAccountClassHash);
           expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
           // Check events
           const eventsEmittedByAccount = txReceipt.events.filter((e) => e.from_address === account.address);
@@ -149,7 +147,7 @@ describe("ArgentAccount: upgrade", function () {
 
         it(`[${name}] Should be possible to upgrade without guardian from ${name}`, async function () {
           const { account } = await deployAccountWithoutGuardians();
-          await upgradeAccount(account, argentAccountClassHash, upgradeExtraCalldata);
+          await upgradeAccount(account, argentAccountClassHash);
           expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
           const accountV3 = await getAccountV3(account);
           mockDapp.providerOrAccount = accountV3;
@@ -189,7 +187,7 @@ describe("ArgentAccount: upgrade", function () {
           );
 
           account.signer = oldSigner;
-          await expectEvent(await upgradeAccount(account, argentAccountClassHash, upgradeExtraCalldata), {
+          await expectEvent(await upgradeAccount(account, argentAccountClassHash), {
             from_address: account.address,
             eventName: "EscapeCanceled",
           });
@@ -214,7 +212,7 @@ describe("ArgentAccount: upgrade", function () {
           );
 
           account.signer = oldSigner;
-          await expectEvent(await upgradeAccount(account, argentAccountClassHash, upgradeExtraCalldata), {
+          await expectEvent(await upgradeAccount(account, argentAccountClassHash), {
             from_address: account.address,
             eventName: "EscapeCanceled",
           });
@@ -296,8 +294,6 @@ describe("ArgentAccount: upgrade", function () {
 });
 
 async function getAccountV3(account: Account): Promise<Account> {
-  // if (account.transactionVersion == ETransactionVersion.V2) {
   await fundAccount(account.address, 1e18, "STRK");
-  // }
   return new ArgentAccount(account, account.address, account.signer);
 }

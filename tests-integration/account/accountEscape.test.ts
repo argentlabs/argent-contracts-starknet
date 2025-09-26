@@ -25,13 +25,8 @@ import {
 } from "../../lib";
 
 describe("ArgentAccount: escape mechanism", function () {
-  let argentAccountClassHash: string;
   let newKeyPair: KeyPair;
   let randomTime: bigint;
-
-  before(async () => {
-    argentAccountClassHash = await manager.declareLocalContract("ArgentAccount");
-  });
 
   beforeEach(async () => {
     newKeyPair = randomStarknetKeyPair();

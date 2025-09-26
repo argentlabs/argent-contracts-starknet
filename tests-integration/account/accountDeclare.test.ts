@@ -1,9 +1,5 @@
 import { expect } from "chai";
-import {
-  deployAccount,
-  getDeclareContractPayload,
-  manager,
-} from "../../lib";
+import { deployAccount, getDeclareContractPayload, manager } from "../../lib";
 
 describe("ArgentAccount: declare", function () {
   beforeEach(async () => {

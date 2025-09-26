@@ -231,7 +231,7 @@ async function deployAccountInner(params: DeployAccountParams): Promise<ArgentWa
 
   const { classHash, salt } = finalParams;
   const contractAddress = hash.calculateContractAddressFromHash(salt, classHash, constructorCalldata, 0);
-  const fundingCall = fundAccountCall(contractAddress, finalParams.fundingAmount ?? 5e18, "STRK"); // 1 ETH
+  const fundingCall = fundAccountCall(contractAddress, finalParams.fundingAmount ?? 5e18, "STRK"); // 5 STRK
   const calls = fundingCall ? [fundingCall] : [];
 
   const signer = new ArgentSigner(owner, finalParams.guardians.at(0));
@@ -469,6 +469,7 @@ export async function getSignerDetails(account: ArgentAccount, calls: Call[]): P
   }
 }
 
+// TODO If we remove support for old funding, we can remove token argument and simplify this function
 export async function fundAccount(recipient: string, amount: number | bigint, token: "ETH" | "STRK") {
   const call = fundAccountCall(recipient, amount, token);
   const response = await deployer.execute(call ? [call] : []);

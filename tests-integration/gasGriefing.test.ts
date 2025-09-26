@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { EDataAvailabilityMode } from "starknet";
+import { EDataAvailabilityMode, ResourceBoundsBN } from "starknet";
 import { ArgentSigner, deployAccount, expectExecutionRevert, manager, randomStarknetKeyPair } from "../lib";
 
 const MAX_ESCAPE_MAX_FEE_STRK = 12000000000000000000n;
@@ -26,7 +26,7 @@ describe("Gas griefing", function () {
     const { resourceBounds } = await accountContract.estimateFee.trigger_escape_owner(compiledSigner);
 
     // At the moment we should only use l1_gas, this simplifies the calculation
-    const newResourceBounds = {
+    const newResourceBounds: ResourceBoundsBN = {
       l1_gas: {
         // Need (max_amount * max_price_per_unit) > 12e18
         max_amount: MAX_ESCAPE_MAX_FEE_STRK / resourceBounds.l1_gas.max_price_per_unit + 1n,
@@ -42,7 +42,7 @@ describe("Gas griefing", function () {
       },
     };
 
-    expect(getMaxFee(newResourceBounds) > MAX_ESCAPE_MAX_FEE_STRK + 1n).to.be.true;
+    expect(getMaxFee(newResourceBounds) > MAX_ESCAPE_MAX_FEE_STRK).to.be.true;
     await expectExecutionRevert(
       "argent/max-fee-too-high",
       account.execute(accountContract.populateTransaction.trigger_escape_owner(compiledSigner), {
@@ -140,11 +140,10 @@ describe("Gas griefing", function () {
   });
 });
 
-function getMaxFee(resourceBounds: any): bigint {
+function getMaxFee(resourceBounds: ResourceBoundsBN): bigint {
   let feeBound = 0n;
   for (const gasBound of Object.values(resourceBounds)) {
-    const castedGasBound = gasBound as { max_amount: bigint; max_price_per_unit: bigint };
-    feeBound += BigInt(castedGasBound.max_amount) * BigInt(castedGasBound.max_price_per_unit);
+    feeBound += BigInt(gasBound.max_amount) * BigInt(gasBound.max_price_per_unit);
   }
   return feeBound;
 }

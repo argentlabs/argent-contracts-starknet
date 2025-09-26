@@ -33,7 +33,7 @@ describe("Estimates", function () {
       await account.execute(call, { ...estimate });
     });
 
-    it(`Use Eip191Signer using txv3`, async function () {
+    it(`Using Eip191Signer`, async function () {
       const { account, guardian, owner } = await deployAccount({ owner: new Eip191KeyPair() });
 
       const estimateSigner = new ArgentSigner(

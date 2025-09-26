@@ -79,6 +79,7 @@ export class DappService {
     transactionDetail?: InvocationsSignerDetails;
   }): Promise<SessionToken> {
     const transactionDetail = providedTransactionDetail ?? (await getSignerDetails(account, calls));
+
     const transactionHash = calculateTransactionHash(transactionDetail, calls);
     const accountAddress = transactionDetail.walletAddress;
 

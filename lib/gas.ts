@@ -4,6 +4,10 @@ import { InvokeFunctionResponse } from "starknet";
 import { type Manager } from "./manager";
 
 const strkUsd = 0.14;
+// We could get the prices from the block, but it's not worth the extra complexity
+const l1GasPrice = 35000000000000;
+const l2GasPrice = 6000000000;
+const l1DataGasPrice = 1;
 
 async function profileGasUsage(transactionHash: string, manager: Manager, allowFailedTransactions = false) {
   const receipt = await manager.ensureAccepted({ transaction_hash: transactionHash });
@@ -52,10 +56,13 @@ export function newProfiler(manager: Manager) {
       const feeUsd = Number((profile.actualFee * BigInt(multiplier * strkUsd)) / 10n ** 18n) / multiplier;
       return {
         "Actual fee": Number(profile.actualFee).toLocaleString("de-DE"),
-        "Fee usd": Number(feeUsd.toFixed(5)),
+        "Fee usd": Number(feeUsd.toFixed(6)),
         "L1 gas": profile.l1_gas,
+        "L1 gas price usd (18 decimals)": Math.floor(l1GasPrice * profile.l1_gas * strkUsd),
         "L2 gas": profile.l2_gas,
+        "L2 gas price usd (18 decimals)": Math.floor(l2GasPrice * profile.l2_gas * strkUsd),
         "L1 data gas": profile.l1_data_gas,
+        "L1 data gas price usd (18 decimals)": Math.floor(l1DataGasPrice * profile.l1_data_gas * strkUsd),
       };
     },
     printSummary() {

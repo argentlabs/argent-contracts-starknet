@@ -304,5 +304,5 @@ describe("ArgentAccount: upgrade", function () {
 
 async function getAccountV3(account: Account): Promise<Account> {
   await fundAccount(account.address, 1e18, "STRK");
-  return new ArgentAccount(account, account.address, account.signer);
+  return new ArgentAccount({ provider: manager, address: account.address, signer: account.signer });
 }

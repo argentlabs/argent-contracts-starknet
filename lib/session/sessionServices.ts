@@ -58,7 +58,12 @@ export class DappService {
         return sessionToken.compileSignature();
       },
     );
-    return new ArgentAccount(manager, account.address, sessionSigner, account.cairoVersion);
+    return new ArgentAccount({
+      provider: manager,
+      address: account.address,
+      signer: sessionSigner,
+      cairoVersion: account.cairoVersion,
+    });
   }
 
   public async getSessionToken({

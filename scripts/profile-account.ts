@@ -225,5 +225,5 @@ async function deployAccountUsingProxy({
 
   await deployer.execute(calls);
 
-  return new ArgentAccount(manager, contract_address, new ArgentSigner(owner, guardian));
+  return new ArgentAccount({ provider: manager, address: contract_address, signer: new ArgentSigner(owner, guardian) });
 }

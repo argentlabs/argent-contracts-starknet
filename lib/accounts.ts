@@ -1,11 +1,11 @@
 import { expect } from "chai";
 import {
   Account,
+  AccountOptions,
   AllowArray,
   ArraySignatureType,
   CairoOption,
   CairoOptionVariant,
-  CairoVersion,
   Call,
   CallData,
   Contract,
@@ -16,11 +16,8 @@ import {
   InvocationsSignerDetails,
   InvokeFunctionResponse,
   Provider,
-  ProviderInterface,
-  ProviderOptions,
   RawCalldata,
   Signature,
-  SignerInterface,
   TransactionReceipt,
   TypedDataRevision,
   UniversalDetails,
@@ -36,19 +33,8 @@ import { ArgentSigner, KeyPair, RawSigner, randomStarknetKeyPair } from "./signe
 import { ethAddress, strkAddress } from "./tokens";
 
 export class ArgentAccount extends Account {
-  constructor(
-    providerOrOptions: ProviderOptions | ProviderInterface,
-    address: string,
-    pkOrSigner: string | Uint8Array | SignerInterface,
-    cairoVersion: CairoVersion = "1",
-  ) {
-    super({
-      provider: providerOrOptions,
-      address,
-      signer: pkOrSigner,
-      cairoVersion,
-      transactionVersion: ETransactionVersion.V3,
-    });
+  constructor(options: AccountOptions) {
+    super(options);
   }
 
   override async estimateFeeBulk(invocations: Invocations, details?: UniversalDetails): Promise<EstimateFeeBulk> {
@@ -235,7 +221,7 @@ async function deployAccountInner(params: DeployAccountParams): Promise<ArgentWa
   const calls = fundingCall ? [fundingCall] : [];
 
   const signer = new ArgentSigner(owner, finalParams.guardians.at(0));
-  const account = new ArgentAccount(manager, contractAddress, signer);
+  const account = new ArgentAccount({ provider: manager, address: contractAddress, signer });
 
   let transactionHash;
   if (finalParams.selfDeploy) {
@@ -417,7 +403,12 @@ export async function executeWithCustomSig(
       return signature;
     }
   })();
-  const newAccount = new ArgentAccount(manager, account.address, signer, account.cairoVersion);
+  const newAccount = new ArgentAccount({
+    provider: manager,
+    address: account.address,
+    signer,
+    cairoVersion: account.cairoVersion,
+  });
 
   return await newAccount.execute(transactions, transactionsDetail);
 }
@@ -433,7 +424,12 @@ export async function estimateWithCustomSig(
       return signature;
     }
   })();
-  const newAccount = new ArgentAccount(manager, account.address, signer, account.cairoVersion);
+  const newAccount = new ArgentAccount({
+    provider: manager,
+    address: account.address,
+    signer,
+    cairoVersion: account.cairoVersion,
+  });
   // If the transaction fails, the estimation will fail and an error will be thrown
   return await newAccount.estimateInvokeFee(transactions);
 }
@@ -441,7 +437,12 @@ export async function estimateWithCustomSig(
 class ShouldNotExecuteError extends Error {}
 
 export async function getSignerDetails(account: ArgentAccount, calls: Call[]): Promise<InvocationsSignerDetails> {
-  const newAccount = new ArgentAccount(manager, account.address, account.signer, account.cairoVersion);
+  const newAccount = new ArgentAccount({
+    provider: manager,
+    address: account.address,
+    signer: account.signer,
+    cairoVersion: account.cairoVersion,
+  });
   const customSigner = new (class extends RawSigner {
     public signerDetails?: InvocationsSignerDetails;
     public async signTransaction(_calls: Call[], signerDetails: InvocationsSignerDetails): Promise<Signature> {

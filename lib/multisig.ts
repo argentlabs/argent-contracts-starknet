@@ -96,7 +96,7 @@ export async function deployMultisig(params: DeployMultisigParams): Promise<Mult
 
   const receipt = await manager.waitForTx(transactionHash);
   const signer = new MultisigSigner(keys.slice(0, finalParams.threshold));
-  const account = new ArgentAccount(manager, accountAddress, signer);
+  const account = new ArgentAccount({ provider: manager, address: accountAddress, signer });
   const accountContract = await manager.loadContract(account.address);
   accountContract.providerOrAccount = account;
   return { account, accountContract, keys, receipt, threshold: BigInt(finalParams.threshold) };

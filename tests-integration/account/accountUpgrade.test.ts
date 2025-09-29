@@ -56,8 +56,17 @@ describe("ArgentAccount: upgrade", function () {
     argentAccountClassHash = await manager.declareLocalContract("ArgentAccount");
     mockDapp = await manager.declareAndDeployContract("MockDapp");
 
+    const v030 = "0.3.0";
+    const classHashV030 = await manager.declareArtifactAccountContract(v030);
     const triggerEscapeOwnerCallV03 = { entrypoint: "trigger_escape_owner", calldata: [12] };
     const triggerEscapeGuardianCallV03 = { entrypoint: "trigger_escape_guardian", calldata: [12] };
+    upgradeData.push({
+      name: v030,
+      deployAccount: async () => deployLegacyAccount(classHashV030),
+      deployAccountWithoutGuardians: async () => deployLegacyAccountWithoutGuardian(classHashV030),
+      triggerEscapeOwnerCall: triggerEscapeOwnerCallV03,
+      triggerEscapeGuardianCall: triggerEscapeGuardianCallV03,
+    });
 
     // From here on we begin support for V3 transactions
     const v031 = "0.3.1";

@@ -54,9 +54,12 @@ export function newProfiler(manager: Manager) {
     summarizeCost(profile: Profile) {
       const multiplier = 1000000;
       const feeUsd = Number((profile.actualFee * BigInt(multiplier * strkUsd)) / 10n ** 18n) / multiplier;
-      const l1GasFeeUsd = Number((l1GasPrice * BigInt(profile.l1_gas) * (BigInt(multiplier * strkUsd))) / 10n ** 18n )/ multiplier;
-      const l2GasFeeUsd = Number((l2GasPrice * BigInt(profile.l2_gas) * (BigInt(multiplier * strkUsd))) / 10n ** 18n )/ multiplier;
-      const l1DataGasFeeUsd = Number((l1DataGasPrice * BigInt(profile.l1_data_gas) * (BigInt(multiplier * strkUsd))) / 10n ** 18n )/ multiplier;
+      const l1GasFeeUsd =
+        Number((l1GasPrice * BigInt(profile.l1_gas) * BigInt(multiplier * strkUsd)) / 10n ** 18n) / multiplier;
+      const l2GasFeeUsd =
+        Number((l2GasPrice * BigInt(profile.l2_gas) * BigInt(multiplier * strkUsd)) / 10n ** 18n) / multiplier;
+      const l1DataGasFeeUsd =
+        Number((l1DataGasPrice * BigInt(profile.l1_data_gas) * BigInt(multiplier * strkUsd)) / 10n ** 18n) / multiplier;
       return {
         "Actual fee": Number(profile.actualFee).toLocaleString("de-DE"),
         "Fee usd": Number(feeUsd.toFixed(6)),

@@ -343,12 +343,9 @@ export async function deployAccountWithoutGuardians(
   return await deployAccountInner(params);
 }
 
-export async function deployLegacyAccount(
-  classHash: string,
-  transactionVersion = ETransactionVersion.V3,
-): Promise<LegacyArgentWallet> {
+export async function deployLegacyAccount(classHash: string): Promise<LegacyArgentWallet> {
   const guardian = new LegacyStarknetKeyPair();
-  return deployLegacyAccountInner(classHash, guardian, transactionVersion);
+  return deployLegacyAccountInner(classHash, guardian, ETransactionVersion.V3);
 }
 
 export async function deployLegacyAccountWithoutGuardian(

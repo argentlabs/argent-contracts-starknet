@@ -40,7 +40,7 @@ export class ArgentAccount extends Account {
   override async estimateFeeBulk(invocations: Invocations, details?: UniversalDetails): Promise<EstimateFeeBulk> {
     details = details ?? {};
     details.skipValidate = details.skipValidate ?? false;
-    
+
     if (this.signer instanceof ArgentSigner) {
       const { owner, guardian } = this.signer as ArgentSigner;
       const estimateSigner = new ArgentSigner(owner.estimateSigner, guardian?.estimateSigner);
@@ -331,30 +331,22 @@ export async function deployAccountWithoutGuardians(
 
 export async function deployLegacyAccount(classHash: string): Promise<LegacyArgentWallet> {
   const guardian = new LegacyStarknetKeyPair();
-  return deployLegacyAccountInner(classHash, guardian, ETransactionVersion.V3);
+  return deployLegacyAccountInner(classHash, guardian);
 }
 
-export async function deployLegacyAccountWithoutGuardian(
-  classHash: string,
-  transactionVersion = ETransactionVersion.V3,
-): Promise<LegacyArgentWallet> {
-  return deployLegacyAccountInner(classHash, undefined, transactionVersion);
+export async function deployLegacyAccountWithoutGuardian(classHash: string): Promise<LegacyArgentWallet> {
+  return deployLegacyAccountInner(classHash, undefined);
 }
 
 async function deployLegacyAccountInner(
   classHash: string,
   guardian?: LegacyStarknetKeyPair,
-  transactionVersion = ETransactionVersion.V3,
 ): Promise<LegacyArgentWallet> {
   const owner = new LegacyStarknetKeyPair();
   const salt = num.toHex(owner.privateKey);
   const constructorCalldata = CallData.compile({ owner: owner.publicKey, guardian: guardian?.publicKey || 0 });
   const contractAddress = hash.calculateContractAddressFromHash(salt, classHash, constructorCalldata, 0);
-  if (transactionVersion === ETransactionVersion.V3) {
-    await fundAccount(contractAddress, 1e18, "STRK");
-  } else {
-    await fundAccount(contractAddress, 1e15, "ETH");
-  }
+  await fundAccount(contractAddress, 1e18, "STRK");
 
   const account = new Account({
     provider: manager,

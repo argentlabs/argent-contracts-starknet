@@ -12,7 +12,6 @@ import {
   expectRevertWithErrorMessage,
   fundAccount,
   generateRandomNumber,
-  getUpgradeDataLegacy,
   LegacyWebauthnOwner,
   manager,
   randomEip191KeyPair,
@@ -165,9 +164,7 @@ describe("ArgentAccount: upgrade", function () {
 
         it(`[${name}] Upgrade cairo with multicall`, async function () {
           const { account } = await deployAccount();
-          const upgradeData = account.cairoVersion
-            ? CallData.compile([[mockDapp.populateTransaction.set_number(randomNumber)]])
-            : getUpgradeDataLegacy([mockDapp.populateTransaction.set_number(randomNumber)]);
+          const upgradeData = CallData.compile([[mockDapp.populateTransaction.set_number(randomNumber)]]);
           await upgradeAccount(account, argentAccountClassHash, upgradeData);
           expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
           await mockDapp.get_number(account.address).should.eventually.equal(randomNumber);

@@ -58,9 +58,9 @@ export const WithContracts = <T extends ReturnType<typeof WithDevnet>>(Base: T) 
         details = {
           skipValidate: true,
           resourceBounds: {
-            l2_gas: { max_amount: 10000000000n, max_price_per_unit: 1500000000n },
-            l1_gas: { max_amount: 0n, max_price_per_unit: 52500000000000n },
-            l1_data_gas: { max_amount: 1000n, max_price_per_unit: 1n },
+            l2_gas: { max_amount: 10000000000n, max_price_per_unit: 4500000000n },
+            l1_gas: { max_amount: 0n, max_price_per_unit: 67500000000000n },
+            l1_data_gas: { max_amount: 1000n, max_price_per_unit: 52500n },
           },
         };
       }

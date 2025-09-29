@@ -5,9 +5,9 @@ import { type Manager } from "./manager";
 
 const strkUsd = 0.14;
 // We could get the prices from the block, but it's not worth the extra complexity
-const l1GasPrice = 35000000000000;
-const l2GasPrice = 6000000000;
-const l1DataGasPrice = 1;
+const l1GasPrice = 45000000000000n;
+const l2GasPrice = 3000000000n;
+const l1DataGasPrice = 35000n;
 
 async function profileGasUsage(transactionHash: string, manager: Manager, allowFailedTransactions = false) {
   const receipt = await manager.ensureAccepted({ transaction_hash: transactionHash });
@@ -54,15 +54,18 @@ export function newProfiler(manager: Manager) {
     summarizeCost(profile: Profile) {
       const multiplier = 1000000;
       const feeUsd = Number((profile.actualFee * BigInt(multiplier * strkUsd)) / 10n ** 18n) / multiplier;
+      const l1GasFeeUsd = Number((l1GasPrice * BigInt(profile.l1_gas) * (BigInt(multiplier * strkUsd))) / 10n ** 18n )/ multiplier;
+      const l2GasFeeUsd = Number((l2GasPrice * BigInt(profile.l2_gas) * (BigInt(multiplier * strkUsd))) / 10n ** 18n )/ multiplier;
+      const l1DataGasFeeUsd = Number((l1DataGasPrice * BigInt(profile.l1_data_gas) * (BigInt(multiplier * strkUsd))) / 10n ** 18n )/ multiplier;
       return {
         "Actual fee": Number(profile.actualFee).toLocaleString("de-DE"),
         "Fee usd": Number(feeUsd.toFixed(6)),
         "L1 gas": profile.l1_gas,
-        "L1 gas price usd (18 decimals)": Math.floor(l1GasPrice * profile.l1_gas * strkUsd),
+        "L1 gas fee usd": Number(l1GasFeeUsd.toFixed(6)),
         "L2 gas": profile.l2_gas,
-        "L2 gas price usd (18 decimals)": Math.floor(l2GasPrice * profile.l2_gas * strkUsd),
+        "L2 gas fee usd": Number(l2GasFeeUsd.toFixed(6)),
         "L1 data gas": profile.l1_data_gas,
-        "L1 data gas price usd (18 decimals)": Math.floor(l1DataGasPrice * profile.l1_data_gas * strkUsd),
+        "L1 data fee usd": Number(l1DataGasFeeUsd.toFixed(6)),
       };
     },
     printSummary() {

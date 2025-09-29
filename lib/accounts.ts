@@ -38,9 +38,9 @@ export class ArgentAccount extends Account {
   }
 
   override async estimateFeeBulk(invocations: Invocations, details?: UniversalDetails): Promise<EstimateFeeBulk> {
-    if (!details?.skipValidate) {
-      details!.skipValidate = false;
-    }
+    details = details ?? {};
+    details.skipValidate = details.skipValidate ?? false;
+    
     if (this.signer instanceof ArgentSigner) {
       const { owner, guardian } = this.signer as ArgentSigner;
       const estimateSigner = new ArgentSigner(owner.estimateSigner, guardian?.estimateSigner);

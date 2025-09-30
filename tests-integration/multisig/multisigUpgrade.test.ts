@@ -122,7 +122,7 @@ describe("ArgentMultisig: upgrade", function () {
               transactionVersion: ETransactionVersion.V3,
             });
             // Need some STRK for v3 transactions
-            await fundAccount(accountV3.address, 1e18, "STRK");
+            await fundAccount(accountV3.address, 1e18);
 
             // Default estimation is too low, we need to increase it
             mockDapp.providerOrAccount = accountV3;

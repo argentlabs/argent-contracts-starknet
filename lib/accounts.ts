@@ -1,4 +1,3 @@
-import { expect } from "chai";
 import {
   Account,
   AccountOptions,
@@ -30,7 +29,7 @@ import { manager } from "./manager";
 import { getOutsideExecutionCall } from "./outsideExecution";
 import { LegacyArgentSigner, LegacyKeyPair, LegacyMultisigSigner, LegacyStarknetKeyPair } from "./signers/legacy";
 import { ArgentSigner, KeyPair, RawSigner, randomStarknetKeyPair } from "./signers/signers";
-import { ethAddress, strkAddress } from "./tokens";
+import { strkAddress } from "./tokens";
 
 export class ArgentAccount extends Account {
   constructor(options: AccountOptions) {
@@ -156,10 +155,8 @@ async function deployOldAccountWithProxyInner(
   guardian?: LegacyKeyPair,
   salt = num.toHex(randomStarknetKeyPair().privateKey),
 ): Promise<LegacyArgentWallet> {
-  const proxyClassHash = await manager.declareFixtureContract("Proxy");
-  const oldArgentAccountClassHash = await manager.declareFixtureContract("Account-0.2.3.1");
-  // Ensuring that the OldArgentAccount class hash is the expected one of v2.3.1
-  expect(oldArgentAccountClassHash).to.equal("0x33434ad846cdd5f23eb73ff09fe6fddd568284a0fb7d1be20ee482f044dabe2");
+  const proxyClassHash = "0x25ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918";
+  const oldArgentAccountClassHash = "0x33434ad846cdd5f23eb73ff09fe6fddd568284a0fb7d1be20ee482f044dabe2";
 
   const guardianPublicKey = guardian ? guardian.publicKey : 0;
   const constructorCalldata = CallData.compile({
@@ -177,7 +174,7 @@ async function deployOldAccountWithProxyInner(
   }
   account.signer = new LegacyMultisigSigner(keys);
 
-  await fundAccount(account.address, 1e16, "ETH"); // 0.01 ETH
+  await fundAccount(account.address, 5e16);
 
   const { transaction_hash } = await account.deployAccount({
     classHash: proxyClassHash,
@@ -217,7 +214,7 @@ async function deployAccountInner(params: DeployAccountParams): Promise<ArgentWa
 
   const { classHash, salt } = finalParams;
   const contractAddress = hash.calculateContractAddressFromHash(salt, classHash, constructorCalldata, 0);
-  const fundingCall = fundAccountCall(contractAddress, finalParams.fundingAmount ?? 5e18, "STRK"); // 5 STRK
+  const fundingCall = fundAccountCall(contractAddress, finalParams.fundingAmount ?? 5e18);
   const calls = fundingCall ? [fundingCall] : [];
 
   const signer = new ArgentSigner(owner, finalParams.guardians.at(0));
@@ -346,7 +343,7 @@ async function deployLegacyAccountInner(
   const salt = num.toHex(owner.privateKey);
   const constructorCalldata = CallData.compile({ owner: owner.publicKey, guardian: guardian?.publicKey || 0 });
   const contractAddress = hash.calculateContractAddressFromHash(salt, classHash, constructorCalldata, 0);
-  await fundAccount(contractAddress, 1e18, "STRK");
+  await fundAccount(contractAddress, 1e18);
 
   const account = new Account({
     provider: manager,
@@ -459,21 +456,17 @@ export async function getSignerDetails(account: ArgentAccount, calls: Call[]): P
   }
 }
 
-// TODO If we remove support for old funding, we can remove token argument and simplify this function
-export async function fundAccount(recipient: string, amount: number | bigint, token: "ETH" | "STRK") {
-  const call = fundAccountCall(recipient, amount, token);
+// TODO RENAME TO FUNDSTRKACCOUNT or smthng similar
+export async function fundAccount(recipient: string, amount: number | bigint) {
+  const call = fundAccountCall(recipient, amount);
   const response = await deployer.execute(call ? [call] : []);
   await manager.waitForTx(response.transaction_hash);
 }
 
-export function fundAccountCall(recipient: string, amount: number | bigint, token: "ETH" | "STRK"): Call | undefined {
+export function fundAccountCall(recipient: string, amount: number | bigint): Call | undefined {
   if (amount <= 0n) {
     return;
   }
-  const contractAddress = { ETH: ethAddress, STRK: strkAddress }[token];
-  if (!contractAddress) {
-    throw new Error(`Unsupported token ${token}`);
-  }
   const calldata = CallData.compile([recipient, uint256.bnToUint256(amount)]);
-  return { contractAddress, calldata, entrypoint: "transfer" };
+  return { contractAddress: strkAddress, calldata, entrypoint: "transfer" };
 }

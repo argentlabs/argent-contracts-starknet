@@ -33,7 +33,7 @@ export async function deployOpenZeppelinAccount(params: DeployOzAccountParams): 
 
   const contractAddress = hash.calculateContractAddressFromHash(finalParams.salt, classHash, constructorCalldata, 0);
 
-  const fundingCall = fundAccountCall(contractAddress, finalParams.fundingAmount ?? 1e18, "STRK");
+  const fundingCall = fundAccountCall(contractAddress, finalParams.fundingAmount ?? 1e18);
   await manager.waitForTx(deployer.execute([fundingCall!]));
 
   const signer = new LegacyMultisigSigner([finalParams.owner]);

@@ -221,7 +221,7 @@ async function deployAccountUsingProxy({
   }
 
   calls.push(contract.populateTransaction.upgrade(latestClassHash));
-  calls.push(fundAccountCall(contract_address, fundingAmount, "STRK"));
+  calls.push(fundAccountCall(contract_address, fundingAmount));
 
   await deployer.execute(calls);
 

@@ -1,6 +1,7 @@
 import { expect } from "chai";
 import { EDataAvailabilityMode, ResourceBoundsBN } from "starknet";
 import { ArgentSigner, deployAccount, expectExecutionRevert, manager, randomStarknetKeyPair } from "../lib";
+import { l1DataGasPrice, l2GasPrice } from "../lib/gas";
 
 const MAX_ESCAPE_MAX_FEE_STRK = 12000000000000000000n;
 
@@ -59,19 +60,29 @@ describe("Gas griefing", function () {
 
     const { resourceBounds } = await accountContract.estimateFee.trigger_escape_owner(compiledSigner);
 
+    // If this fails, we gotta update the math underneath
+    expect(l1DataGasPrice < l2GasPrice).to.be.true;
+
     // Need that the sum of each bound (max_amount * max_price_per_unit) <= 12e18
+    const l2Gas = {
+      max_amount: resourceBounds.l2_gas.max_amount,
+      max_price_per_unit: l2GasPrice,
+    };
+    const l2GasFee = l2Gas.max_price_per_unit * l2Gas.max_amount;
+    const l1DataMaxAmount = (MAX_ESCAPE_MAX_FEE_STRK - l2GasFee) / l1DataGasPrice;
     const newResourceBounds = {
       ...resourceBounds,
-      l2_gas: {
-        max_amount: MAX_ESCAPE_MAX_FEE_STRK / resourceBounds.l2_gas.max_price_per_unit - 1n,
-        max_price_per_unit: resourceBounds.l2_gas.max_price_per_unit,
-      },
+      l2_gas: l2Gas,
       l1_data_gas: {
-        max_amount: resourceBounds.l2_gas.max_price_per_unit,
-        max_price_per_unit: 1n,
+        max_amount: l1DataMaxAmount,
+        max_price_per_unit: l1DataGasPrice,
       },
     };
-    expect(getMaxFee(newResourceBounds) == MAX_ESCAPE_MAX_FEE_STRK).to.be.true;
+
+    // Should be in-between MAX_ESCAPE_MAX_FEE_STRK - l1DataGasPrice and MAX_ESCAPE_MAX_FEE_STRK
+    const maxFee = getMaxFee(newResourceBounds);
+    expect(maxFee <= MAX_ESCAPE_MAX_FEE_STRK).to.be.true;
+    expect(maxFee >= MAX_ESCAPE_MAX_FEE_STRK - l1DataGasPrice).to.be.true;
     await manager.ensureSuccess(
       account.execute(accountContract.populateTransaction.trigger_escape_owner(compiledSigner), {
         resourceBounds: newResourceBounds,

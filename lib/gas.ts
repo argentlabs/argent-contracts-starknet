@@ -5,9 +5,9 @@ import { type Manager } from "./manager";
 
 const strkUsd = 0.14;
 // We could get the prices from the block, but it's not worth the extra complexity
-const l1GasPrice = 45000000000000n;
-const l2GasPrice = 3000000000n;
-const l1DataGasPrice = 35000n;
+export const l1GasPrice = 45000000000000n;
+export const l2GasPrice = 3000000000n;
+export const l1DataGasPrice = 35000n;
 
 async function profileGasUsage(transactionHash: string, manager: Manager, allowFailedTransactions = false) {
   const receipt = await manager.ensureAccepted({ transaction_hash: transactionHash });

@@ -35,7 +35,7 @@ describe("ArgentMultisig: upgrade", function () {
   const artifactNames: UpgradeDataEntry[] = [];
   let mockDapp: ContractWithClass;
 
-  before(async () => {    
+  before(async () => {
     const v010 = "0.1.0";
     const classHashV010 = await manager.declareArtifactMultisigContract(v010);
     artifactNames.push({

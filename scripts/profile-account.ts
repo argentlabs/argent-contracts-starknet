@@ -14,7 +14,7 @@ import {
   deployAccountWithoutGuardians,
   deployOpenZeppelinAccount,
   deployer,
-  fundAccountCall,
+  fundAccountWithStrkCall,
   manager,
   setupSession,
 } from "../lib";
@@ -221,7 +221,7 @@ async function deployAccountUsingProxy({
   }
 
   calls.push(contract.populateTransaction.upgrade(latestClassHash));
-  calls.push(fundAccountCall(contract_address, fundingAmount));
+  calls.push(fundAccountWithStrkCall(contract_address, fundingAmount));
 
   await deployer.execute(calls);
 

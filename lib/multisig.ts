@@ -11,8 +11,8 @@ import {
 import {
   ArgentAccount,
   deployer,
-  fundAccount,
-  fundAccountCall,
+  fundAccountWithStrk,
+  fundAccountWithStrkCall,
   KeyPair,
   LegacyMultisigKeyPair,
   LegacyMultisigSigner,
@@ -66,7 +66,7 @@ export async function deployMultisig(params: DeployMultisigParams): Promise<Mult
   const { classHash, salt, selfDeploymentIndexes } = finalParams;
   const accountAddress = hash.calculateContractAddressFromHash(salt, classHash, constructorCalldata, 0);
 
-  const fundingCall = fundAccountCall(accountAddress, finalParams.fundingAmount ?? 5e18); // 5 STRK
+  const fundingCall = fundAccountWithStrkCall(accountAddress, finalParams.fundingAmount ?? 5e18); // 5 STRK
   const calls = fundingCall ? [fundingCall] : [];
 
   let transactionHash;
@@ -131,7 +131,7 @@ export async function deployLegacyMultisig(classHash: string, threshold = 1): Pr
   const salt = num.toHex(randomStarknetKeyPair().privateKey);
   const constructorCalldata = CallData.compile({ threshold, signers: signersPublicKeys });
   const contractAddress = hash.calculateContractAddressFromHash(salt, classHash, constructorCalldata, 0);
-  await fundAccount(contractAddress, 5e18);
+  await fundAccountWithStrk(contractAddress, 5e18);
   const deploySigner = new LegacyMultisigSigner([keys[0]]);
   const account = new Account({
     provider: manager,

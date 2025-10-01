@@ -174,7 +174,7 @@ async function deployOldAccountWithProxyInner(
   }
   account.signer = new LegacyMultisigSigner(keys);
 
-  await fundAccount(account.address, 5e16);
+  await fundAccountWithStrk(account.address, 3e16);
 
   const { transaction_hash } = await account.deployAccount({
     classHash: proxyClassHash,
@@ -214,7 +214,7 @@ async function deployAccountInner(params: DeployAccountParams): Promise<ArgentWa
 
   const { classHash, salt } = finalParams;
   const contractAddress = hash.calculateContractAddressFromHash(salt, classHash, constructorCalldata, 0);
-  const fundingCall = fundAccountCall(contractAddress, finalParams.fundingAmount ?? 5e18);
+  const fundingCall = fundAccountWithStrkCall(contractAddress, finalParams.fundingAmount ?? 5e18);
   const calls = fundingCall ? [fundingCall] : [];
 
   const signer = new ArgentSigner(owner, finalParams.guardians.at(0));
@@ -343,7 +343,7 @@ async function deployLegacyAccountInner(
   const salt = num.toHex(owner.privateKey);
   const constructorCalldata = CallData.compile({ owner: owner.publicKey, guardian: guardian?.publicKey || 0 });
   const contractAddress = hash.calculateContractAddressFromHash(salt, classHash, constructorCalldata, 0);
-  await fundAccount(contractAddress, 1e18);
+  await fundAccountWithStrk(contractAddress, 1e18);
 
   const account = new Account({
     provider: manager,
@@ -456,14 +456,13 @@ export async function getSignerDetails(account: ArgentAccount, calls: Call[]): P
   }
 }
 
-// TODO RENAME TO FUNDSTRKACCOUNT or smthng similar
-export async function fundAccount(recipient: string, amount: number | bigint) {
-  const call = fundAccountCall(recipient, amount);
+export async function fundAccountWithStrk(recipient: string, amount: number | bigint) {
+  const call = fundAccountWithStrkCall(recipient, amount);
   const response = await deployer.execute(call ? [call] : []);
   await manager.waitForTx(response.transaction_hash);
 }
 
-export function fundAccountCall(recipient: string, amount: number | bigint): Call | undefined {
+export function fundAccountWithStrkCall(recipient: string, amount: number | bigint): Call | undefined {
   if (amount <= 0n) {
     return;
   }

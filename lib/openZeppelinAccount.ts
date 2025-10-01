@@ -1,5 +1,5 @@
 import { Account, CallData, ETransactionVersion, hash, num } from "starknet";
-import { deployer, fundAccountCall } from "./accounts";
+import { deployer, fundAccountWithStrkCall } from "./accounts";
 import { ContractWithClass } from "./contracts";
 import { manager } from "./manager";
 import { LegacyMultisigSigner, LegacyStarknetKeyPair } from "./signers/legacy";
@@ -33,7 +33,7 @@ export async function deployOpenZeppelinAccount(params: DeployOzAccountParams): 
 
   const contractAddress = hash.calculateContractAddressFromHash(finalParams.salt, classHash, constructorCalldata, 0);
 
-  const fundingCall = fundAccountCall(contractAddress, finalParams.fundingAmount ?? 1e18);
+  const fundingCall = fundAccountWithStrkCall(contractAddress, finalParams.fundingAmount ?? 1e18);
   await manager.waitForTx(deployer.execute([fundingCall!]));
 
   const signer = new LegacyMultisigSigner([finalParams.owner]);

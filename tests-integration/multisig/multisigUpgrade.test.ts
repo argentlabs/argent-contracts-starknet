@@ -11,7 +11,7 @@ import {
   deployMultisig,
   deployMultisig1_1,
   expectEvent,
-  fundAccount,
+  fundAccountWithStrk,
   generateRandomNumber,
   manager,
   signerTypeToCustomEnum,
@@ -122,7 +122,7 @@ describe("ArgentMultisig: upgrade", function () {
               transactionVersion: ETransactionVersion.V3,
             });
             // Need some STRK for v3 transactions
-            await fundAccount(accountV3.address, 1e18);
+            await fundAccountWithStrk(accountV3.address, 1e18);
 
             // Default estimation is too low, we need to increase it
             mockDapp.providerOrAccount = accountV3;

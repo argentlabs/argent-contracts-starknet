@@ -1,5 +1,5 @@
 import { RpcProvider } from "starknet";
-import { Constructor } from ".";
+import { Constructor, generateRandomNumber } from ".";
 
 const dumpFolderPath = "./dump";
 export const devnetBaseUrl = "http://127.0.0.1:5050";
@@ -47,7 +47,7 @@ export const WithDevnet = <T extends Constructor<RpcProvider>>(Base: T) =>
     async handleJsonRpc(method: string, params = {}) {
       const body = {
         jsonrpc: "2.0",
-        id: Date.now(),
+        id: generateRandomNumber(),
         method,
         params,
       };

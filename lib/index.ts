@@ -35,5 +35,5 @@ export * from "./upgrade";
 export type Constructor<T> = new (...args: any[]) => T;
 
 export function generateRandomNumber(): bigint {
-  return BigInt(Math.floor(Math.random() * 1000000));
+  return BigInt(Math.floor(Math.random() * 100000000000));
 }

@@ -12,9 +12,6 @@ import {
   Signature,
   SignerInterface,
   TypedData,
-  V3DeclareSignerDetails,
-  V3DeployAccountSignerDetails,
-  V3InvocationsSignerDetails,
   ec,
   encode,
   hash,
@@ -50,14 +47,12 @@ export abstract class RawSigner implements SignerInterface {
     }
 
     const compiledCalldata = transaction.getExecuteCalldata(transactions, details.cairoVersion);
-    const det = details as V3InvocationsSignerDetails;
     const msgHash = hash.calculateInvokeTransactionHash({
-      ...det,
-      senderAddress: det.walletAddress,
+      ...details,
+      senderAddress: details.walletAddress,
       compiledCalldata,
-      version: det.version,
-      nonceDataAvailabilityMode: stark.intDAM(det.nonceDataAvailabilityMode),
-      feeDataAvailabilityMode: stark.intDAM(det.feeDataAvailabilityMode),
+      nonceDataAvailabilityMode: stark.intDAM(details.nonceDataAvailabilityMode),
+      feeDataAvailabilityMode: stark.intDAM(details.feeDataAvailabilityMode),
     });
     return await this.signRaw(msgHash);
   }
@@ -68,14 +63,12 @@ export abstract class RawSigner implements SignerInterface {
     }
     const compiledConstructorCalldata = CallData.compile(details.constructorCalldata);
 
-    const det = details as V3DeployAccountSignerDetails;
     const msgHash = hash.calculateDeployAccountTransactionHash({
-      ...det,
-      salt: det.addressSalt,
+      ...details,
+      salt: details.addressSalt,
       compiledConstructorCalldata,
-      version: det.version,
-      nonceDataAvailabilityMode: stark.intDAM(det.nonceDataAvailabilityMode),
-      feeDataAvailabilityMode: stark.intDAM(det.feeDataAvailabilityMode),
+      nonceDataAvailabilityMode: stark.intDAM(details.nonceDataAvailabilityMode),
+      feeDataAvailabilityMode: stark.intDAM(details.feeDataAvailabilityMode),
     });
 
     return await this.signRaw(msgHash);
@@ -88,12 +81,10 @@ export abstract class RawSigner implements SignerInterface {
     if (details.version !== ETransactionVersion.V3 && details.version !== ETransactionVersion.F3) {
       throw new Error("unsupported signDeclareTransaction version");
     }
-    const det = details as V3DeclareSignerDetails;
     const msgHash = hash.calculateDeclareTransactionHash({
-      ...det,
-      version: det.version,
-      nonceDataAvailabilityMode: stark.intDAM(det.nonceDataAvailabilityMode),
-      feeDataAvailabilityMode: stark.intDAM(det.feeDataAvailabilityMode),
+      ...details,
+      nonceDataAvailabilityMode: stark.intDAM(details.nonceDataAvailabilityMode),
+      feeDataAvailabilityMode: stark.intDAM(details.feeDataAvailabilityMode),
     });
 
     return await this.signRaw(msgHash);

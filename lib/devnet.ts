@@ -47,7 +47,7 @@ export const WithDevnet = <T extends Constructor<RpcProvider>>(Base: T) =>
     async handleJsonRpc(method: string, params = {}) {
       const body = {
         jsonrpc: "2.0",
-        id: generateRandomNumber(),
+        id: Number(generateRandomNumber()),
         method,
         params,
       };

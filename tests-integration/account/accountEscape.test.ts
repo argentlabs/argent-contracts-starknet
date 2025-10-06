@@ -10,17 +10,20 @@ import {
   EscapeStatus,
   KeyPair,
   LegacyArgentSigner,
+  LegacyMultisigSigner,
   LegacyStarknetKeyPair,
   MAX_U64,
   StarknetKeyPair,
   deployAccount,
   deployAccountWithoutGuardians,
+  deployLegacyAccount,
   expectEvent,
   expectRevertWithErrorMessage,
   getEscapeStatus,
   hasOngoingEscape,
   manager,
   randomStarknetKeyPair,
+  upgradeAccount,
   zeroStarknetSignatureType,
 } from "../../lib";
 
@@ -202,11 +205,49 @@ describe("ArgentAccount: escape mechanism", function () {
   });
 
   describe("escape_owner()", function () {
+    let argentAccountClassHash: string;
+    let classHashV030: string;
+
+    before(async () => {
+      classHashV030 = await manager.declareArtifactAccountContract("0.3.0");
+      argentAccountClassHash = await manager.declareLocalContract("ArgentAccount");
+    });
+
     it("Expect 'argent/only-self' when called from another account", async function () {
       const { account } = await deployAccount();
       const { accountContract } = await deployAccount();
       accountContract.providerOrAccount = account;
       await expectRevertWithErrorMessage("argent/only-self", accountContract.escape_owner());
+    });
+
+    it("Cancel escape when upgrading", async function () {
+      const { account, accountContract, owner, guardian } = await deployLegacyAccount(classHashV030);
+      account.signer = new LegacyMultisigSigner([guardian!]);
+      await manager.setTime(randomTime);
+      await manager.waitForTx(accountContract.trigger_escape_owner(newKeyPair.guid));
+
+      account.signer = new LegacyMultisigSigner([owner, guardian!]);
+      const upgradeReceipt = await upgradeAccount(account, argentAccountClassHash);
+
+      await expectEvent(upgradeReceipt.transaction_hash, {
+        from_address: account.address,
+        eventName: "EscapeCanceled",
+      });
+      await getEscapeStatus(await manager.loadContract(account.address)).should.eventually.equal(EscapeStatus.None);
+    });
+
+    it("Clear expired escape when upgrading", async function () {
+      const { account, accountContract, owner, guardian } = await deployLegacyAccount(classHashV030);
+      account.signer = new LegacyMultisigSigner([guardian!]);
+
+      await manager.setTime(randomTime);
+      await manager.waitForTx(accountContract.trigger_escape_owner(newKeyPair.guid));
+
+      await manager.setTime(randomTime + ESCAPE_EXPIRY_PERIOD + 1n);
+
+      account.signer = new LegacyMultisigSigner([owner, guardian!]);
+      await upgradeAccount(account, argentAccountClassHash, ["0"]);
+      await getEscapeStatus(await manager.loadContract(account.address)).should.eventually.equal(EscapeStatus.None);
     });
 
     describe(`Escaping by guardian`, function () {

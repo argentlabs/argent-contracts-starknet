@@ -43,7 +43,7 @@ describe("Gas griefing", function () {
       },
     };
 
-    expect(getMaxFee(newResourceBounds) > MAX_ESCAPE_MAX_FEE_STRK).to.be.true;
+    expect(getMaxFeeWithoutTip(newResourceBounds) > MAX_ESCAPE_MAX_FEE_STRK).to.be.true;
     await expectExecutionRevert(
       "argent/max-fee-too-high",
       account.execute(accountContract.populateTransaction.trigger_escape_owner(compiledSigner), {
@@ -81,7 +81,7 @@ describe("Gas griefing", function () {
     };
 
     // Should be in-between MAX_ESCAPE_MAX_FEE_STRK - l1DataGasPrice and MAX_ESCAPE_MAX_FEE_STRK
-    const maxFee = getMaxFee(newResourceBounds);
+    const maxFee = getMaxFeeWithoutTip(newResourceBounds);
     expect(maxFee <= MAX_ESCAPE_MAX_FEE_STRK).to.be.true;
     expect(maxFee >= MAX_ESCAPE_MAX_FEE_STRK - l1DataGasPrice).to.be.true;
     await manager.ensureSuccess(
@@ -155,7 +155,7 @@ describe("Gas griefing", function () {
   });
 });
 
-function getMaxFee(resourceBounds: ResourceBoundsBN): bigint {
+function getMaxFeeWithoutTip(resourceBounds: ResourceBoundsBN): bigint {
   let feeBound = 0n;
   for (const gasBound of Object.values(resourceBounds)) {
     feeBound += BigInt(gasBound.max_amount) * BigInt(gasBound.max_price_per_unit);

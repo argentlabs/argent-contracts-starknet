@@ -48,6 +48,7 @@ describe("Gas griefing", function () {
       "argent/max-fee-too-high",
       account.execute(accountContract.populateTransaction.trigger_escape_owner(compiledSigner), {
         resourceBounds: newResourceBounds,
+        tip: 0,
       }),
     );
   });
@@ -86,6 +87,7 @@ describe("Gas griefing", function () {
     await manager.ensureSuccess(
       account.execute(accountContract.populateTransaction.trigger_escape_owner(compiledSigner), {
         resourceBounds: newResourceBounds,
+        tip: 0,
       }),
     );
   });
@@ -109,7 +111,7 @@ describe("Gas griefing", function () {
       "argent/tip-too-high",
       account.execute(accountContract.populateTransaction.trigger_escape_owner(compiledSigner), {
         tip: tipInStrkPerL2Gas,
-      }),
+    }),
     );
   });
 
@@ -131,6 +133,7 @@ describe("Gas griefing", function () {
         accountContract.populateTransaction.trigger_escape_owner(randomStarknetKeyPair().compiledSigner),
         {
           feeDataAvailabilityMode: EDataAvailabilityMode.L2,
+          tip: 0,
         },
       ),
     );
@@ -145,6 +148,7 @@ describe("Gas griefing", function () {
         accountContract.populateTransaction.trigger_escape_owner(randomStarknetKeyPair().compiledSigner),
         {
           accountDeploymentData: ["0x1"],
+          tip: 0,
         },
       ),
     );

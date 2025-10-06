@@ -111,7 +111,7 @@ describe("Gas griefing", function () {
       "argent/tip-too-high",
       account.execute(accountContract.populateTransaction.trigger_escape_owner(compiledSigner), {
         tip: tipInStrkPerL2Gas,
-    }),
+      }),
     );
   });
 

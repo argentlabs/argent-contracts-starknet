@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { Account, num } from "starknet";
+import { Account, ETransactionVersion3, num } from "starknet";
 import { StarknetKeyPair, getOwnerAliveMessageHash, manager, starknetSignatureType } from "../lib";
 
 /// To use this script, fill the following three values:
@@ -15,8 +15,14 @@ const newOwnerPublicKey = "0x000000000000000000000000000000000000000000000000000
 
 const accountContract = await manager.loadContract(accountAddress);
 const owner: bigint = await accountContract.get_owner();
-const account = new Account(manager, accountAddress, ownerSigner, "1");
-accountContract.connect(account);
+const account = new Account({
+  provider: manager,
+  address: accountAddress,
+  signer: ownerSigner,
+  cairoVersion: "1",
+  transactionVersion: ETransactionVersion3.V3,
+});
+accountContract.providerOrAccount = account;
 const chainId = await manager.getChainId();
 const validUntil = (await manager.getCurrentTimestamp()) + 60 * 60; // Valid 1h
 

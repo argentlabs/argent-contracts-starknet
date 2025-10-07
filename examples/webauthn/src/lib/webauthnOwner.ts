@@ -135,7 +135,9 @@ export class WebauthnOwner extends KeyPair {
     const clientDataJson = new Uint8Array(assertionResponse.clientDataJSON);
     const signCount = Number(BigInt(buf2hex(authenticatorData.slice(33, 37))));
     const jsonString = new TextDecoder().decode(clientDataJson);
-    const startJsonString = `{"type":"webauthn.get","challenge":"${buf2base64url(normalizedChallenge)}","origin":"${this.attestation.origin}"`;
+    const startJsonString = `{"type":"webauthn.get","challenge":"${buf2base64url(normalizedChallenge)}","origin":"${
+      this.attestation.origin
+    }"`;
     if (!jsonString.startsWith(startJsonString)) {
       console.log("Should start with: ", startJsonString);
       console.log("But got: ", jsonString);

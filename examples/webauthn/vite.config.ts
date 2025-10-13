@@ -5,4 +5,10 @@ import devtoolsJson from "vite-plugin-devtools-json";
 
 export default defineConfig({
   plugins: [tailwindcss(), sveltekit(), devtoolsJson()],
+  server: {
+    // allowedHosts: ["some_ngrok_url.ngrok-free.app"],
+    proxy: {
+      "/rpc": "http://localhost:5050",
+    },
+  }
 });

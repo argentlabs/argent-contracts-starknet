@@ -68,6 +68,12 @@ Copy the URL provided by your tunneling service, append /rpc to the end, and upd
 ```
 PUBLIC_PROVIDER_URL="[YOU_LINK]/rpc"
 ```
+If you are using the devnet, please:  
+Also edit the `vite.config.ts` file to add the relevant info within the allowedHosts setting.  
+Last, but not least, you have two options: 
+ - Edit the `starknet.ts` file to ignore the check for the provider url to include `"localhost"` and just return the content of that if
+ - Adit the the `.env` file to add a `PUBLIC_DEPLOYER_ADDRESS` and a `PUBLIC_DEPLOYER_PRIVATE_KEY`
+
 
 Now, you can start the dApp by running `yarn dev`. You should be able to access the dApp through the link provided by the tunneling service.
 

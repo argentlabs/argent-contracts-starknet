@@ -133,7 +133,6 @@
                   class="w-full bg-white placeholder:text-gray-400 text-gray-900 text-sm border border-gray-300 rounded-lg px-4 py-2.5 transition duration-200 ease-in-out focus:border-orange-500 focus:ring-2 focus:ring-orange-200 hover:border-orange-300 shadow-sm" 
                   placeholder="Enter public key" 
                   bind:value={pubKey}
-                  required
                 >
               </div>
             </div>
@@ -163,7 +162,6 @@
               </div>
               <button 
                 on:click={handleClickCreateOwner}
-                  type="submit"
                   class="bg-orange-500 hover:bg-orange-600 text-white font-medium py-2.5 px-6 border-2 border-orange-500 hover:border-transparent rounded-lg transition-all duration-200 shadow-sm hover:shadow cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-orange-500 disabled:hover:border-orange-500"
                   disabled={!email}
               >

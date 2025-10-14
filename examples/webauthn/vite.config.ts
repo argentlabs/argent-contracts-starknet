@@ -10,5 +10,5 @@ export default defineConfig({
     proxy: {
       "/rpc": "http://localhost:5050",
     },
-  }
+  },
 });

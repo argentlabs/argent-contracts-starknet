@@ -68,6 +68,7 @@ Copy the URL provided by your tunneling service, append /rpc to the end, and upd
 ```
 PUBLIC_PROVIDER_URL="[YOU_LINK]/rpc"
 ```
+
 Also fill in the .env file with the appropriate info for PUBLIC_DEPLOYER_ADDRESS and PUBLIC_DEPLOYER_PRIVATE_KEY.  
 Then edit the `vite.config.ts` file to add the relevant info for the allowedHosts setting.
 

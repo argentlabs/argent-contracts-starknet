@@ -21,11 +21,11 @@ export async function loadDeployer(provider: ProviderType) {
     return deployer;
   }
   if (providerUrl(provider).includes("localhost")) {
-    const [{ address, private_key }] = await predeployedAccounts(provider);
+    const [{ address, privateKey }] = await predeployedAccounts(provider);
     return new ArgentAccount({
       provider,
       address,
-      signer: private_key,
+      signer: privateKey,
       cairoVersion: "1",
       transactionVersion: ETransactionVersion.V3,
     });
@@ -77,7 +77,7 @@ export async function fundAccount(recipient: string, amount: number | bigint, pr
 
 export async function predeployedAccounts(
   provider: ProviderType,
-): Promise<Array<{ address: string; private_key: string }>> {
+): Promise<Array<{ address: string; privateKey: string }>> {
   return handleJsonRpc(provider, "devnet_getPredeployedAccounts");
 }
 

@@ -13,23 +13,23 @@
     "format": "prettier --write ."
   },
   "dependencies": {
-    "@peculiar/asn1-ecc": "^2.5.0",
-    "@peculiar/asn1-schema": "^2.5.0",
-    "js-sha256": "^0.11.1",
-    "starknet": "^8.5.5"
+    "@peculiar/asn1-ecc": "2.5.0",
+    "@peculiar/asn1-schema": "2.5.0",
+    "js-sha256": "0.11.1",
+    "starknet": "8.5.5"
   },
   "devDependencies": {
-    "@sveltejs/adapter-auto": "^6.1.0",
-    "@sveltejs/kit": "^2.43.2",
-    "@sveltejs/vite-plugin-svelte": "^6.2.0",
-    "@tailwindcss/vite": "^4.1.13",
-    "prettier": "^3.6.2",
-    "prettier-plugin-tailwindcss": "^0.6.14",
-    "svelte": "^5.39.5",
-    "svelte-check": "^4.3.2",
-    "tailwindcss": "^4.1.13",
-    "typescript": "^5.9.2",
-    "vite": "^7.1.7",
-    "vite-plugin-devtools-json": "^1.0.0"
+    "@sveltejs/adapter-auto": "6.1.0",
+    "@sveltejs/kit": "2.43.2",
+    "@sveltejs/vite-plugin-svelte": "6.2.0",
+    "@tailwindcss/vite": "4.1.14",
+    "prettier": "3.6.2",
+    "prettier-plugin-tailwindcss": "0.6.14",
+    "svelte": "5.39.5",
+    "svelte-check": "4.3.2",
+    "tailwindcss": "4.1.14",
+    "typescript": "5.9.2",
+    "vite": "7.1.7",
+    "vite-plugin-devtools-json": "1.0.0"
   }
 }

@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { Account, Call, EstimateFeeResponseOverhead, ETransactionVersion, hash } from "starknet";
+import { Account, ETransactionVersion, hash } from "starknet";
 import {
   ArgentAccount,
   ContractWithClass,

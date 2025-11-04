@@ -63,9 +63,8 @@ describe("ArgentAccount: testing 0.2.3.1 upgrade", function () {
     const accountV3 = getAccountV3(account);
     mockDapp.providerOrAccount = accountV3;
     const call = mockDapp.populateTransaction.set_number(randomNumber);
-    const estimate = await estimateAndIncrease(accountV3, call);
     // This should work as long as we support the "old" signature format [r1, s1, r2, s2]
-    await manager.ensureSuccess(accountV3.execute(call, { ...estimate }));
+    await manager.ensureSuccess(accountV3.execute(call));
   });
 
   it(`[0.2.3.1] Should be possible to upgrade without guardian`, async function () {
@@ -76,8 +75,7 @@ describe("ArgentAccount: testing 0.2.3.1 upgrade", function () {
     mockDapp.providerOrAccount = accountV3;
 
     const call = mockDapp.populateTransaction.set_number(randomNumber);
-    const estimate = await estimateAndIncrease(accountV3, call);
-    await manager.ensureSuccess(accountV3.execute(call, { ...estimate }));
+    await manager.ensureSuccess(accountV3.execute(call));
   });
 
   it(`[0.2.3.1] Upgrade cairo with multicall`, async function () {
@@ -90,9 +88,8 @@ describe("ArgentAccount: testing 0.2.3.1 upgrade", function () {
     const accountV3 = getAccountV3(account);
     mockDapp.providerOrAccount = accountV3;
     const call = mockDapp.populateTransaction.set_number(randomNumber);
-    const estimate = await estimateAndIncrease(accountV3, call);
     // We don't really care about the value here, just that it is successful
-    await manager.ensureSuccess(accountV3.execute(call, { ...estimate }));
+    await manager.ensureSuccess(accountV3.execute(call));
   });
 
   it(`[0.2.3.1] Should be possible to upgrade if an owner escape is ongoing`, async function () {
@@ -135,7 +132,7 @@ describe("ArgentAccount: testing 0.2.3.1 upgrade", function () {
     });
   });
 
-  describe.only("Testing recovery_from_legacy_upgrade when upgrading from 0.2.3", function () {
+  describe("Testing recovery_from_legacy_upgrade when upgrading from 0.2.3", function () {
     it("Should be possible to recover the signer", async function () {
       const { account, owner } = await deployOldAccountWithProxy();
       const legacyClassHash = await manager.getClassHashAt(account.address);
@@ -161,8 +158,7 @@ describe("ArgentAccount: testing 0.2.3.1 upgrade", function () {
         entrypoint: "recovery_from_legacy_upgrade",
         calldata: [],
       };
-      const estimateRecovery = await estimateAndIncrease(otherAccount, callRecovery);
-      await manager.ensureSuccess(otherAccount.execute(callRecovery, { ...estimateRecovery }));
+      await manager.ensureSuccess(otherAccount.execute(callRecovery));
       expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
 
       // Making sure it has the new owner migrated correctly
@@ -171,9 +167,8 @@ describe("ArgentAccount: testing 0.2.3.1 upgrade", function () {
       expect(await newAccountContract.get_owners_guids()).to.deep.equal([newGuid]);
 
       const call = mockDapp.populateTransaction.set_number(randomNumber);
-      const estimate = await estimateAndIncrease(accountV3, call);
       // We don't really care about the value here, just that it is successful
-      await manager.ensureSuccess(accountV3.execute(call, { ...estimate }));
+      await manager.ensureSuccess(accountV3.execute(call));
     });
 
     it("Shouldn't be possible to recover the signer twice", async function () {
@@ -188,8 +183,7 @@ describe("ArgentAccount: testing 0.2.3.1 upgrade", function () {
         entrypoint: "recovery_from_legacy_upgrade",
         calldata: [],
       };
-      const estimateRecovery = await estimateAndIncrease(otherAccount, callRecovery);
-      await manager.ensureSuccess(otherAccount.execute(callRecovery, { ...estimateRecovery }));
+      await manager.ensureSuccess(otherAccount.execute(callRecovery));
       expect(BigInt(await manager.getClassHashAt(account.address))).to.equal(BigInt(argentAccountClassHash));
       // Trying to recover the signer a second time
       await otherAccount.execute(callRecovery).should.be.rejectedWith("argent/no-signer-to-recover");
@@ -221,10 +215,4 @@ function getAccountV3(account: Account): ArgentAccount {
     cairoVersion: "1",
     transactionVersion: ETransactionVersion.V3,
   });
-}
-
-async function estimateAndIncrease(account: Account, call: Call): Promise<EstimateFeeResponseOverhead> {
-  const estimate = await account.estimateInvokeFee(call, { skipValidate: true });
-  estimate.resourceBounds.l2_gas.max_amount = estimate.resourceBounds.l2_gas.max_amount * 3n;
-  return estimate;
 }

@@ -6,7 +6,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "ethers": "6.8.1",
+    "ethers": "6.15.0",
     "starknet": "8.5.4"
   },
   "devDependencies": {

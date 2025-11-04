@@ -3,6 +3,7 @@ import { Account, ETransactionVersion, hash } from "starknet";
 import {
   ArgentAccount,
   ContractWithClass,
+  StarknetKeyPair,
   deployAccount,
   deployOldAccountWithProxy,
   deployOldAccountWithProxyWithoutGuardian,
@@ -11,7 +12,6 @@ import {
   generateRandomNumber,
   getUpgradeDataLegacy,
   manager,
-  StarknetKeyPair,
   upgradeAccount,
 } from "../lib";
 

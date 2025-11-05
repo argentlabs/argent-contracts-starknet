@@ -174,7 +174,7 @@ async function deployOldAccountWithProxyInner(
   }
   account.signer = new LegacyMultisigSigner(keys);
 
-  await fundAccountWithStrk(account.address, 3e16);
+  await fundAccountWithStrk(account.address, 5e16);
 
   const { transaction_hash } = await account.deployAccount({
     classHash: proxyClassHash,

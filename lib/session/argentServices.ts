@@ -79,6 +79,7 @@ export class BackendService {
     return [BigInt(signature[2]), BigInt(signature[3])];
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public getBackendKey(_accountAddress: string): bigint {
     return this.backendKey.publicKey;
   }

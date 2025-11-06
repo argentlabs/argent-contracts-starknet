@@ -18,13 +18,13 @@ alexandria_merkle_tree = "0.4.0"
 openzeppelin_security = "1.0.0"
 openzeppelin_presets = "1.0.0"
 
+[dev-dependencies]
+snforge_std = "0.38.3"
+assert_macros = "2.10.1"
+
 [tool.fmt]
 max-line-length = 120
 sort-module-level-items = true
-
-[dev-dependencies]
-assert_macros = "2.10.1"
-snforge_std = "0.38.3"
 
 [scripts]
 test = "snforge test"
@@ -32,6 +32,7 @@ format = "scarb fmt && yarn prettier --write ."
 lint = "yarn eslint ."
 test-ts = "scarb --profile release build && yarn tsc && yarn mocha --recursive tests-integration/ --extension .test.ts"
 test-ts-sc = "yarn mocha --require ts-node/register/transpile-only --recursive tests-integration/**/*.test.ts"
+test-upgrade = "yarn mocha --require ts-node/register/transpile-only --recursive tests-integration/upgrade.ts"
 test-multisig = "scarb --profile release build && yarn tsc && yarn mocha tests-integration/multisig*.test.ts"
 test-session = "scarb --profile release build && yarn tsc && yarn mocha tests-integration/session/*.test.ts"
 test-multiowner = "scarb --profile release build && yarn tsc && yarn mocha tests-integration/multiowner/*.test.ts"

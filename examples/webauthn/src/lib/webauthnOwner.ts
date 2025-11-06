@@ -3,20 +3,20 @@ import { p256 as secp256r1 } from "@noble/curves/p256";
 import { ECDSASigValue } from "@peculiar/asn1-ecc";
 import { AsnParser } from "@peculiar/asn1-schema";
 import {
-  ArraySignatureType,
-  BigNumberish,
+  type ArraySignatureType,
+  type BigNumberish,
   CairoCustomEnum,
   CallData,
-  Uint256,
+  type Uint256,
   hash,
   shortString,
   uint256,
 } from "starknet";
-import { buf2base64url, buf2hex, hex2buf } from "./bytes";
-import { EstimateKeyPair, KeyPair, SignerType, signerTypeToCustomEnum } from "./signers/signers";
-import type { WebauthnAttestation } from "./webauthnAttestation";
+import { buf2base64url, buf2hex, hex2buf } from "$lib/bytes";
+import { EstimateKeyPair, KeyPair, SignerType, signerTypeToCustomEnum } from "$lib/signers/signers";
+import type { WebauthnAttestation } from "$lib/webauthnAttestation";
 
-import { Message, sha256 as jssha256 } from "js-sha256";
+import { type Message, sha256 as jssha256 } from "js-sha256";
 
 function sha256(message: Message): Uint8Array {
   return hex2buf(jssha256(message));
@@ -61,22 +61,11 @@ interface WebauthnSignature {
 
 export class WebauthnOwner extends KeyPair {
   attestation: WebauthnAttestation;
-  requestSignature: (
-    attestation: WebauthnAttestation,
-    challenge: Uint8Array,
-  ) => Promise<AuthenticatorAssertionResponse>;
   rpIdHash: Uint256;
 
-  constructor(
-    attestation: WebauthnAttestation,
-    requestSignature: (
-      attestation: WebauthnAttestation,
-      challenge: Uint8Array,
-    ) => Promise<AuthenticatorAssertionResponse>,
-  ) {
+  constructor(attestation: WebauthnAttestation) {
     super();
     this.attestation = attestation;
-    this.requestSignature = requestSignature;
     this.rpIdHash = uint256.bnToUint256(buf2hex(sha256(attestation.rpId)));
   }
 
@@ -100,8 +89,38 @@ export class WebauthnOwner extends KeyPair {
     return BigInt(hash.computePoseidonHashOnElements(elements));
   }
 
+  async requestSignature(
+    attestation: WebauthnAttestation,
+    challenge: Uint8Array,
+  ): Promise<AuthenticatorAssertionResponse> {
+    const credential = await navigator.credentials.get({
+      publicKey: {
+        challenge: new Uint8Array(challenge),
+        allowCredentials: [
+          {
+            id: new Uint8Array(attestation.credentialId),
+            type: "public-key",
+            transports: ["internal"],
+          },
+        ],
+        userVerification: "required",
+        timeout: 60000,
+      },
+    });
+    if (!credential) {
+      throw new Error("No credential");
+    }
+
+    const assertion = credential as PublicKeyCredential;
+    return assertion.response as AuthenticatorAssertionResponse;
+  }
+
   public get storedValue(): bigint {
     return this.guid;
+  }
+
+  public get signerType(): SignerType {
+    return SignerType.Webauthn;
   }
 
   public get signer(): CairoCustomEnum {
@@ -113,7 +132,7 @@ export class WebauthnOwner extends KeyPair {
   }
 
   public get estimateSigner(): KeyPair {
-    return new EstimateWebauthnOwner(this.attestation.pubKey, this.rpId, this.origin);
+    return new EstimateWebauthnOwner(this.attestation.pubKey, this.attestation.rpId, this.attestation.origin);
   }
 
   public async signRaw(messageHash: string): Promise<ArraySignatureType> {
@@ -135,7 +154,9 @@ export class WebauthnOwner extends KeyPair {
     const clientDataJson = new Uint8Array(assertionResponse.clientDataJSON);
     const signCount = Number(BigInt(buf2hex(authenticatorData.slice(33, 37))));
     const jsonString = new TextDecoder().decode(clientDataJson);
-    const startJsonString = `{"type":"webauthn.get","challenge":"${buf2base64url(normalizedChallenge)}","origin":"${this.attestation.origin}"`;
+    const startJsonString = `{"type":"webauthn.get","challenge":"${buf2base64url(
+      normalizedChallenge,
+    )}","origin":"${this.attestation.origin}"`;
     if (!jsonString.startsWith(startJsonString)) {
       console.log("Should start with: ", startJsonString);
       console.log("But got: ", jsonString);
@@ -194,7 +215,7 @@ export class EstimateWebauthnOwner extends EstimateKeyPair {
   rpIdHash: Uint256;
 
   constructor(
-    public publicKey: ArrayBuffer,
+    public publicKey: Uint8Array,
     public rpId = "localhost",
     public origin = "http://localhost:5173",
   ) {
@@ -218,12 +239,16 @@ export class EstimateWebauthnOwner extends EstimateKeyPair {
     return BigInt(hash.computePoseidonHashOnElements(elements));
   }
 
+  public get signerType(): SignerType {
+    return SignerType.Webauthn;
+  }
+
   public get storedValue(): bigint {
     throw new Error("Not implemented yet");
   }
 
   public get signer(): CairoCustomEnum {
-    const signer: WebauthnSigner = {
+    const signer = {
       origin: toCharArray(this.origin),
       rp_id_hash: this.rpIdHash,
       pubkey: uint256.bnToUint256(buf2hex(this.publicKey)),
@@ -314,5 +339,5 @@ export function createEstimateWebauthnOwner(owner: WebauthnOwner): KeyPair {
       ]);
     }
   }
-  return new EstimateWebauthnOwner(owner.attestation, owner.requestSignature);
+  return new EstimateWebauthnOwner(owner.attestation);
 }

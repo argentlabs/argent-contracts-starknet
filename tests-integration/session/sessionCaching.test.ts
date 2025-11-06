@@ -7,6 +7,7 @@ import {
   deployAccount,
   executeWithCustomSig,
   expectRevertWithErrorMessage,
+  generateRandomNumber,
   manager,
   randomStarknetKeyPair,
   setupSession,
@@ -18,6 +19,7 @@ import { singleMethodAllowList } from "./sessionTestHelpers";
 describe("Session Account: execute caching", function () {
   let argentAccountClassHash: string;
   let mockDappContract: Contract;
+  let randomNumber: bigint;
   const initialTime = 1710167933n;
 
   before(async () => {
@@ -27,6 +29,7 @@ describe("Session Account: execute caching", function () {
 
   beforeEach(async function () {
     await manager.setTime(initialTime);
+    randomNumber = generateRandomNumber();
   });
 
   for (const useCaching of [false, true]) {
@@ -41,9 +44,9 @@ describe("Session Account: execute caching", function () {
         expiry: initialTime + 150n,
         dappKey: randomStarknetKeyPair(),
         cacheOwnerGuid: useCaching ? owner.guid : undefined,
-        allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
+        allowedMethods: singleMethodAllowList(mockDappContract, "set_number"),
       });
-      const calls = [mockDappContract.populateTransaction.set_number_double(2)];
+      const calls = [mockDappContract.populateTransaction.set_number(randomNumber)];
 
       await accountContract.is_session_authorization_cached(sessionHash, owner.guid, guardian.guid).should.eventually.be
         .false;
@@ -54,14 +57,14 @@ describe("Session Account: execute caching", function () {
         .should.eventually.be.equal(useCaching);
 
       await account.waitForTransaction(transaction_hash);
-      await mockDappContract.get_number(accountContract.address).should.eventually.equal(4n);
+      await mockDappContract.get_number(accountContract.address).should.eventually.equal(randomNumber);
 
-      const calls2 = [mockDappContract.populateTransaction.set_number_double(4)];
+      const calls2 = [mockDappContract.populateTransaction.set_number(randomNumber + 1n)];
 
       const { transaction_hash: tx2 } = await accountWithDappSigner.execute(calls2);
 
       await account.waitForTransaction(tx2);
-      await mockDappContract.get_number(accountContract.address).should.eventually.equal(8n);
+      await mockDappContract.get_number(accountContract.address).should.eventually.equal(randomNumber + 1n);
     });
 
     it(`Fail with 'argent/invalid-signature-len' if more than owner + guardian signed session (caching: ${useCaching})`, async function () {
@@ -74,10 +77,10 @@ describe("Session Account: execute caching", function () {
           expiry: initialTime + 150n,
           dappKey: randomStarknetKeyPair(),
           cacheOwnerGuid: useCaching ? owner.guid : undefined,
-          allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
+          allowedMethods: singleMethodAllowList(mockDappContract, "set_number"),
         });
 
-      const calls = [mockDappContract.populateTransaction.set_number_double(2)];
+      const calls = [mockDappContract.populateTransaction.set_number(randomNumber)];
 
       const sessionToken = await dappService.getSessionToken({
         calls,
@@ -113,10 +116,10 @@ describe("Session Account: execute caching", function () {
         expiry: initialTime + 150n,
         dappKey: randomStarknetKeyPair(),
         cacheOwnerGuid: owner.guid,
-        allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
+        allowedMethods: singleMethodAllowList(mockDappContract, "set_number"),
       });
 
-      const calls = [mockDappContract.populateTransaction.set_number_double(2)];
+      const calls = [mockDappContract.populateTransaction.set_number(randomNumber)];
       await expectRevertWithErrorMessage("session/guardian-key-mismatch", accountWithDappSigner.execute(calls));
     });
 
@@ -130,9 +133,9 @@ describe("Session Account: execute caching", function () {
           expiry: initialTime + 150n,
           dappKey: randomStarknetKeyPair(),
           cacheOwnerGuid: owner.guid,
-          allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
+          allowedMethods: singleMethodAllowList(mockDappContract, "set_number"),
         });
-      const calls = [mockDappContract.populateTransaction.set_number_double(2)];
+      const calls = [mockDappContract.populateTransaction.set_number(randomNumber)];
 
       const sessionToken = await dappService.getSessionToken({
         calls,
@@ -182,10 +185,10 @@ describe("Session Account: execute caching", function () {
         expiry: initialTime + 150n,
         dappKey: randomStarknetKeyPair(),
         cacheOwnerGuid: owner.guid,
-        allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
+        allowedMethods: singleMethodAllowList(mockDappContract, "set_number"),
       });
 
-      const calls = [mockDappContract.populateTransaction.set_number_double(2)];
+      const calls = [mockDappContract.populateTransaction.set_number(randomNumber)];
       const sessionToken = await dappService.getSessionToken({
         calls,
         account: accountWithDappSigner,
@@ -216,10 +219,10 @@ describe("Session Account: execute caching", function () {
         expiry: initialTime + 150n,
         dappKey: randomStarknetKeyPair(),
         cacheOwnerGuid: owner.guid,
-        allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
+        allowedMethods: singleMethodAllowList(mockDappContract, "set_number"),
       });
 
-      const calls = [mockDappContract.populateTransaction.set_number_double(2)];
+      const calls = [mockDappContract.populateTransaction.set_number(randomNumber)];
 
       const sessionToken = await dappService.getSessionToken({
         calls,
@@ -255,7 +258,7 @@ describe("Session Account: execute caching", function () {
       }),
     );
 
-    const calls = [mockDappContract.populateTransaction.set_number_double(2)];
+    const calls = [mockDappContract.populateTransaction.set_number(randomNumber)];
 
     const { accountWithDappSigner, sessionHash } = await setupSession({
       guardian: guardian as StarknetKeyPair,
@@ -263,7 +266,7 @@ describe("Session Account: execute caching", function () {
       expiry: initialTime + 150n,
       dappKey: randomStarknetKeyPair(),
       cacheOwnerGuid: owner.guid,
-      allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
+      allowedMethods: singleMethodAllowList(mockDappContract, "set_number"),
     });
 
     await accountContract.is_session_authorization_cached(sessionHash, owner.guid, guardian.guid).should.eventually.be
@@ -287,7 +290,7 @@ describe("Session Account: execute caching", function () {
     await accountContract.is_session_authorization_cached(sessionHash, owner.guid, guardian.guid).should.eventually.be
       .false;
 
-    const calls2 = [mockDappContract.populateTransaction.set_number_double(4)];
+    const calls2 = [mockDappContract.populateTransaction.set_number(randomNumber + 1n)];
 
     await expectRevertWithErrorMessage("session/cache-invalid-owner", accountWithDappSigner.execute(calls2));
   });
@@ -295,7 +298,7 @@ describe("Session Account: execute caching", function () {
   it("Fail if a large authorization is injected", async function () {
     const { accountContract, account, guardian, owner } = await deployAccount();
 
-    const calls = [mockDappContract.populateTransaction.set_number_double(2)];
+    const calls = [mockDappContract.populateTransaction.set_number(randomNumber)];
 
     const { accountWithDappSigner, sessionHash, sessionRequest, dappService } = await setupSession({
       guardian: guardian as StarknetKeyPair,
@@ -303,7 +306,7 @@ describe("Session Account: execute caching", function () {
       expiry: initialTime + 150n,
       dappKey: randomStarknetKeyPair(),
       cacheOwnerGuid: owner.guid,
-      allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
+      allowedMethods: singleMethodAllowList(mockDappContract, "set_number"),
     });
 
     const { transaction_hash } = await accountWithDappSigner.execute(calls);
@@ -336,7 +339,7 @@ describe("Session Account: execute caching", function () {
       expiry: initialTime + 150n,
       dappKey: randomStarknetKeyPair(),
       cacheOwnerGuid: 42n,
-      allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
+      allowedMethods: singleMethodAllowList(mockDappContract, "set_number"),
     });
 
     await expectRevertWithErrorMessage("session/owner-key-mismatch", accountWithDappSigner.execute([]));
@@ -350,7 +353,7 @@ describe("Session Account: execute caching", function () {
       const useCaching = true;
       const isLegacyAccount = true;
 
-      const calls = [mockDappContract.populateTransaction.set_number_double(2)];
+      const calls = [mockDappContract.populateTransaction.set_number(randomNumber)];
 
       const { accountWithDappSigner, sessionHash } = await setupSession({
         guardian: guardian as StarknetKeyPair,
@@ -359,7 +362,7 @@ describe("Session Account: execute caching", function () {
         dappKey: randomStarknetKeyPair(),
         cacheOwnerGuid: useCaching ? owner.guid : undefined,
         isLegacyAccount,
-        allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
+        allowedMethods: singleMethodAllowList(mockDappContract, "set_number"),
       });
 
       await accountContract.is_session_authorization_cached(sessionHash).should.eventually.be.false;
@@ -379,7 +382,7 @@ describe("Session Account: execute caching", function () {
       });
       const useCaching = true;
       const isLegacyAccount = true;
-      const calls = [mockDappContract.populateTransaction.set_number_double(2)];
+      const calls = [mockDappContract.populateTransaction.set_number(randomNumber)];
 
       const { accountWithDappSigner, sessionHash } = await setupSession({
         guardian: guardian as StarknetKeyPair,
@@ -388,7 +391,7 @@ describe("Session Account: execute caching", function () {
         dappKey: randomStarknetKeyPair(),
         cacheOwnerGuid: useCaching ? owner.guid : undefined,
         isLegacyAccount,
-        allowedMethods: singleMethodAllowList(mockDappContract, "set_number_double"),
+        allowedMethods: singleMethodAllowList(mockDappContract, "set_number"),
       });
       await accountContract.is_session_authorization_cached(sessionHash).should.eventually.be.false;
       await accountWithDappSigner.execute(calls);
@@ -398,7 +401,7 @@ describe("Session Account: execute caching", function () {
 
       const newContract = await manager.loadContract(account.address, argentAccountClassHash);
 
-      newContract.connect(account);
+      newContract.providerOrAccount = account;
       const newOwner = randomStarknetKeyPair();
       await newContract.change_owners(
         CallData.compile({

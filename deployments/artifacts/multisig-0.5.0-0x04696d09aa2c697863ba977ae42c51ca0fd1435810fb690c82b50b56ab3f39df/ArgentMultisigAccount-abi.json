@@ -1,0 +1,1242 @@
+[
+    {
+        "type": "impl",
+        "name": "AccountImpl",
+        "interface_name": "argent::account::IAccount"
+    },
+    {
+        "type": "struct",
+        "name": "core::array::Span::<core::felt252>",
+        "members": [
+            {
+                "name": "snapshot",
+                "type": "@core::array::Array::<core::felt252>"
+            }
+        ]
+    },
+    {
+        "type": "struct",
+        "name": "core::starknet::account::Call",
+        "members": [
+            {
+                "name": "to",
+                "type": "core::starknet::contract_address::ContractAddress"
+            },
+            {
+                "name": "selector",
+                "type": "core::felt252"
+            },
+            {
+                "name": "calldata",
+                "type": "core::array::Span::<core::felt252>"
+            }
+        ]
+    },
+    {
+        "type": "interface",
+        "name": "argent::account::IAccount",
+        "items": [
+            {
+                "type": "function",
+                "name": "__validate__",
+                "inputs": [
+                    {
+                        "name": "calls",
+                        "type": "core::array::Array::<core::starknet::account::Call>"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "type": "core::felt252"
+                    }
+                ],
+                "state_mutability": "external"
+            },
+            {
+                "type": "function",
+                "name": "__execute__",
+                "inputs": [
+                    {
+                        "name": "calls",
+                        "type": "core::array::Array::<core::starknet::account::Call>"
+                    }
+                ],
+                "outputs": [],
+                "state_mutability": "external"
+            },
+            {
+                "type": "function",
+                "name": "is_valid_signature",
+                "inputs": [
+                    {
+                        "name": "hash",
+                        "type": "core::felt252"
+                    },
+                    {
+                        "name": "signature",
+                        "type": "core::array::Array::<core::felt252>"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "type": "core::felt252"
+                    }
+                ],
+                "state_mutability": "view"
+            }
+        ]
+    },
+    {
+        "type": "impl",
+        "name": "ArgentAccountImpl",
+        "interface_name": "argent::account::IArgentAccount"
+    },
+    {
+        "type": "struct",
+        "name": "argent::signer::signer_signature::StarknetSigner",
+        "members": [
+            {
+                "name": "pubkey",
+                "type": "core::zeroable::NonZero::<core::felt252>"
+            }
+        ]
+    },
+    {
+        "type": "struct",
+        "name": "core::starknet::eth_address::EthAddress",
+        "members": [
+            {
+                "name": "address",
+                "type": "core::felt252"
+            }
+        ]
+    },
+    {
+        "type": "struct",
+        "name": "argent::signer::signer_signature::Secp256k1Signer",
+        "members": [
+            {
+                "name": "pubkey_hash",
+                "type": "core::starknet::eth_address::EthAddress"
+            }
+        ]
+    },
+    {
+        "type": "struct",
+        "name": "core::integer::u256",
+        "members": [
+            {
+                "name": "low",
+                "type": "core::integer::u128"
+            },
+            {
+                "name": "high",
+                "type": "core::integer::u128"
+            }
+        ]
+    },
+    {
+        "type": "struct",
+        "name": "argent::signer::signer_signature::Secp256r1Signer",
+        "members": [
+            {
+                "name": "pubkey",
+                "type": "core::zeroable::NonZero::<core::integer::u256>"
+            }
+        ]
+    },
+    {
+        "type": "struct",
+        "name": "argent::signer::signer_signature::Eip191Signer",
+        "members": [
+            {
+                "name": "eth_address",
+                "type": "core::starknet::eth_address::EthAddress"
+            }
+        ]
+    },
+    {
+        "type": "struct",
+        "name": "core::array::Span::<core::integer::u8>",
+        "members": [
+            {
+                "name": "snapshot",
+                "type": "@core::array::Array::<core::integer::u8>"
+            }
+        ]
+    },
+    {
+        "type": "struct",
+        "name": "argent::signer::signer_signature::WebauthnSigner",
+        "members": [
+            {
+                "name": "origin",
+                "type": "core::array::Span::<core::integer::u8>"
+            },
+            {
+                "name": "rp_id_hash",
+                "type": "core::zeroable::NonZero::<core::integer::u256>"
+            },
+            {
+                "name": "pubkey",
+                "type": "core::zeroable::NonZero::<core::integer::u256>"
+            }
+        ]
+    },
+    {
+        "type": "enum",
+        "name": "argent::signer::signer_signature::Signer",
+        "variants": [
+            {
+                "name": "Starknet",
+                "type": "argent::signer::signer_signature::StarknetSigner"
+            },
+            {
+                "name": "Secp256k1",
+                "type": "argent::signer::signer_signature::Secp256k1Signer"
+            },
+            {
+                "name": "Secp256r1",
+                "type": "argent::signer::signer_signature::Secp256r1Signer"
+            },
+            {
+                "name": "Eip191",
+                "type": "argent::signer::signer_signature::Eip191Signer"
+            },
+            {
+                "name": "Webauthn",
+                "type": "argent::signer::signer_signature::WebauthnSigner"
+            }
+        ]
+    },
+    {
+        "type": "struct",
+        "name": "argent::account::Version",
+        "members": [
+            {
+                "name": "major",
+                "type": "core::integer::u8"
+            },
+            {
+                "name": "minor",
+                "type": "core::integer::u8"
+            },
+            {
+                "name": "patch",
+                "type": "core::integer::u8"
+            }
+        ]
+    },
+    {
+        "type": "interface",
+        "name": "argent::account::IArgentAccount",
+        "items": [
+            {
+                "type": "function",
+                "name": "__validate_declare__",
+                "inputs": [
+                    {
+                        "name": "class_hash",
+                        "type": "core::felt252"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "type": "core::felt252"
+                    }
+                ],
+                "state_mutability": "view"
+            },
+            {
+                "type": "function",
+                "name": "__validate_deploy__",
+                "inputs": [
+                    {
+                        "name": "class_hash",
+                        "type": "core::felt252"
+                    },
+                    {
+                        "name": "contract_address_salt",
+                        "type": "core::felt252"
+                    },
+                    {
+                        "name": "threshold",
+                        "type": "core::integer::u32"
+                    },
+                    {
+                        "name": "signers",
+                        "type": "core::array::Array::<argent::signer::signer_signature::Signer>"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "type": "core::felt252"
+                    }
+                ],
+                "state_mutability": "view"
+            },
+            {
+                "type": "function",
+                "name": "get_name",
+                "inputs": [],
+                "outputs": [
+                    {
+                        "type": "core::felt252"
+                    }
+                ],
+                "state_mutability": "view"
+            },
+            {
+                "type": "function",
+                "name": "get_version",
+                "inputs": [],
+                "outputs": [
+                    {
+                        "type": "argent::account::Version"
+                    }
+                ],
+                "state_mutability": "view"
+            }
+        ]
+    },
+    {
+        "type": "impl",
+        "name": "UpgradeableCallbackOldImpl",
+        "interface_name": "argent::upgrade::IUpgradableCallbackOld"
+    },
+    {
+        "type": "interface",
+        "name": "argent::upgrade::IUpgradableCallbackOld",
+        "items": [
+            {
+                "type": "function",
+                "name": "execute_after_upgrade",
+                "inputs": [
+                    {
+                        "name": "data",
+                        "type": "core::array::Array::<core::felt252>"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "type": "core::array::Array::<core::felt252>"
+                    }
+                ],
+                "state_mutability": "external"
+            }
+        ]
+    },
+    {
+        "type": "impl",
+        "name": "UpgradeableCallbackImpl",
+        "interface_name": "argent::upgrade::IUpgradableCallback"
+    },
+    {
+        "type": "interface",
+        "name": "argent::upgrade::IUpgradableCallback",
+        "items": [
+            {
+                "type": "function",
+                "name": "perform_upgrade",
+                "inputs": [
+                    {
+                        "name": "new_implementation",
+                        "type": "core::starknet::class_hash::ClassHash"
+                    },
+                    {
+                        "name": "data",
+                        "type": "core::array::Span::<core::felt252>"
+                    }
+                ],
+                "outputs": [],
+                "state_mutability": "external"
+            }
+        ]
+    },
+    {
+        "type": "impl",
+        "name": "SignerManager",
+        "interface_name": "argent::multisig_account::signer_manager::ISignerManager"
+    },
+    {
+        "type": "enum",
+        "name": "core::bool",
+        "variants": [
+            {
+                "name": "False",
+                "type": "()"
+            },
+            {
+                "name": "True",
+                "type": "()"
+            }
+        ]
+    },
+    {
+        "type": "struct",
+        "name": "argent::signer::signer_signature::StarknetSignature",
+        "members": [
+            {
+                "name": "r",
+                "type": "core::felt252"
+            },
+            {
+                "name": "s",
+                "type": "core::felt252"
+            }
+        ]
+    },
+    {
+        "type": "struct",
+        "name": "core::starknet::secp256_trait::Signature",
+        "members": [
+            {
+                "name": "r",
+                "type": "core::integer::u256"
+            },
+            {
+                "name": "s",
+                "type": "core::integer::u256"
+            },
+            {
+                "name": "y_parity",
+                "type": "core::bool"
+            }
+        ]
+    },
+    {
+        "type": "struct",
+        "name": "argent::signer::webauthn::WebauthnSignature",
+        "members": [
+            {
+                "name": "client_data_json_outro",
+                "type": "core::array::Span::<core::integer::u8>"
+            },
+            {
+                "name": "flags",
+                "type": "core::integer::u8"
+            },
+            {
+                "name": "sign_count",
+                "type": "core::integer::u32"
+            },
+            {
+                "name": "ec_signature",
+                "type": "core::starknet::secp256_trait::Signature"
+            }
+        ]
+    },
+    {
+        "type": "enum",
+        "name": "argent::signer::signer_signature::SignerSignature",
+        "variants": [
+            {
+                "name": "Starknet",
+                "type": "(argent::signer::signer_signature::StarknetSigner, argent::signer::signer_signature::StarknetSignature)"
+            },
+            {
+                "name": "Secp256k1",
+                "type": "(argent::signer::signer_signature::Secp256k1Signer, core::starknet::secp256_trait::Signature)"
+            },
+            {
+                "name": "Secp256r1",
+                "type": "(argent::signer::signer_signature::Secp256r1Signer, core::starknet::secp256_trait::Signature)"
+            },
+            {
+                "name": "Eip191",
+                "type": "(argent::signer::signer_signature::Eip191Signer, core::starknet::secp256_trait::Signature)"
+            },
+            {
+                "name": "Webauthn",
+                "type": "(argent::signer::signer_signature::WebauthnSigner, argent::signer::webauthn::WebauthnSignature)"
+            }
+        ]
+    },
+    {
+        "type": "interface",
+        "name": "argent::multisig_account::signer_manager::ISignerManager",
+        "items": [
+            {
+                "type": "function",
+                "name": "change_threshold",
+                "inputs": [
+                    {
+                        "name": "new_threshold",
+                        "type": "core::integer::u32"
+                    }
+                ],
+                "outputs": [],
+                "state_mutability": "external"
+            },
+            {
+                "type": "function",
+                "name": "add_signers",
+                "inputs": [
+                    {
+                        "name": "new_threshold",
+                        "type": "core::integer::u32"
+                    },
+                    {
+                        "name": "signers_to_add",
+                        "type": "core::array::Array::<argent::signer::signer_signature::Signer>"
+                    }
+                ],
+                "outputs": [],
+                "state_mutability": "external"
+            },
+            {
+                "type": "function",
+                "name": "remove_signers",
+                "inputs": [
+                    {
+                        "name": "new_threshold",
+                        "type": "core::integer::u32"
+                    },
+                    {
+                        "name": "signers_to_remove",
+                        "type": "core::array::Array::<argent::signer::signer_signature::Signer>"
+                    }
+                ],
+                "outputs": [],
+                "state_mutability": "external"
+            },
+            {
+                "type": "function",
+                "name": "replace_signer",
+                "inputs": [
+                    {
+                        "name": "signer_to_remove",
+                        "type": "argent::signer::signer_signature::Signer"
+                    },
+                    {
+                        "name": "signer_to_add",
+                        "type": "argent::signer::signer_signature::Signer"
+                    }
+                ],
+                "outputs": [],
+                "state_mutability": "external"
+            },
+            {
+                "type": "function",
+                "name": "get_threshold",
+                "inputs": [],
+                "outputs": [
+                    {
+                        "type": "core::integer::u32"
+                    }
+                ],
+                "state_mutability": "view"
+            },
+            {
+                "type": "function",
+                "name": "get_signer_guids",
+                "inputs": [],
+                "outputs": [
+                    {
+                        "type": "core::array::Array::<core::felt252>"
+                    }
+                ],
+                "state_mutability": "view"
+            },
+            {
+                "type": "function",
+                "name": "is_signer",
+                "inputs": [
+                    {
+                        "name": "signer",
+                        "type": "argent::signer::signer_signature::Signer"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "type": "core::bool"
+                    }
+                ],
+                "state_mutability": "view"
+            },
+            {
+                "type": "function",
+                "name": "is_signer_guid",
+                "inputs": [
+                    {
+                        "name": "signer_guid",
+                        "type": "core::felt252"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "type": "core::bool"
+                    }
+                ],
+                "state_mutability": "view"
+            },
+            {
+                "type": "function",
+                "name": "is_valid_signer_signature",
+                "inputs": [
+                    {
+                        "name": "hash",
+                        "type": "core::felt252"
+                    },
+                    {
+                        "name": "signer_signature",
+                        "type": "argent::signer::signer_signature::SignerSignature"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "type": "core::bool"
+                    }
+                ],
+                "state_mutability": "view"
+            }
+        ]
+    },
+    {
+        "type": "impl",
+        "name": "ExecuteFromOutside",
+        "interface_name": "argent::outside_execution::outside_execution::IOutsideExecution"
+    },
+    {
+        "type": "struct",
+        "name": "core::array::Span::<core::starknet::account::Call>",
+        "members": [
+            {
+                "name": "snapshot",
+                "type": "@core::array::Array::<core::starknet::account::Call>"
+            }
+        ]
+    },
+    {
+        "type": "struct",
+        "name": "argent::outside_execution::outside_execution::OutsideExecution",
+        "members": [
+            {
+                "name": "caller",
+                "type": "core::starknet::contract_address::ContractAddress"
+            },
+            {
+                "name": "nonce",
+                "type": "core::felt252"
+            },
+            {
+                "name": "execute_after",
+                "type": "core::integer::u64"
+            },
+            {
+                "name": "execute_before",
+                "type": "core::integer::u64"
+            },
+            {
+                "name": "calls",
+                "type": "core::array::Span::<core::starknet::account::Call>"
+            }
+        ]
+    },
+    {
+        "type": "interface",
+        "name": "argent::outside_execution::outside_execution::IOutsideExecution",
+        "items": [
+            {
+                "type": "function",
+                "name": "execute_from_outside",
+                "inputs": [
+                    {
+                        "name": "outside_execution",
+                        "type": "argent::outside_execution::outside_execution::OutsideExecution"
+                    },
+                    {
+                        "name": "signature",
+                        "type": "core::array::Array::<core::felt252>"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "type": "core::array::Array::<core::array::Span::<core::felt252>>"
+                    }
+                ],
+                "state_mutability": "external"
+            },
+            {
+                "type": "function",
+                "name": "execute_from_outside_v2",
+                "inputs": [
+                    {
+                        "name": "outside_execution",
+                        "type": "argent::outside_execution::outside_execution::OutsideExecution"
+                    },
+                    {
+                        "name": "signature",
+                        "type": "core::array::Span::<core::felt252>"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "type": "core::array::Array::<core::array::Span::<core::felt252>>"
+                    }
+                ],
+                "state_mutability": "external"
+            },
+            {
+                "type": "function",
+                "name": "is_valid_outside_execution_nonce",
+                "inputs": [
+                    {
+                        "name": "nonce",
+                        "type": "core::felt252"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "type": "core::bool"
+                    }
+                ],
+                "state_mutability": "view"
+            },
+            {
+                "type": "function",
+                "name": "get_outside_execution_message_hash_rev_0",
+                "inputs": [
+                    {
+                        "name": "outside_execution",
+                        "type": "argent::outside_execution::outside_execution::OutsideExecution"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "type": "core::felt252"
+                    }
+                ],
+                "state_mutability": "view"
+            },
+            {
+                "type": "function",
+                "name": "get_outside_execution_message_hash_rev_1",
+                "inputs": [
+                    {
+                        "name": "outside_execution",
+                        "type": "argent::outside_execution::outside_execution::OutsideExecution"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "type": "core::felt252"
+                    }
+                ],
+                "state_mutability": "view"
+            }
+        ]
+    },
+    {
+        "type": "impl",
+        "name": "SRC5",
+        "interface_name": "argent::introspection::ISRC5"
+    },
+    {
+        "type": "interface",
+        "name": "argent::introspection::ISRC5",
+        "items": [
+            {
+                "type": "function",
+                "name": "supports_interface",
+                "inputs": [
+                    {
+                        "name": "interface_id",
+                        "type": "core::felt252"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "type": "core::bool"
+                    }
+                ],
+                "state_mutability": "view"
+            }
+        ]
+    },
+    {
+        "type": "impl",
+        "name": "SRC5Legacy",
+        "interface_name": "argent::introspection::ISRC5Legacy"
+    },
+    {
+        "type": "interface",
+        "name": "argent::introspection::ISRC5Legacy",
+        "items": [
+            {
+                "type": "function",
+                "name": "supportsInterface",
+                "inputs": [
+                    {
+                        "name": "interfaceId",
+                        "type": "core::felt252"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "type": "core::felt252"
+                    }
+                ],
+                "state_mutability": "view"
+            }
+        ]
+    },
+    {
+        "type": "impl",
+        "name": "Upgradable",
+        "interface_name": "argent::upgrade::IUpgradeable"
+    },
+    {
+        "type": "interface",
+        "name": "argent::upgrade::IUpgradeable",
+        "items": [
+            {
+                "type": "function",
+                "name": "upgrade",
+                "inputs": [
+                    {
+                        "name": "new_implementation",
+                        "type": "core::starknet::class_hash::ClassHash"
+                    },
+                    {
+                        "name": "data",
+                        "type": "core::array::Array::<core::felt252>"
+                    }
+                ],
+                "outputs": [],
+                "state_mutability": "external"
+            }
+        ]
+    },
+    {
+        "type": "impl",
+        "name": "ToggleExternalRecovery",
+        "interface_name": "argent::multisig_account::external_recovery::IExternalRecovery"
+    },
+    {
+        "type": "struct",
+        "name": "argent::multisig_account::external_recovery::EscapeCall",
+        "members": [
+            {
+                "name": "selector",
+                "type": "core::felt252"
+            },
+            {
+                "name": "calldata",
+                "type": "core::array::Array::<core::felt252>"
+            }
+        ]
+    },
+    {
+        "type": "struct",
+        "name": "argent::multisig_account::external_recovery::EscapeEnabled",
+        "members": [
+            {
+                "name": "is_enabled",
+                "type": "core::bool"
+            },
+            {
+                "name": "security_period",
+                "type": "core::integer::u64"
+            },
+            {
+                "name": "expiry_period",
+                "type": "core::integer::u64"
+            }
+        ]
+    },
+    {
+        "type": "struct",
+        "name": "argent::multisig_account::external_recovery::Escape",
+        "members": [
+            {
+                "name": "ready_at",
+                "type": "core::integer::u64"
+            },
+            {
+                "name": "call_hash",
+                "type": "core::felt252"
+            }
+        ]
+    },
+    {
+        "type": "enum",
+        "name": "argent::recovery::EscapeStatus",
+        "variants": [
+            {
+                "name": "None",
+                "type": "()"
+            },
+            {
+                "name": "NotReady",
+                "type": "()"
+            },
+            {
+                "name": "Ready",
+                "type": "()"
+            },
+            {
+                "name": "Expired",
+                "type": "()"
+            }
+        ]
+    },
+    {
+        "type": "interface",
+        "name": "argent::multisig_account::external_recovery::IExternalRecovery",
+        "items": [
+            {
+                "type": "function",
+                "name": "toggle_escape",
+                "inputs": [
+                    {
+                        "name": "is_enabled",
+                        "type": "core::bool"
+                    },
+                    {
+                        "name": "security_period",
+                        "type": "core::integer::u64"
+                    },
+                    {
+                        "name": "expiry_period",
+                        "type": "core::integer::u64"
+                    },
+                    {
+                        "name": "guardian",
+                        "type": "core::starknet::contract_address::ContractAddress"
+                    }
+                ],
+                "outputs": [],
+                "state_mutability": "external"
+            },
+            {
+                "type": "function",
+                "name": "get_guardian",
+                "inputs": [],
+                "outputs": [
+                    {
+                        "type": "core::starknet::contract_address::ContractAddress"
+                    }
+                ],
+                "state_mutability": "view"
+            },
+            {
+                "type": "function",
+                "name": "trigger_escape",
+                "inputs": [
+                    {
+                        "name": "call",
+                        "type": "argent::multisig_account::external_recovery::EscapeCall"
+                    }
+                ],
+                "outputs": [],
+                "state_mutability": "external"
+            },
+            {
+                "type": "function",
+                "name": "execute_escape",
+                "inputs": [
+                    {
+                        "name": "call",
+                        "type": "argent::multisig_account::external_recovery::EscapeCall"
+                    }
+                ],
+                "outputs": [],
+                "state_mutability": "external"
+            },
+            {
+                "type": "function",
+                "name": "cancel_escape",
+                "inputs": [],
+                "outputs": [],
+                "state_mutability": "external"
+            },
+            {
+                "type": "function",
+                "name": "get_escape_enabled",
+                "inputs": [],
+                "outputs": [
+                    {
+                        "type": "argent::multisig_account::external_recovery::EscapeEnabled"
+                    }
+                ],
+                "state_mutability": "view"
+            },
+            {
+                "type": "function",
+                "name": "get_escape",
+                "inputs": [],
+                "outputs": [
+                    {
+                        "type": "(argent::multisig_account::external_recovery::Escape, argent::recovery::EscapeStatus)"
+                    }
+                ],
+                "state_mutability": "view"
+            }
+        ]
+    },
+    {
+        "type": "constructor",
+        "name": "constructor",
+        "inputs": [
+            {
+                "name": "threshold",
+                "type": "core::integer::u32"
+            },
+            {
+                "name": "signers",
+                "type": "core::array::Array::<argent::signer::signer_signature::Signer>"
+            }
+        ]
+    },
+    {
+        "type": "event",
+        "name": "argent::multisig_account::signer_manager::ThresholdUpdated",
+        "kind": "struct",
+        "members": [
+            {
+                "name": "new_threshold",
+                "type": "core::integer::u32",
+                "kind": "data"
+            }
+        ]
+    },
+    {
+        "type": "event",
+        "name": "argent::multisig_account::signer_manager::OwnerAddedGuid",
+        "kind": "struct",
+        "members": [
+            {
+                "name": "new_owner_guid",
+                "type": "core::felt252",
+                "kind": "key"
+            }
+        ]
+    },
+    {
+        "type": "event",
+        "name": "argent::multisig_account::signer_manager::OwnerRemovedGuid",
+        "kind": "struct",
+        "members": [
+            {
+                "name": "removed_owner_guid",
+                "type": "core::felt252",
+                "kind": "key"
+            }
+        ]
+    },
+    {
+        "type": "event",
+        "name": "argent::multiowner_account::events::SignerLinked",
+        "kind": "struct",
+        "members": [
+            {
+                "name": "signer_guid",
+                "type": "core::felt252",
+                "kind": "key"
+            },
+            {
+                "name": "signer",
+                "type": "argent::signer::signer_signature::Signer",
+                "kind": "data"
+            }
+        ]
+    },
+    {
+        "type": "event",
+        "name": "argent::multisig_account::signer_manager::signer_manager_component::Event",
+        "kind": "enum",
+        "variants": [
+            {
+                "name": "ThresholdUpdated",
+                "type": "argent::multisig_account::signer_manager::ThresholdUpdated",
+                "kind": "nested"
+            },
+            {
+                "name": "OwnerAddedGuid",
+                "type": "argent::multisig_account::signer_manager::OwnerAddedGuid",
+                "kind": "nested"
+            },
+            {
+                "name": "OwnerRemovedGuid",
+                "type": "argent::multisig_account::signer_manager::OwnerRemovedGuid",
+                "kind": "nested"
+            },
+            {
+                "name": "SignerLinked",
+                "type": "argent::multiowner_account::events::SignerLinked",
+                "kind": "nested"
+            }
+        ]
+    },
+    {
+        "type": "event",
+        "name": "argent::outside_execution::outside_execution::outside_execution_component::Event",
+        "kind": "enum",
+        "variants": []
+    },
+    {
+        "type": "event",
+        "name": "argent::introspection::src5_component::Event",
+        "kind": "enum",
+        "variants": []
+    },
+    {
+        "type": "event",
+        "name": "argent::upgrade::upgrade_component::AccountUpgraded",
+        "kind": "struct",
+        "members": [
+            {
+                "name": "new_implementation",
+                "type": "core::starknet::class_hash::ClassHash",
+                "kind": "data"
+            }
+        ]
+    },
+    {
+        "type": "event",
+        "name": "argent::upgrade::upgrade_component::Event",
+        "kind": "enum",
+        "variants": [
+            {
+                "name": "AccountUpgraded",
+                "type": "argent::upgrade::upgrade_component::AccountUpgraded",
+                "kind": "nested"
+            }
+        ]
+    },
+    {
+        "type": "event",
+        "name": "argent::multisig_account::upgrade_migration::upgrade_migration_component::Event",
+        "kind": "enum",
+        "variants": []
+    },
+    {
+        "type": "event",
+        "name": "argent::multisig_account::external_recovery::EscapeTriggered",
+        "kind": "struct",
+        "members": [
+            {
+                "name": "ready_at",
+                "type": "core::integer::u64",
+                "kind": "data"
+            },
+            {
+                "name": "call",
+                "type": "argent::multisig_account::external_recovery::EscapeCall",
+                "kind": "data"
+            }
+        ]
+    },
+    {
+        "type": "event",
+        "name": "argent::multisig_account::external_recovery::EscapeExecuted",
+        "kind": "struct",
+        "members": [
+            {
+                "name": "call_hash",
+                "type": "core::felt252",
+                "kind": "data"
+            }
+        ]
+    },
+    {
+        "type": "event",
+        "name": "argent::multisig_account::external_recovery::EscapeCanceled",
+        "kind": "struct",
+        "members": [
+            {
+                "name": "call_hash",
+                "type": "core::felt252",
+                "kind": "data"
+            }
+        ]
+    },
+    {
+        "type": "event",
+        "name": "argent::multisig_account::external_recovery::external_recovery_component::Event",
+        "kind": "enum",
+        "variants": [
+            {
+                "name": "EscapeTriggered",
+                "type": "argent::multisig_account::external_recovery::EscapeTriggered",
+                "kind": "nested"
+            },
+            {
+                "name": "EscapeExecuted",
+                "type": "argent::multisig_account::external_recovery::EscapeExecuted",
+                "kind": "nested"
+            },
+            {
+                "name": "EscapeCanceled",
+                "type": "argent::multisig_account::external_recovery::EscapeCanceled",
+                "kind": "nested"
+            }
+        ]
+    },
+    {
+        "type": "event",
+        "name": "openzeppelin_security::reentrancyguard::ReentrancyGuardComponent::Event",
+        "kind": "enum",
+        "variants": []
+    },
+    {
+        "type": "event",
+        "name": "argent::multisig_account::multisig_account::ArgentMultisigAccount::TransactionExecuted",
+        "kind": "struct",
+        "members": [
+            {
+                "name": "hash",
+                "type": "core::felt252",
+                "kind": "key"
+            }
+        ]
+    },
+    {
+        "type": "event",
+        "name": "argent::multisig_account::multisig_account::ArgentMultisigAccount::Event",
+        "kind": "enum",
+        "variants": [
+            {
+                "name": "SignerManagerEvents",
+                "type": "argent::multisig_account::signer_manager::signer_manager_component::Event",
+                "kind": "flat"
+            },
+            {
+                "name": "ExecuteFromOutsideEvents",
+                "type": "argent::outside_execution::outside_execution::outside_execution_component::Event",
+                "kind": "flat"
+            },
+            {
+                "name": "SRC5Events",
+                "type": "argent::introspection::src5_component::Event",
+                "kind": "flat"
+            },
+            {
+                "name": "UpgradeEvents",
+                "type": "argent::upgrade::upgrade_component::Event",
+                "kind": "flat"
+            },
+            {
+                "name": "UpgradeMigrationEvents",
+                "type": "argent::multisig_account::upgrade_migration::upgrade_migration_component::Event",
+                "kind": "flat"
+            },
+            {
+                "name": "EscapeEvents",
+                "type": "argent::multisig_account::external_recovery::external_recovery_component::Event",
+                "kind": "flat"
+            },
+            {
+                "name": "ReentrancyGuardEvent",
+                "type": "openzeppelin_security::reentrancyguard::ReentrancyGuardComponent::Event",
+                "kind": "flat"
+            },
+            {
+                "name": "TransactionExecuted",
+                "type": "argent::multisig_account::multisig_account::ArgentMultisigAccount::TransactionExecuted",
+                "kind": "nested"
+            }
+        ]
+    }
+]

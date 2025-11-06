@@ -1,4 +1,4 @@
-import { randomBytes } from "./bytes";
+import { randomBytes } from "$lib/bytes";
 
 export interface WebauthnAttestation {
   email: string;
@@ -51,32 +51,6 @@ export const createWebauthnAttestation = async (
   const x = publicKey.slice(-64, -32);
 
   return { email, rpId, origin, credentialId, pubKey: x };
-};
-
-export const requestSignature = async (
-  attestation: WebauthnAttestation,
-  challenge: Uint8Array,
-): Promise<AuthenticatorAssertionResponse> => {
-  const credential = await navigator.credentials.get({
-    publicKey: {
-      challenge,
-      allowCredentials: [
-        {
-          id: attestation.credentialId,
-          type: "public-key",
-          transports: ["internal"],
-        },
-      ],
-      userVerification: "required",
-      timeout: 60000,
-    },
-  });
-  if (!credential) {
-    throw new Error("No credential");
-  }
-
-  const assertion = credential as PublicKeyCredential;
-  return assertion.response as AuthenticatorAssertionResponse;
 };
 
 // https://github.com/MasterKale/SimpleWebAuthn/blob/5e3e5718f6b97ee3df09468a4400d3c7770a3f31/packages/browser/src/helpers/browserSupportsWebAuthn.ts

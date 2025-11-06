@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { CairoOption, CairoOptionVariant, CallData, hash } from "starknet";
+import { CairoOption, CairoOptionVariant, CallData, defaultDeployer, hash } from "starknet";
 import {
   ArgentSigner,
   deployAccount,
@@ -28,21 +28,22 @@ describe("ArgentAccount", function () {
 
     const salt = "123";
     const contractAddress = hash.calculateContractAddressFromHash(salt, argentAccountClassHash, constructorCalldata, 0);
-    const udcCalls = deployer.buildUDCContractPayload({
-      classHash: argentAccountClassHash,
-      salt,
-      constructorCalldata,
-      unique: false,
-    });
-    const receipt = await manager.waitForTx(deployer.execute(udcCalls));
-
+    const udcCalls = defaultDeployer.buildDeployerCall(
+      {
+        classHash: argentAccountClassHash,
+        salt,
+        constructorCalldata,
+        unique: false,
+      },
+      contractAddress,
+    );
+    const receipt = await manager.waitForTx(deployer.execute(udcCalls.calls));
     await expectEvent(receipt, {
       from_address: contractAddress,
       eventName: "AccountCreated",
       keys: [owner.storedValue.toString()],
       data: [guardian.storedValue.toString()],
     });
-
     await expectEvent(receipt, {
       from_address: contractAddress,
       eventName: "AccountCreatedGuid",
@@ -58,14 +59,12 @@ describe("ArgentAccount", function () {
     await accountContract.get_guardians_guids().should.eventually.deep.equal([guardian.guid]);
   });
 
-  for (const useTxV3 of [false, true]) {
-    it(`Self deployment (TxV3: ${useTxV3})`, async function () {
-      const { accountContract, owner } = await deployAccountWithoutGuardians({ useTxV3, selfDeploy: true });
+  it(`Self deployment`, async function () {
+    const { accountContract, owner } = await deployAccountWithoutGuardians({ selfDeploy: true });
 
-      await accountContract.get_owners_guids().should.eventually.deep.equal([owner.guid]);
-      await accountContract.get_guardians_guids().should.eventually.deep.equal([]);
-    });
-  }
+    await accountContract.get_owners_guids().should.eventually.deep.equal([owner.guid]);
+    await accountContract.get_guardians_guids().should.eventually.deep.equal([]);
+  });
 
   it("Expect an error when owner is zero", async function () {
     const guardian = new CairoOption(CairoOptionVariant.None);

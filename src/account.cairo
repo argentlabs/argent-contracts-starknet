@@ -21,7 +21,8 @@ pub trait IAccount<TContractState> {
     /// @dev Warning: To guarantee the signature cannot be replayed in other accounts or other chains, the data hashed
     /// must be unique to the account and the chain.
     /// This is true today for starknet transaction signatures and for SNIP-12 signatures but might not be true for
-    /// other types of signatures @param hash The hash of the data to sign
+    /// other types of signatures
+    /// @param hash The hash of the data to sign
     /// @param signature The signature to validate
     /// @return The shortstring 'VALID' when the signature is valid, 0 if the signature doesn't match the hash
     /// @dev it can also panic if the signature is not in a valid format

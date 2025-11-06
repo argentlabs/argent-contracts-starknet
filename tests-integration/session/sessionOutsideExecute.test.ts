@@ -1,5 +1,5 @@
 import { Contract, TypedDataRevision } from "starknet";
-import { StarknetKeyPair, deployAccount, manager, setupSession } from "../../lib";
+import { StarknetKeyPair, deployAccount, generateRandomNumber, manager, setupSession } from "../../lib";
 import { singleMethodAllowList } from "./sessionTestHelpers";
 
 const initialTime = 1713139200n;
@@ -8,10 +8,15 @@ const activeRevision = TypedDataRevision.ACTIVE;
 describe("ArgentAccount: session outside execution", function () {
   let argentSessionAccountClassHash: string;
   let mockDapp: Contract;
+  let randomNumber: bigint;
 
   before(async () => {
     argentSessionAccountClassHash = await manager.declareLocalContract("ArgentAccount");
     mockDapp = await manager.declareAndDeployContract("MockDapp");
+  });
+
+  beforeEach(async () => {
+    randomNumber = generateRandomNumber();
   });
 
   it("Basics: Revision 0", async function () {
@@ -26,7 +31,7 @@ describe("ArgentAccount: session outside execution", function () {
       allowedMethods: singleMethodAllowList(mockDapp, "set_number"),
     });
 
-    const calls = [mockDapp.populateTransaction.set_number(42n)];
+    const calls = [mockDapp.populateTransaction.set_number(randomNumber)];
 
     const outsideExecutionCall = await dappService.getOutsideExecutionCall(
       sessionRequest,
@@ -41,7 +46,7 @@ describe("ArgentAccount: session outside execution", function () {
 
     await mockDappAccount.execute(outsideExecutionCall);
 
-    await mockDapp.get_number(account.address).should.eventually.equal(42n);
+    await mockDapp.get_number(account.address).should.eventually.equal(randomNumber);
   });
 
   it("Basics: Revision 1", async function () {
@@ -49,7 +54,7 @@ describe("ArgentAccount: session outside execution", function () {
 
     const { account: mockDappAccount } = await deployAccount();
 
-    const calls = [mockDapp.populateTransaction.set_number(42n)];
+    const calls = [mockDapp.populateTransaction.set_number(randomNumber)];
 
     const { sessionRequest, authorizationSignature, dappService } = await setupSession({
       guardian: guardian as StarknetKeyPair,
@@ -71,6 +76,6 @@ describe("ArgentAccount: session outside execution", function () {
 
     await mockDappAccount.execute(outsideExecutionCall);
 
-    await mockDapp.get_number(account.address).should.eventually.equal(42n);
+    await mockDapp.get_number(account.address).should.eventually.equal(randomNumber);
   });
 });

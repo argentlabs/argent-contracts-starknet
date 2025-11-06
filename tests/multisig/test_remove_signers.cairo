@@ -1,28 +1,28 @@
 use argent::multisig_account::signer_manager::{OwnerRemovedGuid, ThresholdUpdated, signer_manager_component};
-use argent::signer::signer_signature::{SignerTrait, starknet_signer_from_pubkey};
 use crate::{
-    ITestArgentMultisigDispatcherTrait, SIGNER_1, SIGNER_2, SIGNER_3, initialize_multisig, initialize_multisig_with,
+    ITestArgentMultisigDispatcherTrait, MultisigSetup, SignerKeyPairImpl, StarknetKeyPair, initialize_multisig_m_of_n,
 };
 use snforge_std::{EventSpyAssertionsTrait, EventSpyTrait, spy_events};
 
 #[test]
 fn remove_signers_first() {
     // init
-    let multisig = initialize_multisig_with(threshold: 1, signers: array![SIGNER_1(), SIGNER_2(), SIGNER_3()].span());
+    let MultisigSetup { multisig, signers, .. } = initialize_multisig_m_of_n(1, 3);
+
     let mut spy = spy_events();
 
     // remove signer
-    multisig.remove_signers(2, array![SIGNER_1()]);
+    multisig.remove_signers(2, array![signers[0].signer()]);
 
     // check
-    let signers = multisig.get_signer_guids();
-    assert_eq!(signers.len(), 2);
+    let signers_guids = multisig.get_signer_guids();
+    assert_eq!(signers_guids.len(), 2);
     assert_eq!(multisig.get_threshold(), 2);
-    assert!(!multisig.is_signer(SIGNER_1()));
-    assert!(multisig.is_signer(SIGNER_2()));
-    assert!(multisig.is_signer(SIGNER_3()));
+    assert!(!multisig.is_signer(signers[0].signer()));
+    assert!(multisig.is_signer(signers[1].signer()));
+    assert!(multisig.is_signer(signers[2].signer()));
 
-    let removed_owner_guid = SIGNER_1().into_guid();
+    let removed_owner_guid = signers[0].into_guid();
     let event = signer_manager_component::Event::OwnerRemovedGuid(OwnerRemovedGuid { removed_owner_guid });
     spy.assert_emitted(@array![(multisig.contract_address, event)]);
 
@@ -35,155 +35,155 @@ fn remove_signers_first() {
 #[test]
 fn remove_signers_center() {
     // init
-    let multisig = initialize_multisig_with(threshold: 1, signers: array![SIGNER_1(), SIGNER_2(), SIGNER_3()].span());
+    let MultisigSetup { multisig, signers, .. } = initialize_multisig_m_of_n(1, 3);
 
     // remove signer
-    let signer_to_remove = array![SIGNER_2()];
+    let signer_to_remove = array![signers[1].signer()];
     multisig.remove_signers(1, signer_to_remove);
 
     // check
-    let signers = multisig.get_signer_guids();
-    assert_eq!(signers.len(), 2);
+    let signers_guids = multisig.get_signer_guids();
+    assert_eq!(signers_guids.len(), 2);
     assert_eq!(multisig.get_threshold(), 1);
-    assert!(!multisig.is_signer(SIGNER_2()));
-    assert!(multisig.is_signer(SIGNER_1()));
-    assert!(multisig.is_signer(SIGNER_3()));
+    assert!(!multisig.is_signer(signers[1].signer()));
+    assert!(multisig.is_signer(signers[0].signer()));
+    assert!(multisig.is_signer(signers[2].signer()));
 }
 
 #[test]
 fn remove_signers_last() {
     // init
-    let multisig = initialize_multisig_with(threshold: 1, signers: array![SIGNER_1(), SIGNER_2(), SIGNER_3()].span());
+    let MultisigSetup { multisig, signers, .. } = initialize_multisig_m_of_n(1, 3);
 
     // remove signer
-    let signer_to_remove = array![SIGNER_3()];
+    let signer_to_remove = array![signers[2].signer()];
     multisig.remove_signers(1, signer_to_remove);
 
     // check
-    let signers = multisig.get_signer_guids();
-    assert_eq!(signers.len(), 2);
+    let signers_guids = multisig.get_signer_guids();
+    assert_eq!(signers_guids.len(), 2);
     assert_eq!(multisig.get_threshold(), 1);
-    assert!(!multisig.is_signer(SIGNER_3()));
-    assert!(multisig.is_signer(SIGNER_1()));
-    assert!(multisig.is_signer(SIGNER_2()));
+    assert!(!multisig.is_signer(signers[2].signer()));
+    assert!(multisig.is_signer(signers[0].signer()));
+    assert!(multisig.is_signer(signers[1].signer()));
 }
 
 #[test]
 fn remove_1_and_2() {
     // init
-    let multisig = initialize_multisig_with(threshold: 1, signers: array![SIGNER_1(), SIGNER_2(), SIGNER_3()].span());
+    let MultisigSetup { multisig, signers, .. } = initialize_multisig_m_of_n(1, 3);
 
     // remove signer
-    let signer_to_remove = array![SIGNER_1(), SIGNER_2()];
+    let signer_to_remove = array![signers[0].signer(), signers[1].signer()];
     multisig.remove_signers(1, signer_to_remove);
 
     // check
-    let signers = multisig.get_signer_guids();
-    assert_eq!(signers.len(), 1);
+    let signers_guids = multisig.get_signer_guids();
+    assert_eq!(signers_guids.len(), 1);
     assert_eq!(multisig.get_threshold(), 1);
-    assert!(!multisig.is_signer(SIGNER_1()));
-    assert!(!multisig.is_signer(SIGNER_2()));
-    assert!(multisig.is_signer(SIGNER_3()));
+    assert!(!multisig.is_signer(signers[0].signer()));
+    assert!(!multisig.is_signer(signers[1].signer()));
+    assert!(multisig.is_signer(signers[2].signer()));
 }
 
 #[test]
 fn remove_1_and_3() {
     // init
-    let multisig = initialize_multisig_with(threshold: 1, signers: array![SIGNER_1(), SIGNER_2(), SIGNER_3()].span());
+    let MultisigSetup { multisig, signers, .. } = initialize_multisig_m_of_n(1, 3);
 
     // remove signer
-    let signer_to_remove = array![SIGNER_1(), SIGNER_3()];
+    let signer_to_remove = array![signers[0].signer(), signers[2].signer()];
     multisig.remove_signers(1, signer_to_remove);
 
     // check
-    let signers = multisig.get_signer_guids();
-    assert_eq!(signers.len(), 1);
+    let signers_guids = multisig.get_signer_guids();
+    assert_eq!(signers_guids.len(), 1);
     assert_eq!(multisig.get_threshold(), 1);
-    assert!(!multisig.is_signer(SIGNER_1()));
-    assert!(!multisig.is_signer(SIGNER_3()));
-    assert!(multisig.is_signer(SIGNER_2()));
+    assert!(!multisig.is_signer(signers[0].signer()));
+    assert!(!multisig.is_signer(signers[2].signer()));
+    assert!(multisig.is_signer(signers[1].signer()));
 }
 
 #[test]
 fn remove_2_and_3() {
     // init
-    let multisig = initialize_multisig_with(threshold: 1, signers: array![SIGNER_1(), SIGNER_2(), SIGNER_3()].span());
+    let MultisigSetup { multisig, signers, .. } = initialize_multisig_m_of_n(1, 3);
 
     // remove signer
-    let signer_to_remove = array![SIGNER_2(), SIGNER_3()];
+    let signer_to_remove = array![signers[1].signer(), signers[2].signer()];
     multisig.remove_signers(1, signer_to_remove);
 
     // check
-    let signers = multisig.get_signer_guids();
-    assert_eq!(signers.len(), 1);
+    let signers_guids = multisig.get_signer_guids();
+    assert_eq!(signers_guids.len(), 1);
     assert_eq!(multisig.get_threshold(), 1);
-    assert!(!multisig.is_signer(SIGNER_2()));
-    assert!(!multisig.is_signer(SIGNER_3()));
-    assert!(multisig.is_signer(SIGNER_1()));
+    assert!(!multisig.is_signer(signers[1].signer()));
+    assert!(!multisig.is_signer(signers[2].signer()));
+    assert!(multisig.is_signer(signers[0].signer()));
 }
 
 #[test]
 fn remove_2_and_1() {
     // init
-    let multisig = initialize_multisig_with(threshold: 1, signers: array![SIGNER_1(), SIGNER_2(), SIGNER_3()].span());
+    let MultisigSetup { multisig, signers, .. } = initialize_multisig_m_of_n(1, 3);
 
     // remove signer
-    let signer_to_remove = array![SIGNER_2(), SIGNER_1()];
+    let signer_to_remove = array![signers[1].signer(), signers[0].signer()];
     multisig.remove_signers(1, signer_to_remove);
 
     // check
-    let signers = multisig.get_signer_guids();
-    assert_eq!(signers.len(), 1);
+    let signers_guids = multisig.get_signer_guids();
+    assert_eq!(signers_guids.len(), 1);
     assert_eq!(multisig.get_threshold(), 1);
-    assert!(!multisig.is_signer(SIGNER_2()));
-    assert!(!multisig.is_signer(SIGNER_1()));
-    assert!(multisig.is_signer(SIGNER_3()));
+    assert!(!multisig.is_signer(signers[1].signer()));
+    assert!(!multisig.is_signer(signers[0].signer()));
+    assert!(multisig.is_signer(signers[2].signer()));
 }
 
 #[test]
 fn remove_3_and_1() {
     // init
-    let multisig = initialize_multisig_with(threshold: 1, signers: array![SIGNER_1(), SIGNER_2(), SIGNER_3()].span());
+    let MultisigSetup { multisig, signers, .. } = initialize_multisig_m_of_n(1, 3);
 
     // remove signer
-    let signer_to_remove = array![SIGNER_3(), SIGNER_1()];
+    let signer_to_remove = array![signers[2].signer(), signers[0].signer()];
     multisig.remove_signers(1, signer_to_remove);
 
     // check
-    let signers = multisig.get_signer_guids();
-    assert_eq!(signers.len(), 1);
+    let signers_guids = multisig.get_signer_guids();
+    assert_eq!(signers_guids.len(), 1);
     assert_eq!(multisig.get_threshold(), 1);
-    assert!(!multisig.is_signer(SIGNER_3()));
-    assert!(!multisig.is_signer(SIGNER_1()));
-    assert!(multisig.is_signer(SIGNER_2()));
+    assert!(!multisig.is_signer(signers[2].signer()));
+    assert!(!multisig.is_signer(signers[0].signer()));
+    assert!(multisig.is_signer(signers[1].signer()));
 }
 
 #[test]
 fn remove_3_and_2() {
     // init
-    let multisig = initialize_multisig_with(threshold: 1, signers: array![SIGNER_1(), SIGNER_2(), SIGNER_3()].span());
+    let MultisigSetup { multisig, signers, .. } = initialize_multisig_m_of_n(1, 3);
 
     // remove signer
-    let signer_to_remove = array![SIGNER_2(), SIGNER_3()];
+    let signer_to_remove = array![signers[1].signer(), signers[2].signer()];
     multisig.remove_signers(1, signer_to_remove);
 
     // check
-    let signers = multisig.get_signer_guids();
-    assert_eq!(signers.len(), 1);
+    let signers_guids = multisig.get_signer_guids();
+    assert_eq!(signers_guids.len(), 1);
     assert_eq!(multisig.get_threshold(), 1);
-    assert!(!multisig.is_signer(SIGNER_3()));
-    assert!(!multisig.is_signer(SIGNER_2()));
-    assert!(multisig.is_signer(SIGNER_1()));
+    assert!(!multisig.is_signer(signers[1].signer()));
+    assert!(!multisig.is_signer(signers[2].signer()));
+    assert!(multisig.is_signer(signers[0].signer()));
 }
 
 #[test]
 #[should_panic(expected: ('linked-set/item-not-found',))]
 fn remove_invalid_signers() {
     // init
-    let multisig = initialize_multisig();
+    let MultisigSetup { multisig, .. } = initialize_multisig_m_of_n(1, 3);
 
     // remove signer
-    let signer_to_remove = array![starknet_signer_from_pubkey(10)];
+    let signer_to_remove = array![StarknetKeyPair::random().signer()];
     multisig.remove_signers(1, signer_to_remove);
 }
 
@@ -191,20 +191,21 @@ fn remove_invalid_signers() {
 #[should_panic(expected: ('linked-set/item-not-found',))]
 fn remove_same_signer_twice() {
     // init
-    let multisig = initialize_multisig();
+    let MultisigSetup { multisig, signers, .. } = initialize_multisig_m_of_n(1, 3);
 
     // remove signer
-    multisig.remove_signers(1, array![SIGNER_2(), SIGNER_2()]);
+    let signer_to_remove = array![signers[1].signer(), signers[1].signer()];
+    multisig.remove_signers(1, signer_to_remove);
 }
 
 #[test]
 #[should_panic(expected: ('argent/bad-threshold',))]
 fn remove_signers_invalid_threshold() {
     // init
-    let multisig = initialize_multisig_with(threshold: 1, signers: array![SIGNER_1(), SIGNER_2(), SIGNER_3()].span());
+    let MultisigSetup { multisig, signers, .. } = initialize_multisig_m_of_n(1, 3);
 
     // remove signer
-    let signer_to_remove = array![SIGNER_1(), SIGNER_2()];
+    let signer_to_remove = array![signers[0].signer(), signers[1].signer()];
     multisig.remove_signers(2, signer_to_remove);
 }
 
@@ -212,8 +213,9 @@ fn remove_signers_invalid_threshold() {
 #[should_panic(expected: ('argent/invalid-threshold',))]
 fn remove_signers_zero_threshold() {
     // init
-    let multisig = initialize_multisig();
+    let MultisigSetup { multisig, signers, .. } = initialize_multisig_m_of_n(1, 3);
 
     // remove signer
-    multisig.remove_signers(0, array![SIGNER_1()]);
+    let signer_to_remove = array![signers[0].signer()];
+    multisig.remove_signers(0, signer_to_remove);
 }

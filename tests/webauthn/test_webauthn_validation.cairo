@@ -1,11 +1,25 @@
 use argent::signer::signer_signature::{Signer, SignerTrait, WebauthnSigner, is_valid_webauthn_signature};
 use argent::signer::webauthn::WebauthnSignature;
-use crate::ByteArrayExt;
 use starknet::secp256_trait::Signature;
 
+// impl into
+
+#[generate_trait]
+impl ByteArrayIntoSpanU8 of IntoBytes {
+    fn into_bytes(self: ByteArray) -> Span<u8> {
+        let len = self.len();
+        let mut output = array![];
+        let mut i = 0;
+        while i != len {
+            output.append(self[i]);
+            i += 1;
+        };
+        output.span()
+    }
+}
 
 fn new_webauthn_signer(origin: ByteArray, rp_id_hash: u256, pubkey: u256) -> WebauthnSigner {
-    let origin = origin.into_bytes().span();
+    let origin = origin.into_bytes();
     let rp_id_hash = rp_id_hash.try_into().expect('argent/zero-rp-id-hash');
     let pubkey = pubkey.try_into().expect('argent/zero-pubkey');
     WebauthnSigner { origin, rp_id_hash, pubkey }
@@ -23,7 +37,7 @@ fn valid_signer() -> (felt252, WebauthnSigner, WebauthnSignature) {
     let pubkey = 0x453325eff9c4fd248737d9464bf77bf914222d169028e10217e9ee8392ea8ab4;
     let signer = new_webauthn_signer(:origin, :rp_id_hash, :pubkey);
     let signature = WebauthnSignature {
-        client_data_json_outro: ",\"crossOrigin\":false}".into_bytes().span(),
+        client_data_json_outro: ",\"crossOrigin\":false}".into_bytes(),
         flags: 0b00011101,
         sign_count: 0,
         ec_signature: Signature {
@@ -59,7 +73,7 @@ fn test_is_valid_webauthn_signature_with_extra_json() {
     let pubkey = 0x937567fc640ed1bbc82d124b098cef062c2b3e65a942a078dc74e46b85be6930;
     let signer = new_webauthn_signer(:origin, :rp_id_hash, :pubkey);
     let signature = WebauthnSignature {
-        client_data_json_outro: ",\"crossOrigin\":false,\"extraField\":\"random data\"}".into_bytes().span(),
+        client_data_json_outro: ",\"crossOrigin\":false,\"extraField\":\"random data\"}".into_bytes(),
         flags: 0b00000101,
         sign_count: 0,
         ec_signature: Signature {

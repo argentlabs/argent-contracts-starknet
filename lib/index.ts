@@ -4,7 +4,10 @@ import { config } from "starknet";
 
 chai.use(chaiAsPromised);
 chai.should();
-config.update({ logLevel: "ERROR" });
+// We are spammed with
+// [2025-09-24T11:52:53.679Z] ERROR: Insufficient transaction data: found 3 V3 transactions with tips in 3 blocks (block range: 555-557). Required: 10 transactions. Consider reducing minTxsNecessary or increasing maxBlocks.
+// config.update({ logLevel: "ERROR" });
+config.update({ logLevel: "FATAL" });
 
 export * from "./accounts";
 export * from "./contracts";
@@ -30,3 +33,7 @@ export * from "./udc";
 export * from "./upgrade";
 
 export type Constructor<T> = new (...args: any[]) => T;
+
+export function generateRandomNumber(): bigint {
+  return BigInt(Math.floor(Math.random() * 100000000000));
+}

@@ -19,7 +19,9 @@ async function fetchAllEvents(
   continuationToken?: string,
 ): Promise<any[]> {
   console.log(
-    `Querying events from ${minBlock} to ${endBlock} (${endBlock - minBlock} blocks), continuation token: ${continuationToken}`,
+    `Querying events from ${minBlock} to ${endBlock} (${
+      endBlock - minBlock
+    } blocks), continuation token: ${continuationToken}`,
   );
   const response = await manager.getEvents({
     address,

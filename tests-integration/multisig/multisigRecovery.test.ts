@@ -32,11 +32,11 @@ describe("ArgentMultisig Recovery", function () {
     const { accountContract, originalSigner, newSigner, guardianAccount, replaceSignerCall } = await buildFixture();
     const { account: thirdPartyAccount } = await deployMultisig1_1();
     await manager.setTime(initialTime);
-    accountContract.connect(guardianAccount);
+    accountContract.providerOrAccount = guardianAccount;
     await accountContract.trigger_escape(replaceSignerCall);
 
     await manager.setTime(initialTime + 10 * 60);
-    accountContract.connect(thirdPartyAccount);
+    accountContract.providerOrAccount = thirdPartyAccount;
     await manager.ensureSuccess(accountContract.execute_escape(replaceSignerCall));
     accountContract.is_signer(originalSigner.compiledSigner).should.eventually.equal(false);
     accountContract.is_signer(newSigner.compiledSigner).should.eventually.equal(true);
@@ -50,11 +50,11 @@ describe("ArgentMultisig Recovery", function () {
   it(`Shouldn't be possible to call 'execute_escape' when calling 'trigger_escape'`, async function () {
     const { accountContract, guardianAccount, replaceSignerCall, originalAccount } = await buildFixture();
     await manager.setTime(initialTime);
-    accountContract.connect(guardianAccount);
+    accountContract.providerOrAccount = guardianAccount;
     await accountContract.trigger_escape(replaceSignerCall);
 
     await manager.setTime(initialTime + 15);
-    accountContract.connect(originalAccount);
+    accountContract.providerOrAccount = originalAccount;
     await expectRevertWithErrorMessage(
       "ReentrancyGuard: reentrant call",
       accountContract.execute_escape(replaceSignerCall),
@@ -64,7 +64,7 @@ describe("ArgentMultisig Recovery", function () {
   it(`Shouldn't be possible to call 'execute_escape' when calling 'trigger_escape'`, async function () {
     const { accountContract, guardianAccount } = await buildFixture();
     await manager.setTime(initialTime);
-    accountContract.connect(guardianAccount);
+    accountContract.providerOrAccount = guardianAccount;
     const replaceSignerCall = CallData.compile({
       selector: hash.getSelectorFromName("execute_escape"),
       calldata: [],
@@ -75,7 +75,7 @@ describe("ArgentMultisig Recovery", function () {
   it(`Escape should fail outside time window`, async function () {
     const { accountContract, guardianAccount, replaceSignerCall } = await buildFixture();
     await manager.setTime(initialTime);
-    accountContract.connect(guardianAccount);
+    accountContract.providerOrAccount = guardianAccount;
     await accountContract.trigger_escape(replaceSignerCall);
 
     await manager.setTime(initialTime + 1);

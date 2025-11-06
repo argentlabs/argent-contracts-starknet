@@ -1,30 +1,45 @@
 use argent::linked_set::linked_set_with_head::{
     LinkedSetWithHead, LinkedSetWithHeadReadImpl, LinkedSetWithHeadWriteImpl, MutableLinkedSetWithHeadReadImpl,
 };
-use argent::mocks::linked_set_mock::linked_set_mock;
 use argent::multiowner_account::signer_storage_linked_set::SignerStorageValueLinkedSetConfig;
-use argent::signer::signer_signature::{SignerStorageValue, SignerTrait, SignerType, starknet_signer_from_pubkey};
+use argent::signer::signer_signature::{SignerStorageValue, SignerTrait, SignerType};
+use crate::StarknetKeyPair;
 use starknet::storage::{Mutable, StorageBase};
 
-type ComponentState = linked_set_mock::ComponentState<linked_set_mock::Storage>;
+type ComponentState = LinkedSetMock::ComponentState<LinkedSetMock::Storage>;
+
+#[starknet::component]
+pub mod LinkedSetMock {
+    use argent::linked_set::linked_set_with_head::LinkedSetWithHead;
+    use argent::signer::signer_signature::SignerStorageValue;
+
+    #[storage]
+    pub struct Storage {
+        pub linked_set_with_head: LinkedSetWithHead<SignerStorageValue>,
+    }
+
+    #[event]
+    #[derive(Drop, starknet::Event)]
+    enum Event {}
+}
 
 
 fn setup_linked_set() -> StorageBase<Mutable<LinkedSetWithHead<SignerStorageValue>>> {
-    let mut component: ComponentState = linked_set_mock::component_state_for_testing();
+    let mut component: ComponentState = LinkedSetMock::component_state_for_testing();
     component.linked_set_with_head
 }
 
 fn setup_three_owners() -> (StorageBase<Mutable<LinkedSetWithHead<SignerStorageValue>>>, Array<SignerStorageValue>) {
     let storage = setup_linked_set();
-    let owner1 = starknet_signer_from_pubkey(1);
+    let owner1 = StarknetKeyPair::random().signer();
     let signer_storage1 = owner1.storage_value();
     storage.insert(signer_storage1);
 
-    let owner2 = starknet_signer_from_pubkey(2);
+    let owner2 = StarknetKeyPair::random().signer();
     let signer_storage2 = owner2.storage_value();
     storage.insert(signer_storage2);
 
-    let owner3 = starknet_signer_from_pubkey(3);
+    let owner3 = StarknetKeyPair::random().signer();
     let signer_storage3 = owner3.storage_value();
     storage.insert(signer_storage3);
 
@@ -37,13 +52,13 @@ fn test_len() {
 
     assert_eq!(linked_set.len(), 0);
 
-    let owner1 = starknet_signer_from_pubkey(1);
+    let owner1 = StarknetKeyPair::random().signer();
     let signer_storage1 = owner1.storage_value();
     linked_set.insert(signer_storage1);
 
     assert_eq!(linked_set.len(), 1);
 
-    let owner2 = starknet_signer_from_pubkey(2);
+    let owner2 = StarknetKeyPair::random().signer();
     let signer_storage2 = owner2.storage_value();
     linked_set.insert(signer_storage2);
 
@@ -54,15 +69,15 @@ fn test_len() {
 fn test_is_empty() {
     let linked_set = setup_linked_set();
 
-    assert(linked_set.is_empty(), 'Set should be empty initially');
+    assert!(linked_set.is_empty(), "Set should be empty initially");
 
-    let owner = starknet_signer_from_pubkey(1);
+    let owner = StarknetKeyPair::random().signer();
     let signer_storage = owner.storage_value();
     linked_set.insert(signer_storage);
 
     assert!(!linked_set.is_empty(), "Set should not be empty after adding item");
 
-    let owner2 = starknet_signer_from_pubkey(2);
+    let owner2 = StarknetKeyPair::random().signer();
     let signer_storage2 = owner2.storage_value();
     linked_set.insert(signer_storage2);
 
@@ -79,18 +94,18 @@ fn test_is_empty() {
 fn test_contains() {
     let linked_set = setup_linked_set();
 
-    let owner1 = starknet_signer_from_pubkey(1);
+    let owner1 = StarknetKeyPair::random().signer();
     let signer_storage1 = owner1.storage_value();
     linked_set.insert(signer_storage1);
 
-    assert(linked_set.contains(signer_storage1), 'Item1 should be in the set');
-    assert(linked_set.contains_by_hash(signer_storage1.hash()), 'Item1 should be in the set');
+    assert!(linked_set.contains(signer_storage1), "Item1 should be in the set");
+    assert!(linked_set.contains_by_hash(signer_storage1.hash()), "Item1 should be in the set");
 
-    let owner2 = starknet_signer_from_pubkey(2);
+    let owner2 = StarknetKeyPair::random().signer();
     let signer_storage2 = owner2.storage_value();
 
-    assert(!linked_set.contains(signer_storage2), 'Item2 should not be in the set');
-    assert(!linked_set.contains_by_hash(signer_storage2.hash()), 'Item2 should not be in the set');
+    assert!(!linked_set.contains(signer_storage2), "Item2 should not be in the set");
+    assert!(!linked_set.contains_by_hash(signer_storage2.hash()), "Item2 should not be in the set");
 }
 
 #[test]
@@ -99,7 +114,7 @@ fn test_first() {
 
     assert!(linked_set.first().is_none(), "First item should be None for empty set");
 
-    let owner1 = starknet_signer_from_pubkey(1);
+    let owner1 = StarknetKeyPair::random().signer();
     let signer_storage1 = owner1.storage_value();
     linked_set.insert(signer_storage1);
 
@@ -148,11 +163,11 @@ fn test_remove_last_element() {
 #[test]
 fn test_remove_first_from_two() {
     let mut linked_set = setup_linked_set();
-    let owner1 = starknet_signer_from_pubkey(1);
+    let owner1 = StarknetKeyPair::random().signer();
     let signer_storage1 = owner1.storage_value();
     linked_set.insert(signer_storage1);
 
-    let owner2 = starknet_signer_from_pubkey(2);
+    let owner2 = StarknetKeyPair::random().signer();
     let signer_storage2 = owner2.storage_value();
     linked_set.insert(signer_storage2);
 
@@ -165,11 +180,11 @@ fn test_remove_first_from_two() {
 #[test]
 fn test_remove_second_from_two() {
     let mut linked_set = setup_linked_set();
-    let owner1 = starknet_signer_from_pubkey(1);
+    let owner1 = StarknetKeyPair::random().signer();
     let signer_storage1 = owner1.storage_value();
     linked_set.insert(signer_storage1);
 
-    let owner2 = starknet_signer_from_pubkey(2);
+    let owner2 = StarknetKeyPair::random().signer();
     let signer_storage2 = owner2.storage_value();
     linked_set.insert(signer_storage2);
 
@@ -183,13 +198,13 @@ fn test_remove_second_from_two() {
 fn test_remove_only_element() {
     let mut linked_set = setup_linked_set();
 
-    let owner1 = starknet_signer_from_pubkey(1);
+    let owner1 = StarknetKeyPair::random().signer();
     let signer_storage1 = owner1.storage_value();
     linked_set.insert(signer_storage1);
 
     linked_set.remove(signer_storage1.hash());
 
-    assert(linked_set.is_empty(), 'Set should be empty');
+    assert!(linked_set.is_empty());
 }
 
 #[test]
@@ -227,7 +242,7 @@ fn test_remove_non_existent_item() {
 fn test_single() {
     let mut linked_set = setup_linked_set();
 
-    let owner1 = starknet_signer_from_pubkey(1);
+    let owner1 = StarknetKeyPair::random().signer();
     let signer_storage1 = owner1.storage_value();
     linked_set.insert(signer_storage1);
 

@@ -16,7 +16,7 @@ import {
   StarknetKeyPair,
   deployAccount,
   deployAccountWithoutGuardians,
-  deployOldAccountWithProxy,
+  deployLegacyAccount,
   expectEvent,
   expectRevertWithErrorMessage,
   getEscapeStatus,
@@ -28,13 +28,8 @@ import {
 } from "../../lib";
 
 describe("ArgentAccount: escape mechanism", function () {
-  let argentAccountClassHash: string;
   let newKeyPair: KeyPair;
   let randomTime: bigint;
-
-  before(async () => {
-    argentAccountClassHash = await manager.declareLocalContract("ArgentAccount");
-  });
 
   beforeEach(async () => {
     newKeyPair = randomStarknetKeyPair();
@@ -45,7 +40,7 @@ describe("ArgentAccount: escape mechanism", function () {
     it("Expect 'argent/only-self' when called from another account", async function () {
       const { account } = await deployAccount();
       const { accountContract } = await deployAccount();
-      accountContract.connect(account);
+      accountContract.providerOrAccount = account;
       await expectRevertWithErrorMessage(
         "argent/only-self",
         accountContract.trigger_escape_owner(newKeyPair.compiledSigner),
@@ -210,22 +205,29 @@ describe("ArgentAccount: escape mechanism", function () {
   });
 
   describe("escape_owner()", function () {
+    let argentAccountClassHash: string;
+    let classHashV030: string;
+
+    before(async () => {
+      classHashV030 = await manager.declareArtifactAccountContract("0.3.0");
+      argentAccountClassHash = await manager.declareLocalContract("ArgentAccount");
+    });
+
     it("Expect 'argent/only-self' when called from another account", async function () {
       const { account } = await deployAccount();
       const { accountContract } = await deployAccount();
-      accountContract.connect(account);
+      accountContract.providerOrAccount = account;
       await expectRevertWithErrorMessage("argent/only-self", accountContract.escape_owner());
     });
 
     it("Cancel escape when upgrading", async function () {
-      const { account, accountContract, owner, guardian } = await deployOldAccountWithProxy();
-      account.signer = new LegacyMultisigSigner([guardian]);
-
+      const { account, accountContract, owner, guardian } = await deployLegacyAccount(classHashV030);
+      account.signer = new LegacyMultisigSigner([guardian!]);
       await manager.setTime(randomTime);
-      await manager.waitForTx(accountContract.triggerEscapeSigner());
+      await manager.waitForTx(accountContract.trigger_escape_owner(newKeyPair.guid));
 
-      account.signer = new LegacyMultisigSigner([owner, guardian]);
-      const upgradeReceipt = await upgradeAccount(account, argentAccountClassHash, ["0"]);
+      account.signer = new LegacyMultisigSigner([owner, guardian!]);
+      const upgradeReceipt = await upgradeAccount(account, argentAccountClassHash);
 
       await expectEvent(upgradeReceipt.transaction_hash, {
         from_address: account.address,
@@ -235,15 +237,15 @@ describe("ArgentAccount: escape mechanism", function () {
     });
 
     it("Clear expired escape when upgrading", async function () {
-      const { account, accountContract, owner, guardian } = await deployOldAccountWithProxy();
-      account.signer = new LegacyMultisigSigner([guardian]);
+      const { account, accountContract, owner, guardian } = await deployLegacyAccount(classHashV030);
+      account.signer = new LegacyMultisigSigner([guardian!]);
 
       await manager.setTime(randomTime);
-      await manager.waitForTx(accountContract.triggerEscapeSigner());
+      await manager.waitForTx(accountContract.trigger_escape_owner(newKeyPair.guid));
 
       await manager.setTime(randomTime + ESCAPE_EXPIRY_PERIOD + 1n);
 
-      account.signer = new LegacyMultisigSigner([owner, guardian]);
+      account.signer = new LegacyMultisigSigner([owner, guardian!]);
       await upgradeAccount(account, argentAccountClassHash, ["0"]);
       await getEscapeStatus(await manager.loadContract(account.address)).should.eventually.equal(EscapeStatus.None);
     });
@@ -492,7 +494,7 @@ describe("ArgentAccount: escape mechanism", function () {
     it("Expect 'argent/only-self' when called from another account", async function () {
       const { account } = await deployAccount();
       const { accountContract } = await deployAccount();
-      accountContract.connect(account);
+      accountContract.providerOrAccount = account;
       await expectRevertWithErrorMessage(
         "argent/only-self",
         accountContract.trigger_escape_guardian(newKeyPair.compiledSignerAsOption),
@@ -590,7 +592,7 @@ describe("ArgentAccount: escape mechanism", function () {
     it("Expect 'argent/only-self' when called from another account", async function () {
       const { account } = await deployAccount();
       const { accountContract } = await deployAccount();
-      accountContract.connect(account);
+      accountContract.providerOrAccount = account;
       await expectRevertWithErrorMessage("argent/only-self", accountContract.escape_guardian());
     });
 
@@ -601,7 +603,7 @@ describe("ArgentAccount: escape mechanism", function () {
 
       await expectRevertWithErrorMessage(
         "argent/guardian-required",
-        account.execute([accountContract.populateTransaction.escape_guardian()], undefined, { skipValidate: false }),
+        account.execute([accountContract.populateTransaction.escape_guardian()], { skipValidate: false }),
       );
     });
 
@@ -727,7 +729,7 @@ describe("ArgentAccount: escape mechanism", function () {
     it("Expect 'argent/only-self' when called from another account", async function () {
       const { account } = await deployAccount();
       const { accountContract } = await deployAccount();
-      accountContract.connect(account);
+      accountContract.providerOrAccount = account;
       await expectRevertWithErrorMessage("argent/only-self", accountContract.cancel_escape());
     });
 

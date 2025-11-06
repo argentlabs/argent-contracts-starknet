@@ -58,7 +58,12 @@ export class DappService {
         return sessionToken.compileSignature();
       },
     );
-    return new ArgentAccount(manager, account.address, sessionSigner, account.cairoVersion, account.transactionVersion);
+    return new ArgentAccount({
+      provider: manager,
+      address: account.address,
+      signer: sessionSigner,
+      cairoVersion: account.cairoVersion,
+    });
   }
 
   public async getSessionToken({
@@ -249,6 +254,7 @@ class SessionSigner extends RawSigner {
     super();
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public async signRaw(messageHash: string): Promise<string[]> {
     throw new Error("Method not implemented.");
   }

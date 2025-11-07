@@ -7,6 +7,7 @@ import {
   deployer,
   expectExecutionRevert,
   expectRevertWithErrorMessage,
+  generateRandomNumber,
   getOutsideCall,
   getOutsideExecutionCall,
   getTypedDataHash,
@@ -20,9 +21,14 @@ const legacyRevision = TypedDataRevision.LEGACY;
 const initialTime = 1713139200;
 describe("ArgentAccount: outside execution", function () {
   let mockDapp: Contract;
+  let randomNumber: bigint;
 
   before(async () => {
     mockDapp = await manager.declareAndDeployContract("MockDapp");
+  });
+
+  beforeEach(async () => {
+    randomNumber = generateRandomNumber();
   });
 
   it("Correct message hash", async function () {
@@ -44,9 +50,7 @@ describe("ArgentAccount: outside execution", function () {
       ],
     };
 
-    const foundHash = num.toHex(
-      await accountContract.get_outside_execution_message_hash_rev_0(outsideExecution, { nonce: undefined }),
-    );
+    const foundHash = num.toHex(await accountContract.get_outside_execution_message_hash_rev_0(outsideExecution));
     const expectedMessageHash = getTypedDataHash(outsideExecution, account.address, chainId, legacyRevision);
     expect(foundHash).to.equal(expectedMessageHash);
   });
@@ -61,7 +65,7 @@ describe("ArgentAccount: outside execution", function () {
       nonce: randomStarknetKeyPair().publicKey,
       execute_after: initialTime - 100,
       execute_before: initialTime + 100,
-      calls: [getOutsideCall(mockDapp.populateTransaction.set_number(42))],
+      calls: [getOutsideCall(mockDapp.populateTransaction.set_number(randomNumber))],
     };
     const outsideExecutionCall = await getOutsideExecutionCall(
       outsideExecution,
@@ -117,7 +121,7 @@ describe("ArgentAccount: outside execution", function () {
     // normal scenario
     await accountContract.is_valid_outside_execution_nonce(outsideExecution.nonce).should.eventually.equal(true);
     await manager.waitForTx(deployer.execute(outsideExecutionCall));
-    await mockDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
+    await mockDapp.get_number(account.address).should.eventually.equal(randomNumber, "invalid new value");
     await accountContract.is_valid_outside_execution_nonce(outsideExecution.nonce).should.eventually.equal(false);
 
     // ensure a transaction can't be replayed
@@ -134,7 +138,7 @@ describe("ArgentAccount: outside execution", function () {
       nonce: randomStarknetKeyPair().publicKey,
       execute_after: initialTime - 100,
       execute_before: initialTime + 100,
-      calls: [getOutsideCall(mockDapp.populateTransaction.set_number(42))],
+      calls: [getOutsideCall(mockDapp.populateTransaction.set_number(randomNumber))],
     };
     const outsideExecutionCall = await getOutsideExecutionCall(
       outsideExecution,
@@ -190,7 +194,7 @@ describe("ArgentAccount: outside execution", function () {
     // normal scenario
     await accountContract.is_valid_outside_execution_nonce(outsideExecution.nonce).should.eventually.equal(true);
     await manager.waitForTx(deployer.execute(outsideExecutionCall));
-    await mockDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
+    await mockDapp.get_number(account.address).should.eventually.equal(randomNumber, "invalid new value");
     await accountContract.is_valid_outside_execution_nonce(outsideExecution.nonce).should.eventually.equal(false);
 
     // ensure a transaction can't be replayed
@@ -207,7 +211,7 @@ describe("ArgentAccount: outside execution", function () {
       nonce: randomStarknetKeyPair().publicKey,
       execute_after: 0,
       execute_before: initialTime + 100,
-      calls: [getOutsideCall(mockDapp.populateTransaction.set_number(42))],
+      calls: [getOutsideCall(mockDapp.populateTransaction.set_number(randomNumber))],
     };
     const outsideExecutionCall = await getOutsideExecutionCall(
       outsideExecution,
@@ -218,7 +222,7 @@ describe("ArgentAccount: outside execution", function () {
 
     // ensure the caller is no
     await manager.waitForTx(deployer.execute(outsideExecutionCall));
-    await mockDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
+    await mockDapp.get_number(account.address).should.eventually.equal(randomNumber, "invalid new value");
   });
 
   it("Owner only account", async function () {
@@ -229,7 +233,7 @@ describe("ArgentAccount: outside execution", function () {
       nonce: randomStarknetKeyPair().publicKey,
       execute_after: 0,
       execute_before: initialTime + 100,
-      calls: [getOutsideCall(mockDapp.populateTransaction.set_number(42))],
+      calls: [getOutsideCall(mockDapp.populateTransaction.set_number(randomNumber))],
     };
     const outsideExecutionCall = await getOutsideExecutionCall(
       outsideExecution,
@@ -241,7 +245,7 @@ describe("ArgentAccount: outside execution", function () {
     await manager.setTime(initialTime);
 
     await manager.waitForTx(deployer.execute(outsideExecutionCall));
-    await mockDapp.get_number(account.address).should.eventually.equal(42n, "invalid new value");
+    await mockDapp.get_number(account.address).should.eventually.equal(randomNumber, "invalid new value");
   });
 
   it("Escape method", async function () {

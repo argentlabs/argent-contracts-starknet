@@ -1,8 +1,7 @@
 import { Contract, num } from "starknet";
-import { deployer, fundAccountCall } from ".";
 import { Manager } from "./manager";
 
-export const ethAddress = "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7";
+const ethAddress = "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7";
 export const strkAddress = "0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d";
 
 export class TokenManager {
@@ -10,10 +9,6 @@ export class TokenManager {
   private strkCache?: Contract;
 
   constructor(private manager: Manager) {}
-
-  async feeTokenContract(useTxV3: boolean): Promise<Contract> {
-    return useTxV3 ? this.strkContract() : this.ethContract();
-  }
 
   async ethContract(): Promise<Contract> {
     if (this.ethCache) {
@@ -23,7 +18,7 @@ export class TokenManager {
     if (ethProxy.abi.some((entry) => entry.name == "implementation")) {
       const { address } = await ethProxy.implementation();
       const { abi } = await this.manager.loadContract(num.toHex(address));
-      this.ethCache = new Contract(abi, ethAddress, ethProxy.providerOrAccount);
+      this.ethCache = new Contract({ abi, address: ethAddress, providerOrAccount: ethProxy.providerOrAccount });
     } else {
       this.ethCache = ethProxy;
     }
@@ -46,11 +41,5 @@ export class TokenManager {
   async strkBalance(accountAddress: string): Promise<bigint> {
     const strkContract = await this.strkContract();
     return await strkContract.balanceOf(accountAddress);
-  }
-
-  async fundAccount(recipient: string, amount: number | bigint, token: "ETH" | "STRK") {
-    const call = fundAccountCall(recipient, amount, token);
-    const response = await deployer.execute(call ? [call] : []);
-    await this.manager.waitForTransaction(response.transaction_hash);
   }
 }

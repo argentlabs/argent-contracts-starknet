@@ -1,14 +1,6 @@
 import { expect } from "chai";
-import { CallData, hash, num } from "starknet";
-import {
-  StarknetKeyPair,
-  deployContractUDC,
-  deployer,
-  expectEvent,
-  manager,
-  randomStarknetKeyPair,
-  udcAddress,
-} from "../lib";
+import { CallData, defaultDeployer, hash, num } from "starknet";
+import { StarknetKeyPair, deployContractUDC, deployer, expectEvent, manager, randomStarknetKeyPair } from "../lib";
 
 describe("Deploy UDC", function () {
   let argentAccountClassHash: string;
@@ -35,7 +27,7 @@ describe("Deploy UDC", function () {
     );
 
     await expectEvent(transactionHash, {
-      from_address: udcAddress,
+      from_address: num.cleanHex(defaultDeployer.address.toString()),
       eventName: "ContractDeployed",
       data: CallData.compile({
         address: udcDeploymentAddress,

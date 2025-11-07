@@ -1,19 +1,35 @@
 use argent::account::{SRC5_ACCOUNT_INTERFACE_ID, SRC5_ACCOUNT_INTERFACE_ID_OLD_1, SRC5_ACCOUNT_INTERFACE_ID_OLD_2};
 use argent::introspection::{ISRC5, ISRC5Legacy, SRC5_INTERFACE_ID, SRC5_INTERFACE_ID_OLD, src5_component};
-use argent::mocks::src5_mocks::SRC5Mock;
 use argent::outside_execution::outside_execution::{
     ERC165_OUTSIDE_EXECUTION_INTERFACE_ID_REV_0, ERC165_OUTSIDE_EXECUTION_INTERFACE_ID_REV_1,
 };
 
 const UNSUPPORTED_INTERFACE_ID: felt252 = 0xffffffff;
 
-type ComponentState = src5_component::ComponentState<SRC5Mock::ContractState>;
+#[starknet::contract]
+pub mod SRC5Mock {
+    use argent::introspection::src5_component;
 
-fn CONTRACT_STATE() -> SRC5Mock::ContractState {
-    SRC5Mock::contract_state_for_testing()
+    component!(path: src5_component, storage: src5, event: SRC5Events);
+    #[abi(embed_v0)]
+    impl SRC5 = src5_component::SRC5Impl<ContractState>;
+    #[abi(embed_v0)]
+    impl SRC5Legacy = src5_component::SRC5LegacyImpl<ContractState>;
+
+    #[storage]
+    struct Storage {
+        #[substorage(v0)]
+        src5: src5_component::Storage,
+    }
+
+    #[event]
+    #[derive(Drop, starknet::Event)]
+    enum Event {
+        SRC5Events: src5_component::Event,
+    }
 }
 
-fn COMPONENT_STATE() -> ComponentState {
+fn COMPONENT_STATE() -> src5_component::ComponentState<SRC5Mock::ContractState> {
     src5_component::component_state_for_testing()
 }
 

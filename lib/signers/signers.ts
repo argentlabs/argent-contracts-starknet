@@ -7,17 +7,11 @@ import {
   Calldata,
   DeclareSignerDetails,
   DeployAccountSignerDetails,
+  ETransactionVersion,
   InvocationsSignerDetails,
-  RPC,
   Signature,
   SignerInterface,
   TypedData,
-  V2DeclareSignerDetails,
-  V2DeployAccountSignerDetails,
-  V2InvocationsSignerDetails,
-  V3DeclareSignerDetails,
-  V3DeployAccountSignerDetails,
-  V3InvocationsSignerDetails,
   ec,
   encode,
   hash,
@@ -48,60 +42,34 @@ export abstract class RawSigner implements SignerInterface {
   }
 
   public async signTransaction(transactions: Call[], details: InvocationsSignerDetails): Promise<Signature> {
-    const compiledCalldata = transaction.getExecuteCalldata(transactions, details.cairoVersion);
-    let msgHash;
-
-    // TODO: How to do generic union discriminator for all like this
-    if (Object.values(RPC.ETransactionVersion2).includes(details.version as any)) {
-      const det = details as V2InvocationsSignerDetails;
-      msgHash = hash.calculateInvokeTransactionHash({
-        ...det,
-        senderAddress: det.walletAddress,
-        compiledCalldata,
-        version: det.version,
-      });
-    } else if (Object.values(RPC.ETransactionVersion3).includes(details.version as any)) {
-      const det = details as V3InvocationsSignerDetails;
-      msgHash = hash.calculateInvokeTransactionHash({
-        ...det,
-        senderAddress: det.walletAddress,
-        compiledCalldata,
-        version: det.version,
-        nonceDataAvailabilityMode: stark.intDAM(det.nonceDataAvailabilityMode),
-        feeDataAvailabilityMode: stark.intDAM(det.feeDataAvailabilityMode),
-      });
-    } else {
+    if (details.version !== ETransactionVersion.V3 && details.version !== ETransactionVersion.F3) {
       throw new Error("unsupported signTransaction version");
     }
+
+    const compiledCalldata = transaction.getExecuteCalldata(transactions, details.cairoVersion);
+    const msgHash = hash.calculateInvokeTransactionHash({
+      ...details,
+      senderAddress: details.walletAddress,
+      compiledCalldata,
+      nonceDataAvailabilityMode: stark.intDAM(details.nonceDataAvailabilityMode),
+      feeDataAvailabilityMode: stark.intDAM(details.feeDataAvailabilityMode),
+    });
     return await this.signRaw(msgHash);
   }
 
   public async signDeployAccountTransaction(details: DeployAccountSignerDetails): Promise<Signature> {
-    const compiledConstructorCalldata = CallData.compile(details.constructorCalldata);
-    /*     const version = BigInt(details.version).toString(); */
-    let msgHash;
-
-    if (Object.values(RPC.ETransactionVersion2).includes(details.version as any)) {
-      const det = details as V2DeployAccountSignerDetails;
-      msgHash = hash.calculateDeployAccountTransactionHash({
-        ...det,
-        salt: det.addressSalt,
-        constructorCalldata: compiledConstructorCalldata,
-        version: det.version,
-      });
-    } else if (Object.values(RPC.ETransactionVersion3).includes(details.version as any)) {
-      const det = details as V3DeployAccountSignerDetails;
-      msgHash = hash.calculateDeployAccountTransactionHash({
-        ...det,
-        salt: det.addressSalt,
-        compiledConstructorCalldata,
-        version: det.version,
-        nonceDataAvailabilityMode: stark.intDAM(det.nonceDataAvailabilityMode),
-        feeDataAvailabilityMode: stark.intDAM(det.feeDataAvailabilityMode),
-      });
-    } else {
-      throw new Error(`unsupported signDeployAccountTransaction version: ${details.version}}`);
+    if (details.version !== ETransactionVersion.V3 && details.version !== ETransactionVersion.F3) {
+      throw new Error("unsupported signDeployAccountTransaction version");
     }
+    const compiledConstructorCalldata = CallData.compile(details.constructorCalldata);
+
+    const msgHash = hash.calculateDeployAccountTransactionHash({
+      ...details,
+      salt: details.addressSalt,
+      compiledConstructorCalldata,
+      nonceDataAvailabilityMode: stark.intDAM(details.nonceDataAvailabilityMode),
+      feeDataAvailabilityMode: stark.intDAM(details.feeDataAvailabilityMode),
+    });
 
     return await this.signRaw(msgHash);
   }
@@ -110,25 +78,14 @@ export abstract class RawSigner implements SignerInterface {
     // contractClass: ContractClass,  // Should be used once class hash is present in ContractClass
     details: DeclareSignerDetails,
   ): Promise<Signature> {
-    let msgHash;
-
-    if (Object.values(RPC.ETransactionVersion2).includes(details.version as any)) {
-      const det = details as V2DeclareSignerDetails;
-      msgHash = hash.calculateDeclareTransactionHash({
-        ...det,
-        version: det.version,
-      });
-    } else if (Object.values(RPC.ETransactionVersion3).includes(details.version as any)) {
-      const det = details as V3DeclareSignerDetails;
-      msgHash = hash.calculateDeclareTransactionHash({
-        ...det,
-        version: det.version,
-        nonceDataAvailabilityMode: stark.intDAM(det.nonceDataAvailabilityMode),
-        feeDataAvailabilityMode: stark.intDAM(det.feeDataAvailabilityMode),
-      });
-    } else {
+    if (details.version !== ETransactionVersion.V3 && details.version !== ETransactionVersion.F3) {
       throw new Error("unsupported signDeclareTransaction version");
     }
+    const msgHash = hash.calculateDeclareTransactionHash({
+      ...details,
+      nonceDataAvailabilityMode: stark.intDAM(details.nonceDataAvailabilityMode),
+      feeDataAvailabilityMode: stark.intDAM(details.feeDataAvailabilityMode),
+    });
 
     return await this.signRaw(msgHash);
   }

@@ -1,123 +1,116 @@
-use argent::signer::signer_signature::STARK_CURVE_ORDER_U256;
-use crate::setup::argent_account_setup::{
-    ITestArgentAccountDispatcher, ITestArgentAccountSafeDispatcher, ITestArgentAccountSafeDispatcherTrait,
-};
+use argent::utils::serialization::serialize;
 use crate::{
-    Felt252TryIntoStarknetSigner, GUARDIAN, ITestArgentAccountDispatcherTrait, OWNER, TX_HASH, WRONG_GUARDIAN,
-    WRONG_OWNER, initialize_account, initialize_account_without_guardian, to_starknet_signatures,
-    to_starknet_signer_signatures,
+    ArgentAccountSetup, ArgentAccountWithoutGuardianSetup, ITestArgentAccountDispatcherTrait, SignerKeyPairImpl,
+    StarknetKeyPair, initialize_account, initialize_account_without_guardian,
 };
+use snforge_std::{generate_random_felt};
 use starknet::VALIDATED;
-
-#[generate_trait]
-impl SignatureCheckerTrait of ISignatureCheckerTrait {
-    fn check_signature(self: @ITestArgentAccountDispatcher, hash: felt252, signature: Array<felt252>) -> bool {
-        let safe_dispatcher = ITestArgentAccountSafeDispatcher { contract_address: *self.contract_address };
-        match safe_dispatcher.is_valid_signature(hash, signature) {
-            Result::Ok(validated) => validated == VALIDATED,
-            Result::Err(_) => false,
-        }
-    }
-}
 
 #[test]
 fn valid_no_guardian() {
-    let account = initialize_account_without_guardian();
-    assert!(account.check_signature(TX_HASH, to_starknet_signatures(array![OWNER()])));
+    let ArgentAccountWithoutGuardianSetup { account, owners } = initialize_account_without_guardian();
+    let tx_hash = generate_random_felt();
+    let owner_signature = owners[0].sign(tx_hash);
+    let is_valid = account.is_valid_signature(tx_hash, serialize(@array![owner_signature]));
+    assert_eq!(is_valid, VALIDATED);
 }
 
 #[test]
 fn valid_with_guardian() {
-    assert!(initialize_account().check_signature(TX_HASH, to_starknet_signatures(array![OWNER(), GUARDIAN()])));
+    let ArgentAccountSetup { account, owners, guardians, .. } = initialize_account();
+    let tx_hash = generate_random_felt();
+    let owner_signature = owners[0].sign(tx_hash);
+    let guardian_signature = guardians[0].sign(tx_hash);
+    let is_valid = account.is_valid_signature(tx_hash, serialize(@array![owner_signature, guardian_signature]));
+    assert_eq!(is_valid, VALIDATED);
 }
 
 #[test]
+#[should_panic(expected: ('argent/invalid-owner-sig',))]
 fn invalid_hash() {
-    let account = initialize_account_without_guardian();
-    assert!(!account.check_signature(0, to_starknet_signatures(array![OWNER()])));
+    let ArgentAccountWithoutGuardianSetup { account, owners } = initialize_account_without_guardian();
+    let tx_hash = generate_random_felt();
+    let owner_signature = owners[0].sign(tx_hash);
+    account.is_valid_signature(0, serialize(@array![owner_signature]));
 }
 
 #[test]
+#[should_panic(expected: ('argent/invalid-owner-sig',))]
 fn invalid_owner_without_guardian() {
-    let account = initialize_account_without_guardian();
-    assert!(!account.check_signature(TX_HASH, to_starknet_signer_signatures(array![1, 2, 3])));
-    assert!(!account.check_signature(TX_HASH, to_starknet_signatures(array![WRONG_OWNER()])));
+    let ArgentAccountWithoutGuardianSetup { account, .. } = initialize_account_without_guardian();
+    let tx_hash = generate_random_felt();
+    let random_valid_signature = StarknetKeyPair::random().sign(tx_hash);
+    account.is_valid_signature(tx_hash, serialize(@array![random_valid_signature]));
 }
 
 #[test]
+#[should_panic(expected: ('argent/invalid-owner-sig',))]
 fn invalid_owner_with_guardian() {
-    let account = initialize_account();
-    assert!(!account.check_signature(TX_HASH, to_starknet_signer_signatures(array![1, 2, 3, 5, 8, 8])));
-    assert!(!account.check_signature(TX_HASH, to_starknet_signatures(array![WRONG_OWNER(), GUARDIAN()])));
+    let ArgentAccountSetup { account, guardians, .. } = initialize_account();
+    let tx_hash = generate_random_felt();
+    let guardian_signature = guardians[0].sign(tx_hash);
+    let random_valid_signature = StarknetKeyPair::random().sign(tx_hash);
+    account.is_valid_signature(tx_hash, serialize(@array![random_valid_signature, guardian_signature]));
 }
 
 #[test]
+#[should_panic(expected: ('argent/invalid-guardian-sig',))]
 fn valid_owner_with_invalid_guardian() {
-    let account = initialize_account();
-    let signatures = to_starknet_signer_signatures(array![OWNER().pubkey, OWNER().sig.r, OWNER().sig.s, 1, 2, 3]);
-    assert!(!account.check_signature(TX_HASH, signatures));
-    let signatures = to_starknet_signatures(array![OWNER(), WRONG_GUARDIAN()]);
-    assert!(!account.check_signature(TX_HASH, signatures));
-    let signatures = to_starknet_signatures(array![OWNER(), OWNER()]);
-    assert!(!account.check_signature(TX_HASH, signatures));
+    let ArgentAccountSetup { account, owners, .. } = initialize_account();
+    let tx_hash = generate_random_felt();
+    let owner_signature = owners[0].sign(tx_hash);
+    let random_valid_signature = StarknetKeyPair::random().sign(tx_hash);
+    account.is_valid_signature(tx_hash, serialize(@array![owner_signature, random_valid_signature]));
 }
 
 #[test]
+#[should_panic(expected: ('argent/invalid-owner-sig',))]
 fn invalid_owner_with_invalid_guardian() {
-    let account = initialize_account();
-    let signatures = to_starknet_signer_signatures(array![1, 2, 3, 4, 5, 6]);
-    assert!(!account.check_signature(TX_HASH, signatures));
-    let signatures = to_starknet_signatures(array![WRONG_OWNER(), WRONG_GUARDIAN()]);
-    assert!(!account.check_signature(TX_HASH, signatures));
+    let ArgentAccountSetup { account, .. } = initialize_account();
+    let tx_hash = generate_random_felt();
+    let random_valid_signature = StarknetKeyPair::random().sign(tx_hash);
+    account.is_valid_signature(tx_hash, serialize(@array![random_valid_signature, random_valid_signature]));
 }
 
 #[test]
 #[should_panic(expected: ('argent/invalid-signature-format',))]
 fn invalid_empty_signature_without_guardian() {
-    initialize_account_without_guardian().is_valid_signature(TX_HASH, array![]);
+    let ArgentAccountWithoutGuardianSetup { account, .. } = initialize_account_without_guardian();
+    let tx_hash = generate_random_felt();
+    account.is_valid_signature(tx_hash, array![]);
 }
 
 #[test]
 #[should_panic(expected: ('argent/invalid-guardian-sig',))]
 fn invalid_signature_length_without_guardian() {
-    let account = initialize_account_without_guardian();
-    account.is_valid_signature(TX_HASH, to_starknet_signatures(array![OWNER(), GUARDIAN()]));
+    let ArgentAccountWithoutGuardianSetup { account, owners } = initialize_account_without_guardian();
+    let tx_hash = generate_random_felt();
+    let owner_signature = owners[0].sign(tx_hash);
+    let random_valid_signature = StarknetKeyPair::random().sign(tx_hash);
+    account.is_valid_signature(tx_hash, serialize(@array![owner_signature, random_valid_signature]));
 }
 
 #[test]
 #[should_panic(expected: ('argent/invalid-signature-format',))]
 fn invalid_empty_signature_with_guardian() {
-    initialize_account().is_valid_signature(TX_HASH, array![]);
+    let ArgentAccountSetup { account, .. } = initialize_account();
+    let tx_hash = generate_random_felt();
+    account.is_valid_signature(tx_hash, array![]);
 }
 
 #[test]
 #[should_panic(expected: ('argent/invalid-signature-length',))]
 fn invalid_empty_span_signature() {
-    initialize_account().is_valid_signature(TX_HASH, array![0]);
+    let ArgentAccountSetup { account, .. } = initialize_account();
+    let tx_hash = generate_random_felt();
+    account.is_valid_signature(tx_hash, array![0]);
 }
 
 #[test]
 #[should_panic(expected: ('argent/missing-guardian-sig',))]
 fn invalid_signature_length_with_guardian() {
-    initialize_account().is_valid_signature(TX_HASH, to_starknet_signatures(array![OWNER()]));
-}
-
-#[test]
-#[should_panic(expected: ('argent/invalid-r-value',))]
-fn test_stark_curve_order_r() {
-    initialize_account_without_guardian()
-        .is_valid_signature(
-            TX_HASH,
-            to_starknet_signer_signatures(array![OWNER().pubkey, (STARK_CURVE_ORDER_U256 + 1).try_into().unwrap(), 1]),
-        );
-}
-
-#[test]
-#[should_panic(expected: ('argent/invalid-s-value',))]
-fn test_stark_curve_order_s() {
-    initialize_account_without_guardian()
-        .is_valid_signature(
-            TX_HASH,
-            to_starknet_signer_signatures(array![OWNER().pubkey, 1, (STARK_CURVE_ORDER_U256 + 1).try_into().unwrap()]),
-        );
+    let ArgentAccountSetup { account, owners, .. } = initialize_account();
+    let tx_hash = generate_random_felt();
+    let owner_signature = owners[0].sign(tx_hash);
+    account.is_valid_signature(tx_hash, serialize(@array![owner_signature]));
 }

@@ -8,3 +8,5 @@ tests-integration/fixtures
 starknet-devnet-rs
 .svelte-kit
 docs
+# Uses his own prettier config
+examples

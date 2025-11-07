@@ -1,13 +1,13 @@
 use argent::utils::transaction_version::{
     assert_correct_declare_version, assert_correct_deploy_account_version, assert_correct_invoke_version,
 };
-
+const ESTIMATION_BASE_TX_VERSION: felt252 = 0x100000000000000000000000000000000;
 #[test]
 fn test_assert_correct_invoke_version() {
     assert_correct_invoke_version(1);
-    assert_correct_invoke_version(0x100000000000000000000000000000000 + 1);
+    assert_correct_invoke_version(ESTIMATION_BASE_TX_VERSION + 1);
     assert_correct_invoke_version(3);
-    assert_correct_invoke_version(0x100000000000000000000000000000000 + 3);
+    assert_correct_invoke_version(ESTIMATION_BASE_TX_VERSION + 3);
 }
 
 #[test]
@@ -19,9 +19,9 @@ fn assert_invoke_version_invalid() {
 #[test]
 fn test_assert_correct_deploy_account_version() {
     assert_correct_deploy_account_version(1);
-    assert_correct_deploy_account_version(0x100000000000000000000000000000000 + 1);
+    assert_correct_deploy_account_version(ESTIMATION_BASE_TX_VERSION + 1);
     assert_correct_deploy_account_version(3);
-    assert_correct_deploy_account_version(0x100000000000000000000000000000000 + 3);
+    assert_correct_deploy_account_version(ESTIMATION_BASE_TX_VERSION + 3);
 }
 
 #[test]
@@ -33,9 +33,9 @@ fn assert_deploy_account_invalid() {
 #[test]
 fn test_assert_correct_declare_version() {
     assert_correct_declare_version(2);
-    assert_correct_declare_version(0x100000000000000000000000000000000 + 2);
+    assert_correct_declare_version(ESTIMATION_BASE_TX_VERSION + 2);
     assert_correct_declare_version(3);
-    assert_correct_declare_version(0x100000000000000000000000000000000 + 3);
+    assert_correct_declare_version(ESTIMATION_BASE_TX_VERSION + 3);
 }
 
 #[test]

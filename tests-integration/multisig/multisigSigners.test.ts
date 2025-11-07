@@ -52,7 +52,7 @@ describe("Multisig: Signers types", function () {
     describe("Simple transfer", function () {
       for (const { name, account } of accounts) {
         it(`Using "${name}"`, async function () {
-          strkContract.connect(account);
+          strkContract.providerOrAccount = account;
           await manager.ensureSuccess(strkContract.transfer(recipient, amount));
         });
       }

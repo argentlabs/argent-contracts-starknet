@@ -7,11 +7,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out main branch
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Read .nvmrc
         run: echo "NVMRC=$(cat .nvmrc)" >> $GITHUB_OUTPUT
         id: nvm
+
+      - name: Use correct node version
+        uses: actions/setup-node@v3
+        with:
+          node-version: '${{ steps.nvm.outputs.NVMRC }}'
 
       - name: Setup Scarb
         uses: software-mansion/setup-scarb@v1.5.0
@@ -61,23 +66,41 @@ jobs:
   format:
     runs-on: ubuntu-latest
     steps:
-      - name: Step 1 - Check out main branch
-        uses: actions/checkout@v3
+      - name: Check out main branch
+        uses: actions/checkout@v4
 
-      - name: Step 2 - Install project
+      - name: Read .nvmrc
+        run: echo "NVMRC=$(cat .nvmrc)" >> $GITHUB_OUTPUT
+        id: nvm
+
+      - name: Use correct node version
+        uses: actions/setup-node@v3
+        with:
+          node-version: '${{ steps.nvm.outputs.NVMRC }}'
+
+      - name: Install project
         run: yarn install --frozen-lockfile
 
-      - name: Step 3 - Check correct formatting
+      - name: Check correct formatting
         run: yarn prettier --check .
 
   lint:
     runs-on: ubuntu-latest
     steps:
-      - name: Step 1 - Check out main branch
-        uses: actions/checkout@v3
+      - name: Check out main branch
+        uses: actions/checkout@v4
 
-      - name: Step 2 - Install project
+      - name: Read .nvmrc
+        run: echo "NVMRC=$(cat .nvmrc)" >> $GITHUB_OUTPUT
+        id: nvm
+
+      - name: Use correct node version
+        uses: actions/setup-node@v3
+        with:
+          node-version: '${{ steps.nvm.outputs.NVMRC }}'
+
+      - name: Install project
         run: yarn install --frozen-lockfile
 
-      - name: Step 3 - Check correct linting
+      - name: Check correct linting
         run: yarn eslint .

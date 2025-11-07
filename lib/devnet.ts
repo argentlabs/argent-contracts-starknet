@@ -1,5 +1,5 @@
-import { RawArgs, RpcProvider } from "starknet";
-import { Constructor } from ".";
+import { RpcProvider } from "starknet";
+import { Constructor, generateRandomNumber } from ".";
 
 const dumpFolderPath = "./dump";
 export const devnetBaseUrl = "http://127.0.0.1:5050";
@@ -17,39 +17,53 @@ export const WithDevnet = <T extends Constructor<RpcProvider>>(Base: T) =>
     }
 
     async mintEth(address: string, amount: number | bigint) {
-      await this.handlePost("mint", { address, amount: Number(amount) });
+      await this.handleJsonRpc("devnet_mint", { address, amount: Number(amount) });
     }
 
     async mintStrk(address: string, amount: number | bigint) {
-      await this.handlePost("mint", { address, amount: Number(amount), unit: "FRI" });
+      await this.handleJsonRpc("devnet_mint", { address, amount: Number(amount), unit: "FRI" });
     }
 
     async increaseTime(timeInSeconds: number | bigint) {
-      await this.handlePost("increase_time", { time: Number(timeInSeconds) });
+      await this.handleJsonRpc("devnet_increaseTime", { time: Number(timeInSeconds) });
     }
 
     async setTime(timeInSeconds: number | bigint) {
-      await this.handlePost("set_time", { time: Number(timeInSeconds), generate_block: true });
+      await this.handleJsonRpc("devnet_setTime", { time: Number(timeInSeconds), generate_block: true });
     }
 
     async restart() {
-      await this.handlePost("restart");
+      await this.handleJsonRpc("devnet_restart");
     }
 
     async dump() {
-      await this.handlePost("dump", { path: dumpFolderPath });
+      await this.handleJsonRpc("devnet_dump", { path: dumpFolderPath });
     }
 
     async load() {
-      await this.handlePost("load", { path: dumpFolderPath });
+      await this.handleJsonRpc("devnet_load", { path: dumpFolderPath });
     }
 
-    async handlePost(path: string, payload?: RawArgs) {
-      const url = `${this.channel.nodeUrl}/${path}`;
-      const headers = { "Content-Type": "application/json" };
-      const response = await fetch(url, { method: "POST", headers, body: JSON.stringify(payload) });
-      if (!response.ok) {
-        throw new Error(`HTTP error! calling ${url} Status: ${response.status} Message: ${await response.text()}`);
+    async handleJsonRpc(method: string, params = {}) {
+      const body = {
+        jsonrpc: "2.0",
+        id: Number(generateRandomNumber()),
+        method,
+        params,
+      };
+
+      const res = await fetch(`${this.channel.nodeUrl}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      const json = await res.json();
+
+      if (json.error) {
+        throw new Error(`RPC Error: ${json.error.message}`);
       }
+
+      return json.result;
     }
   };
